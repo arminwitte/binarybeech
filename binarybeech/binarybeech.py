@@ -1,0 +1,546 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+import pandas as pd
+import numpy as np
+import copy
+import treelib
+import itertools
+import scipy.optimize as opt
+
+class Node:
+    def __init__(self,branches=None,attribute=None,threshold=None,value=None):
+        if branches is None and value is None:
+            print("ERROR")
+        
+        self.branches = branches
+        self.threshold = threshold
+        self.attribute = attribute
+        self.is_leaf = True if self.branches is None else False
+        self.value = value
+        self.pinfo = {}
+        
+    def get_child(self,df):
+        if isinstance(df[self.attribute],(int,float,np.number)):
+            return self.branches[0] if df[self.attribute] < self.threshold else self.branches[1]
+        else:
+            return self.branches[0] if df[self.attribute] in self.threshold else self.branches[1]
+        
+class Tree:
+    def __init__(self,root):
+        self.root = root
+        
+    def predict(self,x):
+        item = self.root
+        while not item.is_leaf:
+            item = item.get_child(x)
+        return item
+    
+    def leaf_count(self):
+        return self._leaf_count(self.root)
+    
+    def _leaf_count(self,node):
+        if node.is_leaf:
+            return 1
+        else:
+            return np.sum([self._leaf_count(b) for b in node.branches])
+    
+    def nodes(self):
+        return self._nodes(self.root)
+    
+    def _nodes(self,node):
+        if node.is_leaf:
+            return [node]
+        
+        nl = [node]
+        for b in node.branches:
+            nl += self._nodes(b)
+        return nl
+    
+    def classes(self):
+        nodes = self.nodes()
+        c = []
+        for n in nodes:
+            c.append(n.value)
+        return np.unique(c).tolist()
+    
+    def show(self):
+        tree_view = treelib.Tree()
+        self._show(self.root,tree_view)
+        tree_view.show()
+        
+    def _show(self,node,tree_view,parent=None,prefix=""):
+        name = str(hash(node))
+        if node.is_leaf:
+            text = f"{prefix}{node.value}"
+        else:
+            if isinstance(node.threshold,(int,float,np.number)):
+                text = f"{prefix}{node.attribute}<{node.threshold:.2f}"
+            else:
+                text = f"{prefix}{node.attribute} in {node.threshold}"
+        tree_view.create_node(text,name,parent=parent)
+        
+        if not node.is_leaf:
+            for i, b in enumerate(node.branches):
+                p = "True: " if i == 0 else "False:"
+                self._show(b,tree_view,parent=name,prefix=p)
+    
+class CART:
+    def __init__(self,df,y_name,X_names=None,min_leaf_samples=1,min_split_samples=1,max_depth=32767):
+        self.y_name = y_name
+        if X_names is None:
+            X_names = list(df.columns)
+            X_names.remove(self.y_name)
+        self.X_names = X_names
+        self.df = self._handle_missings(df)
+        self.tree = None
+        self.splittyness = 1.
+        self.leaf_loss_threshold = 1e-12
+        
+        self.classes = np.unique(df[self.y_name]).tolist()
+        
+        self.min_leaf_samples = min_leaf_samples
+        self.min_split_samples = min_split_samples
+        self.max_depth = max_depth
+        
+        self.depth = 0
+        
+    def train(self,k=5, plot=True, slack=1.):
+        """
+        train desicion tree by k-fold cross-validation
+        """
+        #shuffle dataframe
+        df = self.df.sample(frac=1.)
+        
+        # train tree with full dataset
+        self.create_tree()
+        pres = self.prune()
+        beta = self._beta(pres["alpha"])
+        qual_cv = np.zeros((len(beta),k))
+        #split df for k-fold cross-validation
+        training_sets, test_sets = self._k_fold_split(df,k)
+        for i in range(len(training_sets)):
+            c = CART(training_sets[i],
+                     self.y_name,
+                     X_names = self.X_names, 
+                     min_leaf_samples=self.min_leaf_samples,
+                     min_split_samples=self.min_split_samples,
+                     max_depth=self.max_depth)
+            c.create_tree()          
+            pres = c.prune(test_set=test_sets[i])
+            qual = self._qualities(beta,pres)
+            qual_cv[:,i] = np.array(qual)
+        qual_mean = np.mean(qual_cv, axis=1)
+        qual_sd = np.std(qual_cv, axis = 1)
+        qual_sd_mean = np.mean(qual_sd)
+        import matplotlib.pyplot as plt
+        plt.errorbar(beta,qual_mean,yerr=qual_sd)
+        
+        qual_max = np.nanmax(qual_mean)
+        ind_max = np.argmax(qual_mean)
+        qual_max_sd = qual_sd[ind_max]
+        qual_upper = qual_mean + qual_sd * slack
+        ind_best = ind_max
+        for i in range(ind_max, len(qual_upper)):
+            if qual_mean[i] > qual_max - qual_max_sd * slack:
+                ind_best = i
+        beta_best = beta[ind_best]
+        print(f"beta_best: {beta_best}")
+        self.create_tree()
+        self.prune(alpha_max=beta_best)
+    
+    def _beta(self,alpha):
+        beta = []
+        for i in range(len(alpha)-1):
+            if alpha[i] <= 0:
+                continue
+            b = np.sqrt(alpha[i]*alpha[i+1])
+            beta.append(b)
+        return beta
+            
+    def _quality_at(self,b,data):
+        for i, a in enumerate(data["alpha"]):
+            if a > b:
+                return data["A_cv"][i-1]
+        return 0.
+    
+    def _qualities(self,beta,data):
+        return [self._quality_at(b,data) for b in beta]
+    
+    @staticmethod
+    def _k_fold_split(df,k):
+        N = len(df.index)
+        n = int(np.ceil(N/k))
+        training_sets = []
+        test_sets = []
+        for i in range(k):
+            test = df.iloc[i*n:min(N,(i+1)*n),:]
+            training = df.loc[df.index.difference(test.index),:]
+            test_sets.append(test)
+            training_sets.append(training)
+        return training_sets, test_sets
+    
+    def _handle_missings(self,df_in):
+        df_out = df_in.dropna(subset=[self.y_name])
+        # use nan as category
+        # use mean if numerical
+        for name in self.X_names:
+            if np.issubdtype(df_out[name].values.dtype, np.number):
+                df_out[name] = df_out[name].fillna(np.nanmean(df_out[name].values))
+            else:
+                df_out[name] = df_out[name].fillna("missing")
+        return df_out
+        
+    def create_tree(self, leaf_loss_threshold=1e-12):
+        self.leaf_loss_threshold = leaf_loss_threshold
+        root = self._node_or_leaf(self.df)
+        self.tree = Tree(root)
+        n_leafs = self.tree.leaf_count()
+        print(f"A tree with {n_leafs} leafs was created")
+        return self.tree
+    
+    def _gini_impurity(self, df):
+        unique, counts = np.unique(df[self.y_name].values, return_counts=True)
+        N = df[self.y_name].values.ravel().size
+        p = counts/N
+        #print(unique)
+        #print(p)
+        return 1. - np.sum(p**2)
+    
+    def _shannon_entropy(self,df):
+        unique, counts = np.unique(df[self.y_name].values, return_counts=True)
+        N = df[self.y_name].values.size
+        p = counts/N
+        return -np.sum(p * np.log2(p))
+    
+    def _misclassification_cost(self,df):
+        y = df[self.y_name].values
+        unique, counts = np.unique(y, return_counts=True)
+        N = y.size
+        p = np.max(counts)/N
+        return 1. - p
+    
+    def _logistic_loss(self,df):
+        y = df[self.y_name].values
+        #unique, counts = np.unique(y, return_counts= True)
+        #count_max = np.max(counts)
+        p_ = self._node_value(df) #np.nanmax(counts)/np.sum(counts)
+        p_ = np.clip(p_,1e-12,1.-1e-12)
+        p = np.ones_like(y) * p_
+        l = np.sum(-y*np.log(p)-(1-y)*np.log(1-p))
+        return l
+    
+    def _mean_squared_error(self,df):
+        y = df[self.y_name].values
+        y_hat = self._node_value(df)
+        e = y - y_hat
+        return 1/e.size * (e.T @ e)
+        
+    def _residual(self,df):
+        y = df(self.y_name).values
+        p_ = self._probability(df)
+        
+        
+        
+    def _node_value(self,df):
+        #return self._probability(df)
+        v = self._mean(df)
+        return v
+    
+    def _mean(self,df):
+        return np.nanmean(df[self.y_name].values)
+    
+    def _majority_class(self,df):
+        y = df[self.y_name].values
+        unique, counts = np.unique(y,return_counts=True)
+        ind_max = np.argmax(counts)
+        return unique[ind_max]
+    
+    def _odds(self,df):
+        y = df[self.y_name].values
+        unique, counts = np.unique(y, return_counts=True)
+        d={0:0,1:0}
+        for i, u in enumerate(unique):
+            d[u] = counts[i]
+        if d[0] == 0:
+            return np.Inf
+        odds = d[1]/d[0]
+        #print(f"odds: {odds}")
+        return odds
+    
+    def _log_odds(self,df):
+        odds = self._odds(df)
+        odds = np.clip(odds,1e-12,1e12)
+        logodds = np.log(odds)
+        #print(f"logodds: {logodds}")
+        return logodds
+    
+    def _probability(self,df):
+        odds = self._odds(df)
+        if odds == np.Inf:
+            return 1.
+        p = odds/(1+odds)
+        #print(f"odds: {odds:.2f} probability: {p:.4f}")
+        return p
+           
+    def _opt_fun(self,df,split_name):
+        def fun(x):
+            split_df = [df[df[split_name]<x],
+                        df[df[split_name]>=x]]
+            N = len(df.index)
+            n = [len(df_.index) for df_ in split_df]
+            #print(x)
+            return n[0]/N * self._loss(split_df[0]) + n[1]/N * self._loss(split_df[1])
+        return fun
+        
+    def _node_or_leaf(self,df):
+        loss_parent = self._loss(df)
+        #p = self._probability(df)
+        if (loss_parent < self.leaf_loss_threshold
+            #p < 0.025
+            #or p > 0.975
+            or len(df.index) < self.min_leaf_samples
+            or self.depth > self.max_depth):
+            return self._leaf(df)
+        
+        loss_best, split_df, split_threshold, split_name = self._loss_best(df)
+        if split_df is None:
+            return self._leaf(df)
+        print(f"Computed split:\nloss: {loss_best:.2f} (parent: {loss_parent:.2f})\nattribute: {split_name}\nthreshold: {split_threshold}\ncount: {[len(df_.index) for df_ in split_df]}")
+        if loss_best < loss_parent:
+            #print(f"=> Node({split_name}, {split_threshold})")
+            branches = []
+            self.depth += 1
+            for i in range(2):
+                branches.append(self._node_or_leaf(split_df[i]))  
+            self.depth -= 1
+            unique, counts = np.unique(df[self.y_name], return_counts=True)
+            value = self._node_value(df)
+            item = Node(branches=branches,attribute=split_name,threshold=split_threshold,value=value)
+            item.pinfo["N"] = len(df.index)
+            item.pinfo["r"] = self._misclassification_cost(df)
+            item.pinfo["R"] = item.pinfo["N"]/len(self.df.index) * item.pinfo["r"]
+        else:
+            item = self._leaf(df)
+            
+        return item
+    
+    def _leaf(self,df):
+        #unique, counts = np.unique(df[self.y_name].values,return_counts=True)
+        #print([(unique[i], counts[i]) for i in range(len(counts))])
+        #sort_ind = np.argsort(-counts)
+        value = self._node_value(df)#unique[sort_ind[0]]
+        leaf = Node(value=value)
+        
+        leaf.pinfo["N"] = len(df.index)
+        leaf.pinfo["r"] = self._misclassification_cost(df)
+        leaf.pinfo["R"] = leaf.pinfo["N"]/len(self.df.index) * leaf.pinfo["r"]
+        #print(f"=> Leaf({value}, N={len(df.index)})")
+        return leaf
+    
+    def _loss_best(self,df):
+        loss = np.Inf
+        split_df = None
+        split_threshold = None
+        split_name = None
+        for name in self.X_names:
+            loss_ = np.Inf
+            if np.issubdtype(df[name].values.dtype, np.number):
+                loss_, split_df_, split_threshold_ = self._split_by_number(df,name)
+            else:
+                loss_, split_df_, split_threshold_ = self._split_by_class(df,name)
+            #print(loss_)
+            if (loss_ < loss
+                and np.min([len(df_.index) for df_ in split_df_]) >= self.min_split_samples):
+                loss = loss_
+                split_threshold = split_threshold_
+                split_df = split_df_
+                split_name = name
+
+        return loss, split_df, split_threshold, split_name
+    
+    def _split_by_number(self,df,name):
+        if -df[name].min()+df[name].max() < np.finfo(float).tiny:
+            return np.Inf, None, None
+        res = opt.minimize_scalar(self._opt_fun(df,name),bounds=(df[name].min(),df[name].max()),method="bounded")
+        split_threshold = res.x
+        split_df = [df[df[name]<split_threshold],
+                    df[df[name]>=split_threshold]]
+        loss = res.fun
+        return loss, split_df, split_threshold
+    
+    def _split_by_class(self,df,name):
+        unique = np.unique(df[name])
+        comb = []
+        if len(unique) > 5:
+            comb = [(u,) for u in unique]
+        else:
+            for i in range(1,len(unique)):
+                comb += list(itertools.combinations(unique,i))
+            
+        if len(comb) < 1:
+            return np.Inf, None, None
+        
+        loss_ = np.Inf
+        loss = np.Inf
+        for c in comb:
+            split_threshold_ = c
+            split_df_ =[df[df[name].isin(split_threshold_)],
+                        df[~df[name].isin(split_threshold_)]]
+            N = len(df.index)
+            n = [len(df_.index) for df_ in split_df_]
+            loss_ = n[0]/N * self._loss(split_df_[0]) + n[1]/N * self._loss(split_df_[1])
+            if loss_ < loss:
+                loss = loss_
+                split_threshold = split_threshold_
+                split_df = split_df_
+        return loss, split_df, split_threshold
+    
+    def _loss(self,df):
+        #return self._gini_impurity(df)
+        #return self._shannon_entropy(df)
+        #l = self._logistic_loss(df)
+        #print(l)
+        l = self._mean_squared_error(df)
+        return l
+    
+    def metrics(self,df=None):
+        if df is None:
+            df = self.df
+        return self._regression_metrics(df)
+    
+    def _classification_metrics(self,df=None):
+        confmat = self.confusion_matrix(df=df)
+        P = self._precision(confmat)
+        #print(f"precision: {P}")
+        R = self._recall(confmat)
+        #print(f"recall: {R}")
+        F = np.mean(self._F1(P,R))
+        #print(f"F-score: {F}")
+        A = self._accuracy(confmat)
+        return {"precision":P,
+                "recall":R,
+                "F-score":F,
+                "accuracy":A}
+    
+    def _regression_metrics(self,df=None):
+        R2 = self._r_squared(df)
+        return {"R_squared":R2}
+    
+    def _r_squared(self,df):
+        y = df[self.y_name].values
+        y_hat = []
+        for i in range(len(df.index)):
+            v = self.tree.predict(df.iloc[i]).value
+            y_hat.append(v)
+        e = y - np.array(y_hat)
+        sse = e.T @ e
+        sst = np.sum((y - np.nanmean(y))**2)
+        return 1 - sse/sst
+    
+    def prune(self,alpha_max=None, test_set=None):
+        #if not alpha_max:
+        #    tree = copy.deepcopy(self.tree)
+        #else:
+        tree = self.tree
+                
+        d={}
+        d["alpha"]=[]
+        d["R"]=[]
+        d["n_leafs"]=[]
+        if test_set is not None:
+            d["A_cv"] = []
+            d["R_cv"] = []
+            d["P_cv"] = []
+            d["F_cv"] = []
+        n_iter = 0
+        g_min = 0
+        alpha = 0
+        #print("n_leafs\tR\talpha")
+        n_leafs, R = self._g2(tree.root)
+        #print(f"{n_leafs}\t{R:.4f}\t{g_min:.2e}")
+        while tree.leaf_count() > 1 and n_iter < 100:
+            n_iter += 1
+            
+            alpha = g_min
+            if alpha_max is not None and alpha > alpha_max:
+                break
+            # compute g
+            nodes = tree.nodes()
+            g = []
+            pnodes = []
+            for n in nodes:
+                if not n.is_leaf:
+                    g.append(self._g(n))
+                    pnodes.append(n)
+                    
+            g_min = max(0,np.min(g))
+            for i, n in enumerate(pnodes):
+                if g[i] <= g_min:
+                    n.is_leaf = True
+            N, R = self._g2(tree.root)
+            #print(f"{N}\t{R:.4f}\t{alpha:.2e}")
+            if test_set is not None:
+                metrics = self.metrics(df=test_set)
+                d["A_cv"].append(metrics["accuracy"])
+                d["R_cv"].append(metrics["recall"])
+                d["P_cv"].append(metrics["precision"])
+                d["F_cv"].append(metrics["F-score"])
+            d["alpha"].append(alpha)
+            d["n_leafs"].append(N)
+            d["R"].append(R)
+        return d
+            
+    
+    def _g(self,node):
+        n_leafs, R_desc = self._g2(node)
+        R = node.pinfo["R"]
+        #print(n_leafs, R, R_desc)
+        return (R - R_desc)/(n_leafs - 1)
+                              
+    def _g2(self,node):
+        n_leafs = 0
+        R_desc = 0
+        if node.is_leaf:
+            return 1, node.pinfo["R"]
+        
+        for b in node.branches:
+            nl, R = self._g2(b)
+            n_leafs += nl
+            R_desc += R
+        return n_leafs, R_desc
+    
+    def confusion_matrix(self,df=None):
+        if df is None:
+            df = self.df
+        unique = np.unique(self.df[self.y_name].values)
+        classes = unique.tolist()#self.tree.classes()
+        n_classes = len(classes)
+        confmat = np.zeros((n_classes,n_classes))
+        
+        for i in range(len(df.index)):
+            val_pred = self.tree.predict(df.iloc[i]).value
+            val_true = df[self.y_name].iloc[i]
+            i_pred = classes.index(val_pred)
+            i_true = classes.index(val_true)
+            confmat[i_true,i_pred] += 1
+        return confmat
+           
+    @staticmethod
+    def _precision(m):
+        return np.diag(m) / np.sum(m, axis=1)
+        
+    @staticmethod
+    def _recall(m):
+        return np.diag(m) / np.sum(m, axis=0)
+    
+    @staticmethod
+    def _F1(P,R):
+        #F = np.zeros_like(P)
+        #for i in range(len(
+        return 2 * P * R / (P + R)
+    
+    @staticmethod
+    def _accuracy(m):
+        return np.sum(np.diag(m))/np.sum(np.sum(m))
+        
