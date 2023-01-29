@@ -1,7 +1,7 @@
 [tool.hatchling]
 name = "binarybeech"
 version = "0.1.0"
-description = "A decision tree package for Python"
+description = "Simplistic algorithms to train decision trees for regression and classification"
 authors = ["Armin Witte <your.email@example.com>"]
 
 [tool.hatchling.dependencies]
