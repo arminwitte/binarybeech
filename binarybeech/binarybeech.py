@@ -544,3 +544,68 @@ class CART:
     def _accuracy(m):
         return np.sum(np.diag(m))/np.sum(np.sum(m))
         
+
+
+class GradientBoostedTree:
+    def __init__(self,df,y_name,X_names=None,learning_rate=0.1):
+        self.df = df
+        self.y_name = y_name
+        if X_names is None:
+            self.X_names = [s for s in df.columns if s not in [y_name]]
+        else:
+            self.X_names = X_names
+        
+        self.init_tree = None
+        self.trees = []
+        self.learning_rate = learning_rate
+            
+    def _initial_model(self):
+        unique, counts = np.unique(self.df[self.y_name].values, return_counts=True)
+        N = len(self.df.index)
+        ind_max = np.argmax(counts)
+        p = counts[ind_max]/N
+        v = unique[ind_max]
+        n = tr.Node(value=v)
+        t = tr.Tree(root=n)
+        t.show()
+        return t, p
+    
+    def _initial_tree(self):
+        c = tr.CART(self.df,self.y_name,X_names=self.X_names, max_depth=0)
+        c.create_tree()
+        c.prune()
+        self.init_tree = c.tree
+        return c
+            
+    def predict(self,x):
+        p = self.init_tree.predict(x).value
+        for t in self.trees:
+            p += self.learning_rate * t.predict(x).value
+        return p
+        
+    def _pseudo_residuals(self):
+        res = np.empty_like(self.df[self.y_name].values).astype(np.float64)
+        for i, x in enumerate(self.df.iloc):
+            res[i] = x[self.y_name] - self.predict(x)
+        return res
+    
+    def create_trees(self,M):
+        res = self._pseudo_residuals()
+        df = self.df
+        df["pseudo_residuals"] = res
+        for i in range(M):
+            res = self._pseudo_residuals()
+            print("\n>>>",np.linalg.norm(res))
+            df["pseudo_residuals"] = res
+            c = tr.CART(df,"pseudo_residuals",X_names=self.X_names,max_depth=3,min_leaf_samples=5,min_split_samples=4)
+            c.create_tree()
+            self.trees.append(c.tree)
+            
+    def _confusion_matrix(self,df):
+        m = np.zeros((2,2),dtype=int)
+        for i, x in enumerate(df.iloc):
+            y = int(x[self.y_name])
+            y_hat = int(round(self.predict(x)))
+            m[y,y_hat] += 1
+        return m
+            
