@@ -565,13 +565,13 @@ class GradientBoostedTree:
         ind_max = np.argmax(counts)
         p = counts[ind_max]/N
         v = unique[ind_max]
-        n = tr.Node(value=v)
-        t = tr.Tree(root=n)
+        n = Node(value=v)
+        t = Tree(root=n)
         t.show()
         return t, p
     
     def _initial_tree(self):
-        c = tr.CART(self.df,self.y_name,X_names=self.X_names, max_depth=0)
+        c = CART(self.df,self.y_name,X_names=self.X_names, max_depth=0)
         c.create_tree()
         c.prune()
         self.init_tree = c.tree
@@ -597,7 +597,7 @@ class GradientBoostedTree:
             res = self._pseudo_residuals()
             print("\n>>>",np.linalg.norm(res))
             df["pseudo_residuals"] = res
-            c = tr.CART(df,"pseudo_residuals",X_names=self.X_names,max_depth=3,min_leaf_samples=5,min_split_samples=4)
+            c = CART(df,"pseudo_residuals",X_names=self.X_names,max_depth=3,min_leaf_samples=5,min_split_samples=4)
             c.create_tree()
             self.trees.append(c.tree)
             
