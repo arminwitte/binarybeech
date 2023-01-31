@@ -19,6 +19,4 @@ isort = "^5.6.4"
 version = "20.8b0"
 
 [tool.isort]
-version = "5.6.4"
-line_length = 88
-known_standard_library = ["typing"]
+profile = "black"
