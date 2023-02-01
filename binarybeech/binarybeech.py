@@ -106,7 +106,7 @@ class CART:
         self.max_depth = max_depth
         
         self.depth = 0
-        self.metrics = metrics_factory.create_metric(metric_type)
+        self.metrics = metrics_factory.create_metric(metrics_type)
         
     def train(self,k=5, plot=True, slack=1.):
         """
