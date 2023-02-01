@@ -106,7 +106,7 @@ class CART:
         self.max_depth = max_depth
         
         self.depth = 0
-        self.metrics = metrics_factory.create_metric(metrics_type)
+        self.metrics = metrics_factory.create_metrics(metrics_type, self.y_name)
         
     def train(self,k=5, plot=True, slack=1.):
         """
@@ -237,7 +237,7 @@ class CART:
             value = self._node_value(df)
             item = Node(branches=branches,attribute=split_name,threshold=split_threshold,value=value)
             item.pinfo["N"] = len(df.index)
-            item.pinfo["r"] = self._misclassification_cost(df)
+            item.pinfo["r"] = self.metrics.loss_prune(df)
             item.pinfo["R"] = item.pinfo["N"]/len(self.df.index) * item.pinfo["r"]
         else:
             item = self._leaf(df)
