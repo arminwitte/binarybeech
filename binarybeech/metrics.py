@@ -133,7 +133,7 @@ class RegressionMetrics(Metrics):
     def validate(self, y_hat, data):
         return self._regression_metrics(y_hat, data)
 
-   def _regression_metrics(self, y_hat, df):
+    def _regression_metrics(self, y_hat, df):
         R2 = self._r_squared(y_hat, df)
         return {"R_squared":R2}
     
@@ -160,7 +160,7 @@ class LogisticMetrics(Metrics):
         # Implementation of the node value calculation for logistic
         pass
 
-   def validate(self, y_hat, data):
+    def validate(self, y_hat, data):
         return self._classification_metrics(y_hat, data)
 
     def _confusion_matrix(self, y_hat, df):
