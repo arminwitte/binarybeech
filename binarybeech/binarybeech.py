@@ -8,7 +8,7 @@ import treelib
 import itertools
 import scipy.optimize as opt
 
-From binarybeech.metrics import metrics_factory
+from binarybeech.metrics import metrics_factory
 
 class Node:
     def __init__(self,branches=None,attribute=None,threshold=None,value=None):
