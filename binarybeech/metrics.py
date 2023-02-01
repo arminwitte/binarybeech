@@ -83,6 +83,20 @@ class Metrics(ABC):
         #print(f"odds: {odds:.2f} probability: {p:.4f}")
         return p
 
+    def _classification_metrics(self, y_hat, df=None):
+        confmat = self._confusion_matrix(y_hat, df=df)
+        P = self._precision(confmat)
+        #print(f"precision: {P}")
+        R = self._recall(confmat)
+        #print(f"recall: {R}")
+        F = np.mean(self._F1(P,R))
+        #print(f"F-score: {F}")
+        A = self._accuracy(confmat)
+        return {"precision":P,
+                "recall":R,
+                "F-score":F,
+                "accuracy":A}
+
     @abstractmethod
     def loss(self, data):
         pass
@@ -93,6 +107,10 @@ class Metrics(ABC):
 
     @abstractmethod
     def node_value(self, data):
+        pass
+
+    @abstractmethod
+    def validate(self, y_hat, data):
         pass
 
 class RegressionMetrics(Metrics):
@@ -109,13 +127,18 @@ class RegressionMetrics(Metrics):
 
     def node_value(self, data):
         # Implementation of the node value calculation for regression
-        return self._mean(data)
+        return self._mean(data)def validate(self, y_hat, data):
+        pass
 
-   def _regression_metrics(self,y, df=None):
-        R2 = self._r_squared(df)
+    def validate(self, y_hat, data):
+        pass
+
+
+   def _regression_metrics(self, y_hat, df=None):
+        R2 = self._r_squared(y_hatb df)
         return {"R_squared":R2}
     
-    def _r_squared(self,y_hat, df):
+    def _r_squared(self, y_hat, df):
         y = self._y()
         e = y - y_hat
         sse = e.T @ e
@@ -138,6 +161,19 @@ class LogisticMetrics(Metrics):
         # Implementation of the node value calculation for logistic
         pass
 
+   def validate(self, y_hat, data):
+        pass 
+
+    def _confusion_matrix(self, y_hat, df):
+        m = np.zeros((2,2),dtype=int)
+        y_hat = np.round(y_hat).astype(int)
+        for i, x in enumerate(df.iloc):
+            y = int(x[self.y_name])
+            y_hat_i = y_hat[i]
+            m[y,y_hat_i] += 1
+        return m
+            
+
 class ClassificationMetrics(Metrics):
     def __init__(self,y_name):
         super().__init__(y_name)
@@ -154,28 +190,17 @@ class ClassificationMetrics(Metrics):
         # Implementation of the node value calculation for classification
         return self._majority_class(data)
 
-    def _classification_metrics(self, y,df=None):
-        confmat = self._confusion_matrix(y, df=df)
-        P = self._precision(confmat)
-        #print(f"precision: {P}")
-        R = self._recall(confmat)
-        #print(f"recall: {R}")
-        F = np.mean(self._F1(P,R))
-        #print(f"F-score: {F}")
-        A = self._accuracy(confmat)
-        return {"precision":P,
-                "recall":R,
-                "F-score":F,
-                "accuracy":A}
+    def validate(self, y_hat, data):
+        pass
 
-    def _confusion_matrix(self,df,y):
+    def _confusion_matrix(self, y_hat, df):
         unique = np.unique(self.df[self.y_name].values)
         classes = unique.tolist()#self.tree.classes()
         n_classes = len(classes)
         confmat = np.zeros((n_classes,n_classes))
         
         for i in range(len(df.index)):
-            val_pred = y[i]
+            val_pred = y_hat[i]
             val_true = df[self.y_name].iloc[i]
             i_pred = classes.index(val_pred)
             i_true = classes.index(val_true)
