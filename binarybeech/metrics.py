@@ -156,7 +156,7 @@ class RegressionMetrics(Metrics):
         return {"R_squared":R2}
     
     def _r_squared(self, y_hat, df):
-        y = self._y()
+        y = self._y(df)
         e = y - y_hat
         sse = e.T @ e
         sst = np.sum((y - np.nanmean(y))**2)
