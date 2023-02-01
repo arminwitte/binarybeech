@@ -321,7 +321,7 @@ class CART:
     def _node_value(self,df):
         return self.metrics.node_value(df)
     
-    def metrics(self,df=None):
+    def validate(self,df=None):
         if df is None:
             df = self.df
         return self._regression_metrics(df)
@@ -398,7 +398,7 @@ class CART:
             N, R = self._g2(tree.root)
             #print(f"{N}\t{R:.4f}\t{alpha:.2e}")
             if test_set is not None:
-                metrics = self.metrics(df=test_set)
+                metrics = self.validate(df=test_set)
                 d["A_cv"].append(metrics["accuracy"])
                 d["R_cv"].append(metrics["recall"])
                 d["P_cv"].append(metrics["precision"])
@@ -427,9 +427,7 @@ class CART:
             R_desc += R
         return n_leafs, R_desc
     
-    def confusion_matrix(self,df=None):
-        if df is None:
-            df = self.df
+    def confusion_matrix(self,df):
         unique = np.unique(self.df[self.y_name].values)
         classes = unique.tolist()#self.tree.classes()
         n_classes = len(classes)
