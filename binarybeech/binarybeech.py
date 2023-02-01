@@ -7,13 +7,14 @@ import copy
 import treelib
 import itertools
 import scipy.optimize as opt
+import logging
 
 from binarybeech.metrics import metrics_factory
 
 class Node:
     def __init__(self,branches=None,attribute=None,threshold=None,value=None):
         if branches is None and value is None:
-            print("ERROR")
+            raise ValueError("You have to specify either the branches emerging from this node or a value for this leaf.")
         
         self.branches = branches
         self.threshold = threshold
@@ -109,6 +110,8 @@ class CART:
         
         self.metrics_type = metrics_type
         self.metrics = metrics_factory.create_metrics(metrics_type, self.y_name)
+
+        self.logger = logging.getLogger(__name__)
         
     def train(self,k=5, plot=True, slack=1.):
         """
@@ -151,7 +154,7 @@ class CART:
             if qual_mean[i] > qual_max - qual_max_sd * slack:
                 ind_best = i
         beta_best = beta[ind_best]
-        print(f"beta_best: {beta_best}")
+        self.logger.info(f"beta_best: {beta_best}")
         self.create_tree()
         self.prune(alpha_max=beta_best)
     
@@ -202,7 +205,7 @@ class CART:
         root = self._node_or_leaf(self.df)
         self.tree = Tree(root)
         n_leafs = self.tree.leaf_count()
-        print(f"A tree with {n_leafs} leafs was created")
+        self.logger.info(f"A tree with {n_leafs} leafs was created")
         return self.tree
            
     def _opt_fun(self,df,split_name):
@@ -211,7 +214,6 @@ class CART:
                         df[df[split_name]>=x]]
             N = len(df.index)
             n = [len(df_.index) for df_ in split_df]
-            #print(x)
             return n[0]/N * self._loss(split_df[0]) + n[1]/N * self._loss(split_df[1])
         return fun
         
@@ -228,7 +230,7 @@ class CART:
         loss_best, split_df, split_threshold, split_name = self._loss_best(df)
         if split_df is None:
             return self._leaf(df)
-        print(f"Computed split:\nloss: {loss_best:.2f} (parent: {loss_parent:.2f})\nattribute: {split_name}\nthreshold: {split_threshold}\ncount: {[len(df_.index) for df_ in split_df]}")
+        self.logger.debug(f"Computed split:\nloss: {loss_best:.2f} (parent: {loss_parent:.2f})\nattribute: {split_name}\nthreshold: {split_threshold}\ncount: {[len(df_.index) for df_ in split_df]}")
         if loss_best < loss_parent:
             #print(f"=> Node({split_name}, {split_threshold})")
             branches = []
@@ -437,6 +439,8 @@ class GradientBoostedTree:
         self.init_tree = None
         self.trees = []
         self.learning_rate = learning_rate
+
+        self.logger = logging.getLogger(__name__)
             
     def _initial_model(self):
         unique, counts = np.unique(self.df[self.y_name].values, return_counts=True)
@@ -474,7 +478,7 @@ class GradientBoostedTree:
         df["pseudo_residuals"] = res
         for i in range(M):
             res = self._pseudo_residuals()
-            print("\n>>>",np.linalg.norm(res))
+            self.logger.info(f"Norm of pseudo-residuals: {np.linalg.norm(res)}")
             df["pseudo_residuals"] = res
             c = CART(df,"pseudo_residuals",X_names=self.X_names,max_depth=3,min_leaf_samples=5,min_split_samples=4)
             c.create_tree()
