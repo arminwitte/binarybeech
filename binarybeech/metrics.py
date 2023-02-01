@@ -84,7 +84,7 @@ class Metrics(ABC):
         return p
 
     def _classification_metrics(self, y_hat, df=None):
-        confmat = self._confusion_matrix(y_hat, df=df)
+        confmat = self._confusion_matrix(y_hat, df)
         P = self._precision(confmat)
         #print(f"precision: {P}")
         R = self._recall(confmat)
@@ -127,15 +127,14 @@ class RegressionMetrics(Metrics):
 
     def node_value(self, data):
         # Implementation of the node value calculation for regression
-        return self._mean(data)def validate(self, y_hat, data):
+        return self._mean(data)
         pass
 
     def validate(self, y_hat, data):
-        pass
+        return self._regression_metrics(y_hat, data)
 
-
-   def _regression_metrics(self, y_hat, df=None):
-        R2 = self._r_squared(y_hatb df)
+   def _regression_metrics(self, y_hat, df):
+        R2 = self._r_squared(y_hat, df)
         return {"R_squared":R2}
     
     def _r_squared(self, y_hat, df):
@@ -162,7 +161,7 @@ class LogisticMetrics(Metrics):
         pass
 
    def validate(self, y_hat, data):
-        pass 
+        return self._classification_metrics(y_hat, data)
 
     def _confusion_matrix(self, y_hat, df):
         m = np.zeros((2,2),dtype=int)
@@ -191,7 +190,7 @@ class ClassificationMetrics(Metrics):
         return self._majority_class(data)
 
     def validate(self, y_hat, data):
-        pass
+        return self._classification_metrics(y_hat, data)
 
     def _confusion_matrix(self, y_hat, df):
         unique = np.unique(self.df[self.y_name].values)
