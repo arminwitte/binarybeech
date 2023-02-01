@@ -111,6 +111,17 @@ class RegressionMetrics(Metrics):
         # Implementation of the node value calculation for regression
         return self._mean(data)
 
+   def _regression_metrics(self,y, df=None):
+        R2 = self._r_squared(df)
+        return {"R_squared":R2}
+    
+    def _r_squared(self,y_hat, df):
+        y = self._y()
+        e = y - y_hat
+        sse = e.T @ e
+        sst = np.sum((y - np.nanmean(y))**2)
+        return 1 - sse/sst
+
 class LogisticMetrics(Metrics):
     def __init__(self,y_name):
         super().__init__(y_name)
@@ -142,6 +153,36 @@ class ClassificationMetrics(Metrics):
     def node_value(self, data):
         # Implementation of the node value calculation for classification
         return self._majority_class(data)
+
+    def _classification_metrics(self, y,df=None):
+        confmat = self._confusion_matrix(y, df=df)
+        P = self._precision(confmat)
+        #print(f"precision: {P}")
+        R = self._recall(confmat)
+        #print(f"recall: {R}")
+        F = np.mean(self._F1(P,R))
+        #print(f"F-score: {F}")
+        A = self._accuracy(confmat)
+        return {"precision":P,
+                "recall":R,
+                "F-score":F,
+                "accuracy":A}
+
+    def _confusion_matrix(self,df,y):
+        unique = np.unique(self.df[self.y_name].values)
+        classes = unique.tolist()#self.tree.classes()
+        n_classes = len(classes)
+        confmat = np.zeros((n_classes,n_classes))
+        
+        for i in range(len(df.index)):
+            val_pred = y[i]
+            val_true = df[self.y_name].iloc[i]
+            i_pred = classes.index(val_pred)
+            i_true = classes.index(val_true)
+            confmat[i_true,i_pred] += 1
+        return confmat
+           
+    
 
 class MetricFactory:
     def __init__(self):
