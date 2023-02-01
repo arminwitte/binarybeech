@@ -324,36 +324,11 @@ class CART:
     def validate(self,df=None):
         if df is None:
             df = self.df
-        return self._regression_metrics(df)
-    
-    def _classification_metrics(self,df=None):
-        confmat = self.confusion_matrix(df=df)
-        P = self._precision(confmat)
-        #print(f"precision: {P}")
-        R = self._recall(confmat)
-        #print(f"recall: {R}")
-        F = np.mean(self._F1(P,R))
-        #print(f"F-score: {F}")
-        A = self._accuracy(confmat)
-        return {"precision":P,
-                "recall":R,
-                "F-score":F,
-                "accuracy":A}
-    
-    def _regression_metrics(self,df=None):
-        R2 = self._r_squared(df)
-        return {"R_squared":R2}
-    
-    def _r_squared(self,df):
-        y = df[self.y_name].values
         y_hat = []
-        for i in range(len(df.index)):
-            v = self.tree.predict(df.iloc[i]).value
-            y_hat.append(v)
-        e = y - np.array(y_hat)
-        sse = e.T @ e
-        sst = np.sum((y - np.nanmean(y))**2)
-        return 1 - sse/sst
+        for x in df.iloc:
+            y_hat.append(self.tree.predict(x).value)
+        y_hat = np.array(y_hat)
+        return self.metrics.validate(y_hat, df)
     
     def prune(self,alpha_max=None, test_set=None):
         #if not alpha_max:
@@ -427,20 +402,6 @@ class CART:
             R_desc += R
         return n_leafs, R_desc
     
-    def confusion_matrix(self,df):
-        unique = np.unique(self.df[self.y_name].values)
-        classes = unique.tolist()#self.tree.classes()
-        n_classes = len(classes)
-        confmat = np.zeros((n_classes,n_classes))
-        
-        for i in range(len(df.index)):
-            val_pred = self.tree.predict(df.iloc[i]).value
-            val_true = df[self.y_name].iloc[i]
-            i_pred = classes.index(val_pred)
-            i_true = classes.index(val_true)
-            confmat[i_true,i_pred] += 1
-        return confmat
-           
     @staticmethod
     def _precision(m):
         return np.diag(m) / np.sum(m, axis=1)
