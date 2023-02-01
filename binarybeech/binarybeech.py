@@ -476,12 +476,14 @@ class GradientBoostedTree:
             c = CART(df,"pseudo_residuals",X_names=self.X_names,max_depth=3,min_leaf_samples=5,min_split_samples=4)
             c.create_tree()
             self.trees.append(c.tree)
-            
-    def _confusion_matrix(self,df):
-        m = np.zeros((2,2),dtype=int)
-        for i, x in enumerate(df.iloc):
-            y = int(x[self.y_name])
-            y_hat = int(round(self.predict(x)))
-            m[y,y_hat] += 1
-        return m
+
+    def validate(self, df=None):
+        if df is None:
+            df = self.df
+        y_hat = []
+        for x in df.iloc:
+            y_hat.append(self.predict(x))
+        from binarybeech.metrics import LogisticMetrics
+        m = LogisticMetrics(self.y_name)
+        return m.validate(y_hat, df)
             
