@@ -211,7 +211,8 @@ class ClassificationMetrics(Metrics):
         return self._classification_metrics(y_hat, data)
 
     def _confusion_matrix(self, y_hat, df):
-        unique = np.unique(self.df[self.y_name].values)
+        y = self._y(df)
+        unique = np.unique(y)
         classes = unique.tolist()#self.tree.classes()
         n_classes = len(classes)
         confmat = np.zeros((n_classes,n_classes))
