@@ -10,53 +10,54 @@ class Metric(ABC):
         return df[self.y_name].values
 
     def _gini_impurity(self, df):
-        unique, counts = np.unique(df[self.y_name].values, return_counts=True)
-        N = df[self.y_name].values.ravel().size
+        y = self._y(df)
+        unique, counts = np.unique(y, return_counts=True)
+        N = y.size
         p = counts/N
         #print(unique)
         #print(p)
         return 1. - np.sum(p**2)
     
     def _shannon_entropy(self,df):
-        unique, counts = np.unique(df[self.y_name].values, return_counts=True)
-        N = df[self.y_name].values.size
+        y = self._y(df)
+        unique, counts = np.unique(y, return_counts=True)
+        N = y.size
         p = counts/N
         return -np.sum(p * np.log2(p))
 
     def _misclassification_cost(self,df):
-        y = df[self.y_name].values
+        y = self._y(df)
         unique, counts = np.unique(y, return_counts=True)
         N = y.size
         p = np.max(counts)/N
         return 1. - p
     
     def _logistic_loss(self,df):
-        y = df[self.y_name].values
-        #unique, counts = np.unique(y, return_counts= True)
-        #count_max = np.max(counts)
-        p_ = self._node_value(df) #np.nanmax(counts)/np.sum(counts)
+        y = self._y(df)
+        p_ = self.node_value(df) #np.nanmax(counts)/np.sum(counts)
         p_ = np.clip(p_,1e-12,1.-1e-12)
         p = np.ones_like(y) * p_
         l = np.sum(-y*np.log(p)-(1-y)*np.log(1-p))
         return l
     
     def _mean_squared_error(self,df):
-        y = df[self.y_name].values
-        y_hat = self._node_value(df)
+        y = self._y(df)
+        y_hat = self.node_value(df)
         e = y - y_hat
         return 1/e.size * (e.T @ e)
     
     def _mean(self,df):
-        return np.nanmean(df[self.y_name].values)
+        y = self._y(df)
+        return np.nanmean(y)
     
     def _majority_class(self,df):
-        y = df[self.y_name].values
+        y = self._y(df)
         unique, counts = np.unique(y,return_counts=True)
         ind_max = np.argmax(counts)
         return unique[ind_max]
     
     def _odds(self,df):
-        y = df[self.y_name].values
+        y = self._y(df)
         unique, counts = np.unique(y, return_counts=True)
         d={0:0,1:0}
         for i, u in enumerate(unique):
@@ -100,15 +101,15 @@ class RegressionMetrics(Metric):
 
     def loss(self, data):
         # Implementation of the loss calculation for regression
-        pass
+        return self._mean_squared_error(data)
 
     def loss_prune(self, data):
         # Implementation of the loss pruning calculation for regression
-        pass
+        return self.loss(data)
 
     def node_value(self, data):
         # Implementation of the node value calculation for regression
-        pass
+        return self._mean(data)
 
 class LogisticMetrics(Metric):
     def __init__(self,y_name):
@@ -132,15 +133,15 @@ class ClassificationMetrics(Metric):
 
     def loss(self, data):
         # Implementation of the loss calculation for classification
-        pass
+        return self._gini_impurity(data)
 
     def loss_prune(self, data):
         # Implementation of the loss pruning calculation for classification
-        pass
+        return self._misclassification_cost(data)
 
     def node_value(self, data):
         # Implementation of the node value calculation for classification
-        pass
+        return self._majority_class(data)
 
 class MetricFactory:
     def __init__(self):
@@ -155,15 +156,7 @@ class MetricFactory:
         else:
             raise ValueError("Invalid metric type")
 
-factory = MetricFactory()
-factory.register("regression", RegressionMetrics)
-factory.register("logistic", LogisticMetrics)
-factory.register("classification", ClassificationMetrics)
-
-class MainClass:
-    def __init__(self, metric_type):
-        self.metric = factory.create_metric(metric_type)
-
-    def run(self, data):
-        result = self.metric.loss(data)
-        # Use result in some way
+metrics_factory = MetricFactory()
+metrics_factory.register("regression", RegressionMetrics)
+metrics_factory.register("logistic", LogisticMetrics)
+metrics_factory.register("classification", ClassificationMetrics)
