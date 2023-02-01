@@ -8,6 +8,8 @@ import treelib
 import itertools
 import scipy.optimize as opt
 
+From binarybeech.metrics import metrics_factory
+
 class Node:
     def __init__(self,branches=None,attribute=None,threshold=None,value=None):
         if branches is None and value is None:
@@ -86,7 +88,7 @@ class Tree:
                 self._show(b,tree_view,parent=name,prefix=p)
     
 class CART:
-    def __init__(self,df,y_name,X_names=None,min_leaf_samples=1,min_split_samples=1,max_depth=32767):
+    def __init__(self,df,y_name,X_names=None,min_leaf_samples=1,min_split_samples=1,max_depth=32767,metrics_type="regression"):
         self.y_name = y_name
         if X_names is None:
             X_names = list(df.columns)
@@ -104,6 +106,7 @@ class CART:
         self.max_depth = max_depth
         
         self.depth = 0
+        self.metrics = metrics_factory.create_metric(metric_type)
         
     def train(self,k=5, plot=True, slack=1.):
         """
