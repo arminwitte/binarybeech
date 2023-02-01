@@ -106,6 +106,8 @@ class CART:
         self.max_depth = max_depth
         
         self.depth = 0
+        
+        self.metrics_type = metrics_type
         self.metrics = metrics_factory.create_metrics(metrics_type, self.y_name)
         
     def train(self,k=5, plot=True, slack=1.):
@@ -128,7 +130,8 @@ class CART:
                      X_names = self.X_names, 
                      min_leaf_samples=self.min_leaf_samples,
                      min_split_samples=self.min_split_samples,
-                     max_depth=self.max_depth)
+                     max_depth=self.max_depth,
+                     metrics_type=self.metrics_type)
             c.create_tree()          
             pres = c.prune(test_set=test_sets[i])
             qual = self._qualities(beta,pres)
