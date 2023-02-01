@@ -201,90 +201,6 @@ class CART:
         n_leafs = self.tree.leaf_count()
         print(f"A tree with {n_leafs} leafs was created")
         return self.tree
-    
-    def _gini_impurity(self, df):
-        unique, counts = np.unique(df[self.y_name].values, return_counts=True)
-        N = df[self.y_name].values.ravel().size
-        p = counts/N
-        #print(unique)
-        #print(p)
-        return 1. - np.sum(p**2)
-    
-    def _shannon_entropy(self,df):
-        unique, counts = np.unique(df[self.y_name].values, return_counts=True)
-        N = df[self.y_name].values.size
-        p = counts/N
-        return -np.sum(p * np.log2(p))
-    
-    def _misclassification_cost(self,df):
-        y = df[self.y_name].values
-        unique, counts = np.unique(y, return_counts=True)
-        N = y.size
-        p = np.max(counts)/N
-        return 1. - p
-    
-    def _logistic_loss(self,df):
-        y = df[self.y_name].values
-        #unique, counts = np.unique(y, return_counts= True)
-        #count_max = np.max(counts)
-        p_ = self._node_value(df) #np.nanmax(counts)/np.sum(counts)
-        p_ = np.clip(p_,1e-12,1.-1e-12)
-        p = np.ones_like(y) * p_
-        l = np.sum(-y*np.log(p)-(1-y)*np.log(1-p))
-        return l
-    
-    def _mean_squared_error(self,df):
-        y = df[self.y_name].values
-        y_hat = self._node_value(df)
-        e = y - y_hat
-        return 1/e.size * (e.T @ e)
-        
-    def _residual(self,df):
-        y = df(self.y_name).values
-        p_ = self._probability(df)
-        
-        
-        
-    def _node_value(self,df):
-        #return self._probability(df)
-        v = self._mean(df)
-        return v
-    
-    def _mean(self,df):
-        return np.nanmean(df[self.y_name].values)
-    
-    def _majority_class(self,df):
-        y = df[self.y_name].values
-        unique, counts = np.unique(y,return_counts=True)
-        ind_max = np.argmax(counts)
-        return unique[ind_max]
-    
-    def _odds(self,df):
-        y = df[self.y_name].values
-        unique, counts = np.unique(y, return_counts=True)
-        d={0:0,1:0}
-        for i, u in enumerate(unique):
-            d[u] = counts[i]
-        if d[0] == 0:
-            return np.Inf
-        odds = d[1]/d[0]
-        #print(f"odds: {odds}")
-        return odds
-    
-    def _log_odds(self,df):
-        odds = self._odds(df)
-        odds = np.clip(odds,1e-12,1e12)
-        logodds = np.log(odds)
-        #print(f"logodds: {logodds}")
-        return logodds
-    
-    def _probability(self,df):
-        odds = self._odds(df)
-        if odds == np.Inf:
-            return 1.
-        p = odds/(1+odds)
-        #print(f"odds: {odds:.2f} probability: {p:.4f}")
-        return p
            
     def _opt_fun(self,df,split_name):
         def fun(x):
@@ -336,7 +252,7 @@ class CART:
         leaf = Node(value=value)
         
         leaf.pinfo["N"] = len(df.index)
-        leaf.pinfo["r"] = self._misclassification_cost(df)
+        leaf.pinfo["r"] = self.metrics.loss_prune(df)
         leaf.pinfo["R"] = leaf.pinfo["N"]/len(self.df.index) * leaf.pinfo["r"]
         #print(f"=> Leaf({value}, N={len(df.index)})")
         return leaf
@@ -400,12 +316,10 @@ class CART:
         return loss, split_df, split_threshold
     
     def _loss(self,df):
-        #return self._gini_impurity(df)
-        #return self._shannon_entropy(df)
-        #l = self._logistic_loss(df)
-        #print(l)
-        l = self._mean_squared_error(df)
-        return l
+        return self.metrics.loss(df)
+
+    def _node_value(self,df):
+        return self.metrics.node_value(df)
     
     def metrics(self,df=None):
         if df is None:
