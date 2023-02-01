@@ -2,7 +2,7 @@
 from abc import ABC, abstractmethod
 import numpy as np
 
-class Metric(ABC):
+class Metrics(ABC):
     def __init__(self,y_name):
         self.y_name = y_name
 
@@ -95,7 +95,7 @@ class Metric(ABC):
     def node_value(self, data):
         pass
 
-class RegressionMetrics(Metric):
+class RegressionMetrics(Metrics):
     def __init__(self,y_name):
         super().__init__(y_name)
 
@@ -111,7 +111,7 @@ class RegressionMetrics(Metric):
         # Implementation of the node value calculation for regression
         return self._mean(data)
 
-class LogisticMetrics(Metric):
+class LogisticMetrics(Metrics):
     def __init__(self,y_name):
         super().__init__(y_name)
 
@@ -127,7 +127,7 @@ class LogisticMetrics(Metric):
         # Implementation of the node value calculation for logistic
         pass
 
-class ClassificationMetrics(Metric):
+class ClassificationMetrics(Metrics):
     def __init__(self,y_name):
         super().__init__(y_name)
 
@@ -147,14 +147,14 @@ class MetricFactory:
     def __init__(self):
         self.metrics = {}
 
-    def register(self, metric_type, metric_class):
-        self.metrics[metric_type] = metric_class
+    def register(self, metrics_type, metrics_class):
+        self.metrics[metrics_type] = metrics_class
 
-    def create_metric(self, metric_type):
-        if metric_type in self.metrics:
-            return self.metrics[metric_type]()
+    def create_metrics(self, metrics_type, y_name):
+        if metrics_type in self.metrics:
+            return self.metrics[metrics_type](y_name)
         else:
-            raise ValueError("Invalid metric type")
+            raise ValueError("Invalid metrics type")
 
 metrics_factory = MetricFactory()
 metrics_factory.register("regression", RegressionMetrics)
