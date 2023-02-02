@@ -168,15 +168,15 @@ class LogisticMetrics(Metrics):
 
     def loss(self, data):
         # Implementation of the loss calculation for logistic
-        pass
+        return self._logistic_loss(data)
 
     def loss_prune(self, data):
         # Implementation of the loss pruning calculation for logistic
-        pass
+        return self._misclassification_cost(data)
 
     def node_value(self, data):
         # Implementation of the node value calculation for logistic
-        pass
+        return self._probability(data)
 
     def validate(self, y_hat, data):
         return self._classification_metrics(y_hat, data)
