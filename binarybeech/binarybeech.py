@@ -409,8 +409,8 @@ class CART:
 
 
 class GradientBoostedTree:
-    def __init__(self,df,y_name,X_names=None,learning_rate=0.1):
-        self.df = df
+    def __init__(self,df,y_name,X_names=None,learning_rate=0.1,cart_settings={}, init_metrics_type="logistic"):
+        self.df = df.copy()
         self.y_name = y_name
         if X_names is None:
             self.X_names = [s for s in df.columns if s not in [y_name]]
@@ -420,22 +420,13 @@ class GradientBoostedTree:
         self.init_tree = None
         self.trees = []
         self.learning_rate = learning_rate
+        self.cart_settings = cart_settings
+        self.init_metrics_type = init_metrics_type
 
         self.logger = logging.getLogger(__name__)
-            
-    def _initial_model(self):
-        unique, counts = np.unique(self.df[self.y_name].values, return_counts=True)
-        N = len(self.df.index)
-        ind_max = np.argmax(counts)
-        p = counts[ind_max]/N
-        v = unique[ind_max]
-        n = Node(value=v)
-        t = Tree(root=n)
-        t.show()
-        return t, p
     
     def _initial_tree(self):
-        c = CART(self.df,self.y_name,X_names=self.X_names, max_depth=0)
+        c = CART(self.df,self.y_name,X_names=self.X_names, max_depth=0, metrics_type=self.init_metrics_type)
         c.create_tree()
         c.prune()
         self.init_tree = c.tree
@@ -446,6 +437,12 @@ class GradientBoostedTree:
         for t in self.trees:
             p += self.learning_rate * t.predict(x).value
         return p
+
+    def predict_all(self,df):
+        y_hat = np.empty((len(df.index)),))
+        for i, x in enumerate(df.iloc):
+            y_hat[i] = self.predict(x)
+        return y_hat
         
     def _pseudo_residuals(self):
         res = np.empty_like(self.df[self.y_name].values).astype(np.float64)
@@ -461,17 +458,18 @@ class GradientBoostedTree:
             res = self._pseudo_residuals()
             self.logger.info(f"Norm of pseudo-residuals: {np.linalg.norm(res)}")
             df["pseudo_residuals"] = res
-            c = CART(df,"pseudo_residuals",X_names=self.X_names,max_depth=3,min_leaf_samples=5,min_split_samples=4)
+            kwargs = dict(max_depth=3,min_leaf_samples=5,min_split_samples=4,metrics_type="regression")
+            kwargs = {**kwargs, **self.cart_settings}
+            c = CART(df,"pseudo_residuals",X_names=self.X_names,**kwargs)
             c.create_tree()
             self.trees.append(c.tree)
 
     def validate(self, df=None):
         if df is None:
             df = self.df
-        y_hat = []
-        for x in df.iloc:
-            y_hat.append(self.predict(x))
-        from binarybeech.metrics import LogisticMetrics
-        m = LogisticMetrics(self.y_name)
+        y_hat = self.predict_all(df)
+        #from binarybeech.metrics import LogisticMetrics
+        #m = LogisticMetrics(self.y_name)
+        m = metrics_factory.create_metrics(self.init_metrics_type,self.y_name)
         return m.validate(y_hat, df)
             
