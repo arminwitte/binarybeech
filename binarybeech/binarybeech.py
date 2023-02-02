@@ -406,25 +406,6 @@ class CART:
             n_leafs += nl
             R_desc += R
         return n_leafs, R_desc
-    
-    @staticmethod
-    def _precision(m):
-        return np.diag(m) / np.sum(m, axis=1)
-        
-    @staticmethod
-    def _recall(m):
-        return np.diag(m) / np.sum(m, axis=0)
-    
-    @staticmethod
-    def _F1(P,R):
-        #F = np.zeros_like(P)
-        #for i in range(len(
-        return 2 * P * R / (P + R)
-    
-    @staticmethod
-    def _accuracy(m):
-        return np.sum(np.diag(m))/np.sum(np.sum(m))
-        
 
 
 class GradientBoostedTree:
