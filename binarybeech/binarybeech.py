@@ -439,7 +439,7 @@ class GradientBoostedTree:
         return p
 
     def predict_all(self,df):
-        y_hat = np.empty((len(df.index)),))
+        y_hat = np.empty((len(df.index),))
         for i, x in enumerate(df.iloc):
             y_hat[i] = self.predict(x)
         return y_hat
