@@ -423,6 +423,7 @@ class GradientBoostedTree:
         self.learning_rate = learning_rate
         self.cart_settings = cart_settings
         self.init_metrics_type = init_metrics_type
+        self.metrics = metrics_factory.create_metrics(self.init_metrics_type, self.y_name)
 
         self.logger = logging.getLogger(__name__)
     
@@ -435,8 +436,8 @@ class GradientBoostedTree:
             
     def predict(self,x):
         p = self.init_tree.predict(x).value
-        for t in self.trees:
-            p += self.learning_rate * t.predict(x).value
+        for i, t in enumerate(self.trees):
+            p += self.learning_rate * self.gamma[i] * t.predict(x).value
         return p
 
     def predict_all(self,df):
@@ -466,19 +467,30 @@ class GradientBoostedTree:
             kwargs = {**kwargs, **self.cart_settings}
             c = CART(df,"pseudo_residuals",X_names=self.X_names,**kwargs)
             c.create_tree()
-            gamma = self._gamma(c)
+            gamma = self._gamma(c.tree)
             self.trees.append(c.tree)
             self.gamma.append(gamma)
 
-    def _gamma(tree):
-        res = opt.minimize_scalar(self._opt_fun, bracket=[0.,2.])
+    def _gamma(self, tree):
+        res = opt.minimize_scalar(self._opt_fun(tree), bracket=[0.,2.])
+        print(res.x)
         return res.x
 
-    def _opt_fun(self):
-        pass
+    def _opt_fun(self, tree):
+        y_hat = self.predict_all(self.df)
+        delta = np.empty_like(y_hat)
+        for i, x in enumerate(self.df.iloc):
+            delta[i] = tree.predict(x).value
+        def fun(gamma):
+            y_hat_new = y_hat + gamma * delta
+            y_hat_new = self._dichotomize(y_hat_new)
+            return self.metrics.loss(y_hat_new,self.df)
+        rerurn fun
 
+    @staticmethod
     def _dichotomize(y_hat):
-        pass
+        y_hat = np.clip(y_hat,0.,1.)
+        return np.round(y_hat).astype(int)
 
     def validate(self, df=None):
         if df is None:
@@ -486,6 +498,6 @@ class GradientBoostedTree:
         y_hat = self.predict_all(df)
         #from binarybeech.metrics import LogisticMetrics
         #m = LogisticMetrics(self.y_name)
-        m = metrics_factory.create_metrics(self.init_metrics_type,self.y_name)
-        return m.validate(y_hat, df)
+        #m = metrics_factory.create_metrics(self.init_metrics_type,self.y_name)
+        return self.metrics.validate(y_hat, df)
             
