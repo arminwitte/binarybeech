@@ -485,7 +485,7 @@ class GradientBoostedTree:
             y_hat_new = y_hat + gamma * delta
             y_hat_new = self._dichotomize(y_hat_new)
             return self.metrics.loss(y_hat_new,self.df)
-        rerurn fun
+        return fun
 
     @staticmethod
     def _dichotomize(y_hat):
