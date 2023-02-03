@@ -472,7 +472,7 @@ class GradientBoostedTree:
             self.gamma.append(gamma)
 
     def _gamma(self, tree):
-        res = opt.minimize_scalar(self._opt_fun(tree), bracket=[0.,1.])
+        res = opt.minimize_scalar(self._opt_fun(tree), bracket=[0.,2.])
         print(res.x, res.fun)
         return res.x
 
