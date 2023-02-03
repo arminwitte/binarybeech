@@ -419,6 +419,7 @@ class GradientBoostedTree:
         
         self.init_tree = None
         self.trees = []
+        self.gamma = []
         self.learning_rate = learning_rate
         self.cart_settings = cart_settings
         self.init_metrics_type = init_metrics_type
@@ -451,9 +452,12 @@ class GradientBoostedTree:
         return res
     
     def create_trees(self,M):
+        self._initial_tree()
         res = self._pseudo_residuals()
         df = self.df
         df["pseudo_residuals"] = res
+        self.trees = []
+        self.gamma = []
         for i in range(M):
             res = self._pseudo_residuals()
             self.logger.info(f"Norm of pseudo-residuals: {np.linalg.norm(res)}")
@@ -462,7 +466,19 @@ class GradientBoostedTree:
             kwargs = {**kwargs, **self.cart_settings}
             c = CART(df,"pseudo_residuals",X_names=self.X_names,**kwargs)
             c.create_tree()
+            gamma = self._gamma(c)
             self.trees.append(c.tree)
+            self.gamma.append(gamma)
+
+    def _gamma(tree):
+        res = opt.minimize_scalar(self._opt_fun, bracket=[0.,2.])
+        return res.x
+
+    def _opt_fun(self):
+        pass
+
+    def _dichotomize(y_hat):
+        pass
 
     def validate(self, df=None):
         if df is None:
