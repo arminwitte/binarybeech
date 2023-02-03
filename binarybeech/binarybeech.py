@@ -409,7 +409,7 @@ class CART:
 
 
 class GradientBoostedTree:
-    def __init__(self,df,y_name,X_names=None,learning_rate=0.1,cart_settings={}, init_metrics_type="logistic"):
+    def __init__(self,df,y_name,X_names=None,sample_frac=1, n_attributes=None, learning_rate=0.1,cart_settings={}, init_metrics_type="logistic"):
         self.df = df.copy()
         self.y_name = y_name
         if X_names is None:
@@ -424,6 +424,8 @@ class GradientBoostedTree:
         self.cart_settings = cart_settings
         self.init_metrics_type = init_metrics_type
         self.metrics = metrics_factory.create_metrics(self.init_metrics_type, self.y_name)
+        self.sample_frac = sample_frac
+        self.n_attributes = n_attributes
 
         self.logger = logging.getLogger(__name__)
     
@@ -463,9 +465,14 @@ class GradientBoostedTree:
             res = self._pseudo_residuals()
             self.logger.info(f"Norm of pseudo-residuals: {np.linalg.norm(res)}")
             df["pseudo_residuals"] = res
+            if self.n_attributes is None:
+                X_names = self.X_names
+            else:
+                rng = np.random.default_rng()
+                X_names = rng.choice(self.X_names,self.n_attributes,replace=False)
             kwargs = dict(max_depth=3,min_leaf_samples=5,min_split_samples=4,metrics_type="regression")
             kwargs = {**kwargs, **self.cart_settings}
-            c = CART(df,"pseudo_residuals",X_names=self.X_names,**kwargs)
+            c = CART(df.sample(frac=self.sample_frac),"pseudo_residuals",X_names=X_names,**kwargs)
             c.create_tree()
             gamma = self._gamma(c.tree)
             self.trees.append(c.tree)
