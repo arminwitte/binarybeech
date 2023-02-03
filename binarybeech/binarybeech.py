@@ -472,8 +472,8 @@ class GradientBoostedTree:
             self.gamma.append(gamma)
 
     def _gamma(self, tree):
-        res = opt.minimize_scalar(self._opt_fun(tree), bracket=[0.,2.])
-        print(res.x)
+        res = opt.minimize_scalar(self._opt_fun(tree), bracket=[0.,1.])
+        print(res.x, res.fun)
         return res.x
 
     def _opt_fun(self, tree):
@@ -483,9 +483,15 @@ class GradientBoostedTree:
             delta[i] = tree.predict(x).value
         def fun(gamma):
             y_hat_new = y_hat + gamma * delta
-            y_hat_new = self._dichotomize(y_hat_new)
-            return self.metrics.loss(y_hat_new,self.df)
+            return self._logistic_loss(y_hat_new)
         return fun
+    
+    def _logistic_loss(self,y_hat_new):
+        y = self.df[self.y_name].values
+        p = y_hat_new
+        p = np.clip(p,1e-12,1.-1e-12)
+        l = np.sum(-y*np.log(p)-(1-y)*np.log(1-p))
+        return l 
 
     @staticmethod
     def _dichotomize(y_hat):
