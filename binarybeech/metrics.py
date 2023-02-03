@@ -183,7 +183,7 @@ class LogisticMetrics(Metrics):
 
     def _confusion_matrix(self, y_hat, df):
         m = np.zeros((2,2),dtype=int)
-        y_hat = np.round(y_hat).astype(int)
+        y_hat = np.round(np.clip(y_hat,0.,1.)).astype(int)
         for i, x in enumerate(df.iloc):
             y = int(x[self.y_name])
             y_hat_i = y_hat[i]
