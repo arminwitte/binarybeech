@@ -24,7 +24,7 @@ class Node:
         self.pinfo = {}
         
     def get_child(self,df):
-        if isinstance(df[self.attribute],(int,float,np.number)):
+        if isinstance(self.threshold,(int,float,np.number)):
             return self.branches[0] if df[self.attribute] < self.threshold else self.branches[1]
         else:
             return self.branches[0] if df[self.attribute] in self.threshold else self.branches[1]
