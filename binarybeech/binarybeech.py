@@ -409,7 +409,7 @@ class CART:
 
 
 class GradientBoostedTree:
-    def __init__(self,df,y_name,X_names=None,sample_frac=1, n_attributes=None, learning_rate=0.1,cart_settings={}, init_metrics_type="logistic"):
+    def __init__(self,df,y_name,X_names=None,sample_frac=1, n_attributes=None, learning_rate=0.1,cart_settings={}, init_metrics_type="logistic",gamma=None):
         self.df = df.copy()
         self.y_name = y_name
         if X_names is None:
@@ -426,6 +426,7 @@ class GradientBoostedTree:
         self.metrics = metrics_factory.create_metrics(self.init_metrics_type, self.y_name)
         self.sample_frac = sample_frac
         self.n_attributes = n_attributes
+        self.gamma_setting = gamma
 
         self.logger = logging.getLogger(__name__)
     
@@ -474,7 +475,10 @@ class GradientBoostedTree:
             kwargs = {**kwargs, **self.cart_settings}
             c = CART(df.sample(frac=self.sample_frac),"pseudo_residuals",X_names=X_names,**kwargs)
             c.create_tree()
-            gamma = self._gamma(c.tree)
+            if self.gamma_setting is None:
+                gamma = self._gamma(c.tree)
+            else:
+                gamma = self.gamma_setting
             self.trees.append(c.tree)
             self.gamma.append(gamma)
 
