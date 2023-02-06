@@ -436,24 +436,38 @@ class GradientBoostedTree:
         c.prune()
         self.init_tree = c.tree
         return c
+    
+    @staticmethod
+    def logistic(x):
+        return 1./(1. + np.exp(x))
             
-    def predict(self,x):
+    def predict_log_odds(self,x):
         p = self.init_tree.predict(x).value
+        p = np.log(p/(1. - p))
         for i, t in enumerate(self.trees):
             p += self.learning_rate * self.gamma[i] * t.predict(x).value
         return p
+    
+    def predict(self, x):
+        p = self.predict_log_odds(x)
+        return self.logistic(p)
 
-    def predict_all(self,df):
+    def predict_all_log_odds(self,df):
         y_hat = np.empty((len(df.index),))
         for i, x in enumerate(df.iloc):
-            y_hat[i] = self.predict(x)
+            y_hat[i] = self.predict_log_odds(x)
         return y_hat
+    
+    def predict_all(self, df):
+        p = self.predict_all_log_odds(df)
+        return self.logistic(p)
         
     def _pseudo_residuals(self):
-        res = np.empty_like(self.df[self.y_name].values).astype(np.float64)
-        for i, x in enumerate(self.df.iloc):
-            res[i] = x[self.y_name] - self.predict(x)
-        return res
+        #res = np.empty_like(self.df[self.y_name].values).astype(np.float64)
+        #for i, x in enumerate(self.df.iloc):
+            #res[i] = x[self.y_name] - self.predict(x)
+        res = self.df[self.y_name] - self.predict_all(self.df)
+        return -res
     
     def create_trees(self,M):
         self._initial_tree()
@@ -483,25 +497,26 @@ class GradientBoostedTree:
             self.gamma.append(gamma)
 
     def _gamma(self, tree):
-        res = opt.minimize_scalar(self._opt_fun(tree), bracket=[0.,2.])
-        print(res.x, res.fun)
+        res = opt.minimize_scalar(self._opt_fun(tree), bounds=[0.,10.])
+        print(f"{res.x:.2f}\t {res.fun:.2f}")
         return res.x
 
     def _opt_fun(self, tree):
-        y_hat = self.predict_all(self.df)
+        y_hat = self.predict_all_log_odds(self.df)
         delta = np.empty_like(y_hat)
         for i, x in enumerate(self.df.iloc):
             delta[i] = tree.predict(x).value
         def fun(gamma):
-            y_hat_new = y_hat + gamma * delta
+            y_ = y_hat + gamma * delta# * self.learning_rate
+            y_hat_new = self.logistic(y_)
             return self._logistic_loss(y_hat_new)
         return fun
     
     def _logistic_loss(self,y_hat_new):
         y = self.df[self.y_name].values
         p = y_hat_new
-        p = np.clip(p,1e-12,1.-1e-12)
-        l = np.sum(-y*np.log(p)-(1-y)*np.log(1-p))
+        #p = np.clip(p,1e-12,1.-1e-12)
+        l = -np.sum(y*np.log(p)+(1-y)*np.log(1-p))
         return l 
 
     @staticmethod
