@@ -553,6 +553,7 @@ class RandomForest:
         self.logger = logging.getLogger(__name__)
 
     def create_trees(self,M):
+        df = self.df
         self.trees = []
         for i in range(M):
             if self.n_attributes is None:
