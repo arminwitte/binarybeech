@@ -411,6 +411,7 @@ class CART:
 class GradientBoostedTree:
     def __init__(self,df,y_name,X_names=None,sample_frac=1, n_attributes=None, learning_rate=0.1,cart_settings={}, init_metrics_type="logistic",gamma=None):
         self.df = df.copy()
+        self.N = len(self.df.index)
         self.y_name = y_name
         if X_names is None:
             self.X_names = [s for s in df.columns if s not in [y_name]]
@@ -498,7 +499,7 @@ class GradientBoostedTree:
 
     def _gamma(self, tree):
         res = opt.minimize_scalar(self._opt_fun(tree), bounds=[0.,10.])
-        print(f"{res.x:.2f}\t {res.fun:.2f}")
+        print(f"{res.x:.2f}\t {res.fun/self.N:.4f}")
         return res.x
 
     def _opt_fun(self, tree):
@@ -533,3 +534,58 @@ class GradientBoostedTree:
         #m = metrics_factory.create_metrics(self.init_metrics_type,self.y_name)
         return self.metrics.validate(y_hat, df)
             
+class RandomForest:
+    def __init__(self,df,y_name,X_names=None,sample_frac=1, n_attributes=None,cart_settings={}, metrics_type="regression"):
+        self.df = df.copy()
+        self.N = len(self.df.index)
+        self.y_name = y_name
+        if X_names is None:
+            self.X_names = [s for s in df.columns if s not in [y_name]]
+        else:
+            self.X_names = X_names
+       
+        self.trees = []
+        self.cart_settings = cart_settings
+        self.metrics = metrics_factory.create_metrics(self.init_metrics_type, self.y_name)
+        self.sample_frac = sample_frac
+        self.n_attributes = n_attributes
+
+        self.logger = logging.getLogger(__name__)
+
+    def create_trees(self,M):
+        self.trees = []
+        for i in range(M):
+            if self.n_attributes is None:
+                X_names = self.X_names
+            else:
+                rng = np.random.default_rng()
+                X_names = rng.choice(self.X_names,self.n_attributes,replace=False)
+            kwargs = dict(max_depth=3,min_leaf_samples=5,min_split_samples=4,metrics_type="regression")
+            kwargs = {**kwargs, **self.cart_settings}
+            c = CART(df.sample(frac=self.sample_frac),self.y_name,X_names=X_names,**kwargs)
+            c.create_tree()
+            self.trees.append(c.tree)
+
+    def predict(self,x):
+        y = []
+        for t in self.trees:
+            y.append(t.predict(x).value)
+        unique, counts = np.unique(y, return_counts=True)
+        ind_max = np.argmax(counts)
+        return unique[ind_max]
+
+    def predict_all(self,df):
+        y_hat = []
+        for x in df.iloc:
+            y_hat.append(self.predict(x))
+
+        return y_hat
+
+    def validate(self, df=None):
+        if df is None:
+            df = self.df
+        y_hat = self.predict_all(df)
+        return self.metrics.validate(y_hat, df)
+            
+         
+    
