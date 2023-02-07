@@ -546,7 +546,8 @@ class RandomForest:
        
         self.trees = []
         self.cart_settings = cart_settings
-        self.metrics = metrics_factory.create_metrics(self.init_metrics_type, self.y_name)
+        self.metrics_type = metrics_type
+        self.metrics = metrics_factory.create_metrics(self.metrics_type, self.y_name)
         self.sample_frac = sample_frac
         self.n_attributes = n_attributes
 
@@ -561,7 +562,7 @@ class RandomForest:
             else:
                 rng = np.random.default_rng()
                 X_names = rng.choice(self.X_names,self.n_attributes,replace=False)
-            kwargs = dict(max_depth=3,min_leaf_samples=5,min_split_samples=4,metrics_type="regression")
+            kwargs = dict(max_depth=3,min_leaf_samples=5,min_split_samples=4,metrics_type=self.metrics_type)
             kwargs = {**kwargs, **self.cart_settings}
             c = CART(df.sample(frac=self.sample_frac),self.y_name,X_names=X_names,**kwargs)
             c.create_tree()
