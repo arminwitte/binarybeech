@@ -494,7 +494,7 @@ class GradientBoostedTree:
                 X_names = rng.choice(self.X_names,self.n_attributes,replace=False)
             kwargs = dict(max_depth=3,min_leaf_samples=5,min_split_samples=4,metrics_type="regression")
             kwargs = {**kwargs, **self.cart_settings}
-            c = CART(df.sample(frac=self.sample_frac),"pseudo_residuals",X_names=X_names,**kwargs)
+            c = CART(df.sample(frac=self.sample_frac, replace=True),"pseudo_residuals",X_names=X_names,**kwargs)
             c.create_tree()
             if self.gamma_setting is None:
                 gamma = self._gamma(c.tree)
@@ -541,7 +541,7 @@ class GradientBoostedTree:
         return self.metrics.validate(y_hat, df)
             
 class RandomForest:
-    def __init__(self,df,y_name,X_names=None,sample_frac=1, n_attributes=None,cart_settings={}, metrics_type="regression"):
+    def __init__(self,df,y_name,X_names=None, verbose=False ,sample_frac=1, n_attributes=None,cart_settings={}, metrics_type="regression"):
         self.df = df.copy()
         self.N = len(self.df.index)
         self.y_name = y_name
@@ -557,6 +557,7 @@ class RandomForest:
         self.sample_frac = sample_frac
         self.n_attributes = n_attributes
 
+        self.verbose = verbose
         self.logger = logging.getLogger(__name__)
 
     def create_trees(self,M):
@@ -570,10 +571,11 @@ class RandomForest:
                 X_names = rng.choice(self.X_names,self.n_attributes,replace=False)
             kwargs = dict(max_depth=3,min_leaf_samples=5,min_split_samples=4,metrics_type=self.metrics_type)
             kwargs = {**kwargs, **self.cart_settings}
-            c = CART(df.sample(frac=self.sample_frac),self.y_name,X_names=X_names,**kwargs)
+            c = CART(df.sample(frac=self.sample_frac, replace=True),self.y_name,X_names=X_names,**kwargs)
             c.create_tree()
             self.trees.append(c.tree)
-            print(f"{i:4d}: Tree with {c.tree.leaf_count()} leaves created.")
+            if self.verbose:
+                print(f"{i:4d}: Tree with {c.tree.leaf_count()} leaves created.")
 
     def predict(self,x):
         y = []
