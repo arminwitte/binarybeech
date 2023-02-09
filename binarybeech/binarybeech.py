@@ -112,6 +112,12 @@ class CART:
         self.metrics = metrics_factory.create_metrics(metrics_type, self.y_name)
 
         self.logger = logging.getLogger(__name__)
+
+    def predict_all(self,df):
+        y_hat = np.empty((len(df.index),))
+        for i, x in enumerate(df.iloc):
+            y_hat[i] = self.tree.predict(x).value
+        return y_hat 
         
     def train(self,k=5, plot=True, slack=1.):
         """
@@ -567,6 +573,7 @@ class RandomForest:
             c = CART(df.sample(frac=self.sample_frac),self.y_name,X_names=X_names,**kwargs)
             c.create_tree()
             self.trees.append(c.tree)
+            print(f"{i:4d}: Tree with {c.tree.leaf_count()} leaves created.")
 
     def predict(self,x):
         y = []
