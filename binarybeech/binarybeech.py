@@ -595,18 +595,39 @@ class RandomForest:
         return y_hat
 
     def validate_oob(self):
-        pass
-
+        unique, names = self._oob_df()
+        self._oob_predict()
+        y_hat = []
+        for x in self.df.iloc:
+            votes = []
+            for n in names:
+                votes.append(x[n])
+            idx_max = np.argmax(votes)
+            y_hat.append(unique[idx_max])
+        return self.metrics.validate(y_hat, self.df)
+            
     def _oob_predict(self):
         for i, t in self.trees:
             idx = self.oob_indices[i]
+            for j in idx:
+                x = self.df.loc[j,:]
+                y = t.predict(x).value
+                name = self._oob_name(y)
+                self.df[name] += 1
 
     def _oob_df(self):
         y = self.df[self.y_name].values
         N = y.size
         unique = np.unique(y)
+        names = []
         for u in unique:
-        "_".join(("))
+            name = self._oob_name(u)
+            names.append(name)
+            self.df[name] = 0
+        return unique, names
+
+    def _oob_name(self,value):
+        return "_".join(("oob",str(self.y_name),str(value)))
 
     def validate(self, df=None):
         if df is None:
