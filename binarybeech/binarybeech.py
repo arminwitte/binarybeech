@@ -201,9 +201,9 @@ class CART:
         # use mean if numerical
         for name in self.X_names:
             if np.issubdtype(df_out[name].values.dtype, np.number):
-                df_out[name] = df_out[name].fillna(np.nanmean(df_out[name].values))
+                df_out[name] = df_out[name].apply(lambda x: x.fillna(np.nanmean(df_out[name].values)))
             else:
-                df_out[name] = df_out[name].fillna("missing")
+                df_out[name] = df_out[name].apply(lambda x: x.fillna("missing"))
         return df_out
         
     def create_tree(self, leaf_loss_threshold=1e-12):
@@ -551,6 +551,7 @@ class RandomForest:
             self.X_names = X_names
        
         self.trees = []
+        self.oob_indices = []
         self.cart_settings = cart_settings
         self.metrics_type = metrics_type
         self.metrics = metrics_factory.create_metrics(self.metrics_type, self.y_name)
@@ -561,7 +562,7 @@ class RandomForest:
         self.logger = logging.getLogger(__name__)
 
     def create_trees(self,M):
-        df = self.df
+        df = self.df.sample(frac=self.sample_frac, replace=True)
         self.trees = []
         for i in range(M):
             if self.n_attributes is None:
@@ -571,9 +572,10 @@ class RandomForest:
                 X_names = rng.choice(self.X_names,self.n_attributes,replace=False)
             kwargs = dict(max_depth=3,min_leaf_samples=5,min_split_samples=4,metrics_type=self.metrics_type)
             kwargs = {**kwargs, **self.cart_settings}
-            c = CART(df.sample(frac=self.sample_frac, replace=True),self.y_name,X_names=X_names,**kwargs)
+            c = CART(df,self.y_name,X_names=X_names,**kwargs)
             c.create_tree()
             self.trees.append(c.tree)
+            self.oob_indices.append(self.df.index.difference(df.index))
             if self.verbose:
                 print(f"{i:4d}: Tree with {c.tree.leaf_count()} leaves created.")
 
@@ -591,6 +593,20 @@ class RandomForest:
             y_hat.append(self.predict(x))
 
         return y_hat
+
+    def validate_oob(self):
+        pass
+
+    def _oob_predict(self):
+        for i, t in self.trees:
+            idx = self.oob_indices[i]
+
+    def _oob_df(self):
+        y = self.df[self.y_name].values
+        N = y.size
+        unique = np.unique(y)
+        for u in unique:
+        "_".join(("))
 
     def validate(self, df=None):
         if df is None:
