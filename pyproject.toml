@@ -1,11 +1,11 @@
-[build-system]
+E[build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
 name = "binarybeech"
 description = "Simplistic algorithms to train decision trees for regression and classification"
-version = "0.0.13"
+version = "0.0.15"
 authors = [
   { name="Armin Witte"},
 ]
