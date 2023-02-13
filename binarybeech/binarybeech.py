@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+K#!/usr/bin/env python
 # coding: utf-8
 
 import pandas as pd
@@ -628,6 +628,22 @@ class RandomForest:
             df = self.df
         y_hat = self.predict_all(df)
         return self.metrics.validate(y_hat, df)
+
+    def variable_importance(self):
+        d = {}
+        for x in self.X_names:
+            d[x] = 0.
+        for t in self.trees:
+            nodes = t.nodes()
+            for n in nodes:
+                if n.is_leaf:
+                    continue
+                name = n.attribute
+                R_parent = n.pinfo["R"]
+                R_children = np.sum([b.pinfo["R"] for b in n.branches])
+                R_delta = R_parent - R_children
+                d[name] += R_delta
+        return d
             
          
     
