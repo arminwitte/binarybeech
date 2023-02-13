@@ -736,7 +736,7 @@ class RandomForest:
                 R_children = np.sum([b.pinfo["R"] for b in n.branches])
                 R_delta = R_parent - R_children
                 d[name] += R_delta
-        max_val = max(d.values)
-        for key in d.keys:
+        max_val = max(d.values())
+        for key in d.keys():
             d[key] /= max_val
         return d
