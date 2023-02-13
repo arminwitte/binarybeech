@@ -1,8 +1,7 @@
 import numpy as np
 
-def variable_importance(mod):
-    for t in mpd.trees:
-        pass
-
-def variable_importance_ensemble(mod):
-    pass
+def print_bars(d, max_width=70):
+    for key, val in d.items():
+        l = int(round(50 * val))
+        print(f"{key:10}|{"#"*l}{}{val:4.2}
+    
