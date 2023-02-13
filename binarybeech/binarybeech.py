@@ -739,4 +739,5 @@ class RandomForest:
         max_val = max(d.values())
         for key in d.keys():
             d[key] /= max_val
+        d = dict(sorted(d.items(), key=lambda item: item[1], reverse=True))
         return d
