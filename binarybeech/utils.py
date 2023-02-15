@@ -55,39 +55,19 @@ def log_odds(x):
     logodds = np.log(odds)
     return logodds
 
-def _probability(self, df):
-        odds = self._odds(df)
-        if odds == np.Inf:
-            return 1.0
-        p = odds / (1 + odds)
-        # print(f"odds: {odds:.2f} probability: {p:.4f}")
-        return p
+def probability(x):
+    if x == np.Inf:
+        return 1.0
+    return x / (1 + x)
 
-    def _classification_metrics(self, y_hat, df=None):
-        confmat = self._confusion_matrix(y_hat, df)
-        P = self._precision(confmat)
-        # print(f"precision: {P}")
-        R = self._recall(confmat)
-        # print(f"recall: {R}")
-        F = np.mean(self._F1(P, R))
-        # print(f"F-score: {F}")
-        A = self._accuracy(confmat)
-        return {"precision": P, "recall": R, "F-score": F, "accuracy": A}
+def precision(m):
+    return np.diag(m) / np.sum(m, axis=1)
 
-    @staticmethod
-    def _precision(m):
-        return np.diag(m) / np.sum(m, axis=1)
+def recall(m):
+    return np.diag(m) / np.sum(m, axis=0)
 
-    @staticmethod
-    def _recall(m):
-        return np.diag(m) / np.sum(m, axis=0)
+def F1(P, R):
+    return 2 * P * R / (P + R)
 
-    @staticmethod
-    def _F1(P, R):
-        # F = np.zeros_like(P)
-        # for i in range(len(
-        return 2 * P * R / (P + R)
-
-    @staticmethod
-    def _accuracy(m):
-        return np.sum(np.diag(m)) / np.sum(np.sum(m))
+def accuracy(m):
+    return np.sum(np.diag(m)) / np.sum(np.sum(m))
