@@ -16,13 +16,13 @@ def gini_impurity(x):
 
 def shannon_entropy(x):
     unique, counts = np.unique(x, return_counts=True)
-    N = y.size
+    N = x.size
     p = counts / N
     return -np.sum(p * np.log2(p))
 
-def misclassification_cost(self, x):
-    unique, counts = np.unique(y, return_counts=True)
-    N = y.size
+def misclassification_cost(x):
+    unique, counts = np.unique(x, return_counts=True)
+    N = x.size
     p = np.max(counts) / N
     return 1.0 - p
 
