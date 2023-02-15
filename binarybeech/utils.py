@@ -50,9 +50,9 @@ def odds(x):
     return odds
 
 def log_odds(x):
-    odds = odds(x)
-    odds = np.clip(odds, 1e-12, 1e12)
-    logodds = np.log(odds)
+    o = odds(x)
+    o = np.clip(o, 1e-12, 1e12)
+    logodds = np.log(o)
     return logodds
 
 def probability(x):
