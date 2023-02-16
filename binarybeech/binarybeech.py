@@ -232,6 +232,14 @@ class IntervalSplitter(Splitter):
 
 
 class CART:
+    
+    available_splitters = {"unknown":None,
+        "constant":None,
+        "dichotomous":NominalSplitter,
+        "nominal":NominalSplitter,
+        "interval":IntervalSplitter
+    }
+    
     def __init__(
         self,
         df,
@@ -251,8 +259,13 @@ class CART:
         self.tree = None
         self.splittyness = 1.0
         self.leaf_loss_threshold = 1e-12
+        self.metrics_type = metrics_type
+        self.metrics = metrics_factory.create_metrics(metrics_type, self.y_name)
+
 
         self.classes = np.unique(df[self.y_name]).tolist()
+        self.variable_levels = self._variable_levels()
+        self.splitters = self._init_splitters()
 
         self.min_leaf_samples = min_leaf_samples
         self.min_split_samples = min_split_samples
@@ -260,10 +273,32 @@ class CART:
 
         self.depth = 0
 
-        self.metrics_type = metrics_type
-        self.metrics = metrics_factory.create_metrics(metrics_type, self.y_name)
-
         self.logger = logging.getLogger(__name__)
+        
+    def _variable_levels(self):
+        d = {}
+        for name in self.X_names:
+            df = self.df[name].dropna()
+            unique = np.unique(df)
+            if len(unique) == 0:
+                d[name] = "unknown"
+            elif len(unique) == 1:
+                d[name] = "constant"
+            elif len(unique) == 2:
+                d[name] = "dichotomous"
+            else: 
+                if np.issubdtype(df.values.dtype, np.number):
+                    d[names] = "interval"
+                else:
+                    d[name] = "nomimal"
+        return d
+                
+    def _init_splitters(self):
+        d = {}
+        for key, val in self.variable_levels:
+            splttr = self.available_splitters[val]
+            d[key] = splttr(self.y_name,key,metrics_type=self.metrics_type)
+        return d
 
     def predict_all(self, df):
         y_hat = np.empty((len(df.index),))
