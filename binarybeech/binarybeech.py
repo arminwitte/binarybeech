@@ -189,6 +189,46 @@ class NominalSplitter(Splitter):
                 self.split_df = split_df
                 
         return better
+        
+class IntervalSplitter(Splitter):
+    def __init__(self, y_name, attribute, metrics_type):
+        super().__init__(y_name, metrics_type)
+        
+    def split(self, df):
+        self.loss = np.Inf
+        self.split_df = []
+        self.threshold = None
+        
+        better = False
+        
+        if -df[name].min() + df[name].max() < np.finfo(float).tiny:
+            return better
+            
+        mame = self.attribute
+        
+        res = opt.minimize_scalar(
+            self._opt_fun(df),
+            bounds=(df[name].min(), df[name].max()),
+            method="bounded",
+        )
+        self.threshold = res.x
+        self.split_df = [df[df[name] < threshold], df[df[name] >= threshold]]
+        self.loss = res.fun
+        return better
+                
+    def _opt_fun(self, df):
+        split_name = self.attribute
+        N = len(df.index)
+        def fun(x):
+            split_df = [df[df[split_name] < x], df[df[split_name] >= x]]
+            n = [len(df_.index) for df_ in split_df]
+            return n[0] / N * self.metrics.loss(split_df[0]) + n[1] / N * self.metrics.loss(
+                    split_df[1]
+                )
+    
+        return fun
+        
+        
 
 
 class CART:
