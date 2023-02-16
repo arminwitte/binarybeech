@@ -4,6 +4,7 @@
 import copy
 import itertools
 import logging
+from abc import ABC, abstractmethod
 
 import numpy as np
 import pandas as pd
@@ -100,6 +101,94 @@ class Tree:
             for i, b in enumerate(node.branches):
                 p = "True: " if i == 0 else "False:"
                 self._show(b, tree_view, parent=name, prefix=p)
+
+
+class Reporter:
+    def __init__(self, labels):
+        self.labels = labels
+        self.buffer = {}
+    
+    def set(self, **kwargs):
+        self.buffer.update(kwargs)
+        
+    def print(self):
+        s = ""
+        for l in self.labels:
+            v = self.buffer.get(l)
+            if v is None:
+                s += " - \t"
+            elif isinstance(v,float):
+                s += f"{v:4.2f}\t"
+            elif isinstance(v,int):
+                s += f"{v:6}\t"
+            elif isinstance(v,str):
+                s += f"{v[:9]}\t"
+            else:
+                s += f"{v:10}\t"
+        print(s)
+        self.buffer = {}
+
+
+class Splitter(ABC):
+    def __init__(self, y_name, attribute,  metrics_type):
+        self.y_name = y_name
+        self.attribute = attribute
+        self.metrics = metrics_factory.create_metrics(metrics_type, self.y_name)
+        
+        self.loss = None
+        self.split_df = []
+        self.threshold = None
+    
+    @abstractmethod
+    def split(self, df):
+        pass
+
+
+class NominalSplitter(Splitter):
+    def __init__(self, y_name, attribute, metrics_type):
+        super().__init__(y_name, metrics_type)
+        
+    def split(self, df):
+        self.loss = np.Inf
+        self.split_df = []
+        self.threshold = None
+        
+        better = False
+        
+        unique = np.unique(df[name])
+        
+        if len(unique) < 1:
+            return better
+        
+        comb = []
+        name = self.attribute
+        
+        if len(unique) > 5:
+            comb = [(u,) for u in unique]
+        else:
+            for i in range(1, len(unique)):
+                comb += list(itertools.combinations(unique, i))
+        
+        loss = np.Inf
+        
+        for c in comb:
+            threshold = c
+            split_df = [
+                df[df[name].isin(threshold)],
+                        df[~df[name].isin(threshold)],
+                    ]
+            N = len(df.index)
+            n = [len(df_.index) for df_ in split_df]
+            loss = n[0] / N * self.metrics.loss(split_df_[0]) + n[1] / N * self.metrics.loss(
+                        split_df_[1]
+                    )
+            if loss < self.loss:
+                better = True
+                self.loss = loss
+                self.threshold = threshold
+                self.split_df = split_df
+                
+        return better
 
 
 class CART:
