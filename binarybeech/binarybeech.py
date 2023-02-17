@@ -213,7 +213,7 @@ class IntervalSplitter(Splitter):
             method="bounded",
         )
         self.threshold = res.x
-        self.split_df = [df[df[self.attribute] < threshold], df[df[self.attribute] >= threshold]]
+        self.split_df = [df[df[self.attribute] < self.threshold], df[df[self.attribute] >= self.threshold]]
         self.loss = res.fun
         return res.success
                 
@@ -290,7 +290,7 @@ class CART:
                 d[name] = "dichotomous"
             else: 
                 if np.issubdtype(df.values.dtype, np.number):
-                    d[names] = "interval"
+                    d[name] = "interval"
                 else:
                     d[name] = "nomimal"
         return d
