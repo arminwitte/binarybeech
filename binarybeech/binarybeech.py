@@ -147,7 +147,7 @@ class Splitter(ABC):
 
 class NominalSplitter(Splitter):
     def __init__(self, y_name, attribute, metrics_type):
-        super().__init__(y_name, metrics_type)
+        super().__init__(y_name, attribute, metrics_type)
         
     def split(self, df):
         self.loss = np.Inf
@@ -193,7 +193,7 @@ class NominalSplitter(Splitter):
         
 class IntervalSplitter(Splitter):
     def __init__(self, y_name, attribute, metrics_type):
-        super().__init__(y_name, metrics_type)
+        super().__init__(y_name, attribute, metrics_type)
         
     def split(self, df):
         self.loss = np.Inf
@@ -292,14 +292,14 @@ class CART:
                 if np.issubdtype(df.values.dtype, np.number):
                     d[name] = "interval"
                 else:
-                    d[name] = "nomimal"
+                    d[name] = "nominal"
         return d
                 
     def _init_splitters(self):
         d = {}
-        for key, val in self.variable_levels:
+        for key, val in self.variable_levels.items():
             splttr = self.available_splitters[val]
-            d[key] = splttr(self.y_name,key,metrics_type=self.metrics_type)
+            d[key] = splttr(self.y_name,key,self.metrics_type)
         return d
 
     def predict_all(self, df):
@@ -670,7 +670,7 @@ class GradientBoostedTree:
             metrics_type=self.init_metrics_type,
         )
         c.create_tree()
-        c.prune()
+        #c.prune()
         self.init_tree = c.tree
         return c
 
@@ -756,7 +756,7 @@ class GradientBoostedTree:
         y = self.df[self.y_name].values
         def fun(gamma):
             y_ = y_hat + gamma * delta  # * self.learning_rate
-            p = self.logistic(y_)
+            p = utils.logistic(y_)
             return utils.logistic_loss(y, p)
 
         return fun
