@@ -3,6 +3,8 @@ from abc import ABC, abstractmethod
 
 import numpy as np
 
+import binarybeech.utils as utils
+
 
 class Metrics(ABC):
     def __init__(self, y_name):
@@ -13,40 +15,26 @@ class Metrics(ABC):
 
     def _gini_impurity(self, df):
         y = self._y(df)
-        unique, counts = np.unique(y, return_counts=True)
-        N = y.size
-        p = counts / N
-        # print(unique)
-        # print(p)
-        return 1.0 - np.sum(p**2)
+        return utils.gini_impurity(y)
 
     def _shannon_entropy(self, df):
         y = self._y(df)
-        unique, counts = np.unique(y, return_counts=True)
-        N = y.size
-        p = counts / N
-        return -np.sum(p * np.log2(p))
+        return utils.shannon_entropy(y)
 
     def _misclassification_cost(self, df):
         y = self._y(df)
-        unique, counts = np.unique(y, return_counts=True)
-        N = y.size
-        p = np.max(counts) / N
-        return 1.0 - p
+        return utils.misclassification_cost(y)
 
     def _logistic_loss(self, df):
         y = self._y(df)
-        p_ = self.node_value(df)  # np.nanmax(counts)/np.sum(counts)
-        p_ = np.clip(p_, 1e-12, 1.0 - 1e-12)
+        p_ = self.node_value(df)
         p = np.ones_like(y) * p_
-        l = np.sum(-y * np.log(p) - (1 - y) * np.log(1 - p))
-        return l
+        return utils.logistic_loss(y, p)
 
     def _mean_squared_error(self, df):
         y = self._y(df)
         y_hat = self.node_value(df)
-        e = y - y_hat
-        return 1 / e.size * (e.T @ e)
+        return utils.mean_squared_error(y, y_hat)
 
     def _mean(self, df):
         y = self._y(df)
@@ -54,21 +42,11 @@ class Metrics(ABC):
 
     def _majority_class(self, df):
         y = self._y(df)
-        unique, counts = np.unique(y, return_counts=True)
-        ind_max = np.argmax(counts)
-        return unique[ind_max]
+        return utils.majority_class(y)
 
     def _odds(self, df):
         y = self._y(df)
-        unique, counts = np.unique(y, return_counts=True)
-        d = {0: 0, 1: 0}
-        for i, u in enumerate(unique):
-            d[u] = counts[i]
-        if d[0] == 0:
-            return np.Inf
-        odds = d[1] / d[0]
-        # print(f"odds: {odds}")
-        return odds
+        return utils.odds(y)
 
     def _log_odds(self, df):
         odds = self._odds(df)
