@@ -767,7 +767,6 @@ class GradientBoostedTree:
         y_hat = self.predict_all(df)
         # from binarybeech.metrics import LogisticMetrics
         # m = LogisticMetrics(self.y_name)
-        # m = metrics_factory.create_metrics(self.init_metrics_type,self.y_name)
         return self.metrics.validate(y_hat, df)
 
 
