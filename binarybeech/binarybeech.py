@@ -156,7 +156,7 @@ class NominalSplitter(Splitter):
         
         success = False
         
-        unique = np.unique(df[name])
+        unique = np.unique(df[self.attribute])
         
         if len(unique) < 1:
             return success
@@ -180,8 +180,8 @@ class NominalSplitter(Splitter):
                     ]
             N = len(df.index)
             n = [len(df_.index) for df_ in split_df]
-            loss = n[0] / N * self.metrics.loss(split_df_[0]) + n[1] / N * self.metrics.loss(
-                        split_df_[1]
+            loss = n[0] / N * self.metrics.loss(split_df[0]) + n[1] / N * self.metrics.loss(
+                        split_df[1]
                     )
             if loss < self.loss:
                 success = True
@@ -202,18 +202,18 @@ class IntervalSplitter(Splitter):
         
         success = False
         
-        if -df[name].min() + df[name].max() < np.finfo(float).tiny:
+        if -df[self.attribute].min() + df[self.attribute].max() < np.finfo(float).tiny:
             return success
             
         mame = self.attribute
         
         res = opt.minimize_scalar(
             self._opt_fun(df),
-            bounds=(df[name].min(), df[name].max()),
+            bounds=(df[self.attribute].min(), df[self.attribute].max()),
             method="bounded",
         )
         self.threshold = res.x
-        self.split_df = [df[df[name] < threshold], df[df[name] >= threshold]]
+        self.split_df = [df[df[self.attribute] < threshold], df[df[self.attribute] >= threshold]]
         self.loss = res.fun
         return res.success
                 
