@@ -4,6 +4,7 @@
 import copy
 import itertools
 import logging
+from abc import ABC, abstractmethod
 
 import numpy as np
 import pandas as pd
@@ -11,6 +12,7 @@ import scipy.optimize as opt
 
 import treelib
 from binarybeech.metrics import metrics_factory
+import binarybeech.utils as utils
 
 
 class Node:
@@ -102,7 +104,143 @@ class Tree:
                 self._show(b, tree_view, parent=name, prefix=p)
 
 
+class Reporter:
+    def __init__(self, labels):
+        self.labels = labels
+        self.buffer = {}
+    
+    def set(self, **kwargs):
+        self.buffer.update(kwargs)
+        
+    def print(self):
+        s = ""
+        for l in self.labels:
+            v = self.buffer.get(l)
+            if v is None:
+                s += " - \t"
+            elif isinstance(v,float):
+                s += f"{v:4.2f}\t"
+            elif isinstance(v,int):
+                s += f"{v:6}\t"
+            elif isinstance(v,str):
+                s += f"{v[:9]}\t"
+            else:
+                s += f"{v:10}\t"
+        print(s)
+        self.buffer = {}
+
+
+class Splitter(ABC):
+    def __init__(self, y_name, attribute,  metrics_type):
+        self.y_name = y_name
+        self.attribute = attribute
+        self.metrics = metrics_factory.create_metrics(metrics_type, self.y_name)
+        
+        self.loss = None
+        self.split_df = []
+        self.threshold = None
+    
+    @abstractmethod
+    def split(self, df):
+        pass
+
+
+class NominalSplitter(Splitter):
+    def __init__(self, y_name, attribute, metrics_type):
+        super().__init__(y_name, metrics_type)
+        
+    def split(self, df):
+        self.loss = np.Inf
+        self.split_df = []
+        self.threshold = None
+        
+        success = False
+        
+        unique = np.unique(df[self.attribute])
+        
+        if len(unique) < 1:
+            return success
+        
+        comb = []
+        name = self.attribute
+        
+        if len(unique) > 5:
+            comb = [(u,) for u in unique]
+        else:
+            for i in range(1, len(unique)):
+                comb += list(itertools.combinations(unique, i))
+        
+        loss = np.Inf
+        
+        for c in comb:
+            threshold = c
+            split_df = [
+                df[df[name].isin(threshold)],
+                        df[~df[name].isin(threshold)],
+                    ]
+            N = len(df.index)
+            n = [len(df_.index) for df_ in split_df]
+            loss = n[0] / N * self.metrics.loss(split_df[0]) + n[1] / N * self.metrics.loss(
+                        split_df[1]
+                    )
+            if loss < self.loss:
+                success = True
+                self.loss = loss
+                self.threshold = threshold
+                self.split_df = split_df
+                
+        return success
+        
+class IntervalSplitter(Splitter):
+    def __init__(self, y_name, attribute, metrics_type):
+        super().__init__(y_name, metrics_type)
+        
+    def split(self, df):
+        self.loss = np.Inf
+        self.split_df = []
+        self.threshold = None
+        
+        success = False
+        
+        if -df[self.attribute].min() + df[self.attribute].max() < np.finfo(float).tiny:
+            return success
+            
+        mame = self.attribute
+        
+        res = opt.minimize_scalar(
+            self._opt_fun(df),
+            bounds=(df[self.attribute].min(), df[self.attribute].max()),
+            method="bounded",
+        )
+        self.threshold = res.x
+        self.split_df = [df[df[self.attribute] < self.threshold], df[df[self.attribute] >= self.threshold]]
+        self.loss = res.fun
+        return res.success
+                
+    def _opt_fun(self, df):
+        split_name = self.attribute
+        N = len(df.index)
+        def fun(x):
+            split_df = [df[df[split_name] < x], df[df[split_name] >= x]]
+            n = [len(df_.index) for df_ in split_df]
+            return n[0] / N * self.metrics.loss(split_df[0]) + n[1] / N * self.metrics.loss(
+                    split_df[1]
+                )
+    
+        return fun
+        
+        
+
+
 class CART:
+    
+    available_splitters = {"unknown":None,
+        "constant":None,
+        "dichotomous":NominalSplitter,
+        "nominal":NominalSplitter,
+        "interval":IntervalSplitter
+    }
+    
     def __init__(
         self,
         df,
@@ -122,19 +260,47 @@ class CART:
         self.tree = None
         self.splittyness = 1.0
         self.leaf_loss_threshold = 1e-12
+        self.metrics_type = metrics_type
+        self.metrics = metrics_factory.create_metrics(metrics_type, self.y_name)
+
 
         self.classes = np.unique(df[self.y_name]).tolist()
+        self.variable_levels = self._variable_levels()
+        self.splitters = self._init_splitters()
 
+        # pre-pruning
         self.min_leaf_samples = min_leaf_samples
         self.min_split_samples = min_split_samples
         self.max_depth = max_depth
 
         self.depth = 0
 
-        self.metrics_type = metrics_type
-        self.metrics = metrics_factory.create_metrics(metrics_type, self.y_name)
-
         self.logger = logging.getLogger(__name__)
+        
+    def _variable_levels(self):
+        d = {}
+        for name in self.X_names:
+            df = self.df[name].dropna()
+            unique = np.unique(df)
+            if len(unique) == 0:
+                d[name] = "unknown"
+            elif len(unique) == 1:
+                d[name] = "constant"
+            elif len(unique) == 2:
+                d[name] = "dichotomous"
+            else: 
+                if np.issubdtype(df.values.dtype, np.number):
+                    d[name] = "interval"
+                else:
+                    d[name] = "nomimal"
+        return d
+                
+    def _init_splitters(self):
+        d = {}
+        for key, val in self.variable_levels:
+            splttr = self.available_splitters[val]
+            d[key] = splttr(self.y_name,key,metrics_type=self.metrics_type)
+        return d
 
     def predict_all(self, df):
         y_hat = np.empty((len(df.index),))
@@ -227,9 +393,9 @@ class CART:
         # use mean if numerical
         for name in self.X_names:
             if np.issubdtype(df_out[name].values.dtype, np.number):
-                df_out[name] = df_out[name].fillna(np.nanmean(df_out[name].values))
+                df_out.loc[:,name] = df_out[name].fillna(np.nanmedian(df_out[name].values))
             else:
-                df_out[name] = df_out[name].fillna("missing")
+                df_out.loc[:,name] = df_out[name].fillna("missing")
         return df_out
 
     def create_tree(self, leaf_loss_threshold=1e-12):
@@ -259,7 +425,7 @@ class CART:
             # p < 0.025
             # or p > 0.975
             or len(df.index) < self.min_leaf_samples
-            or self.depth > self.max_depth
+            or self.depth >= self.max_depth
         ):
             return self._leaf(df)
 
@@ -293,16 +459,12 @@ class CART:
         return item
 
     def _leaf(self, df):
-        # unique, counts = np.unique(df[self.y_name].values,return_counts=True)
-        # print([(unique[i], counts[i]) for i in range(len(counts))])
-        # sort_ind = np.argsort(-counts)
-        value = self._node_value(df)  # unique[sort_ind[0]]
+        value = self._node_value(df)
         leaf = Node(value=value)
 
         leaf.pinfo["N"] = len(df.index)
         leaf.pinfo["r"] = self.metrics.loss_prune(df)
         leaf.pinfo["R"] = leaf.pinfo["N"] / len(self.df.index) * leaf.pinfo["r"]
-        # print(f"=> Leaf({value}, N={len(df.index)})")
         return leaf
 
     def _loss_best(self, df):
@@ -312,10 +474,13 @@ class CART:
         split_name = None
         for name in self.X_names:
             loss_ = np.Inf
-            if np.issubdtype(df[name].values.dtype, np.number):
-                loss_, split_df_, split_threshold_ = self._split_by_number(df, name)
-            else:
-                loss_, split_df_, split_threshold_ = self._split_by_class(df, name)
+            splitter = self.splitters[name]
+            success = splitter.split(df)
+            if not success:
+                continue
+            loss_ = splitter.loss
+            split_df_ = splitter.split_df
+            split_threshold_ = splitter.threshold
             # print(loss_)
             if (
                 loss_ < loss
@@ -509,9 +674,9 @@ class GradientBoostedTree:
         self.init_tree = c.tree
         return c
 
-    @staticmethod
-    def logistic(x):
-        return 1.0 / (1.0 + np.exp(x))
+    #@staticmethod
+    #def logistic(x):
+    #    return 1.0 / (1.0 + np.exp(-x))
 
     def predict_log_odds(self, x):
         p = self.init_tree.predict(x).value
@@ -522,7 +687,7 @@ class GradientBoostedTree:
 
     def predict(self, x):
         p = self.predict_log_odds(x)
-        return self.logistic(p)
+        return utils.logistic(p)
 
     def predict_all_log_odds(self, df):
         y_hat = np.empty((len(df.index),))
@@ -532,14 +697,14 @@ class GradientBoostedTree:
 
     def predict_all(self, df):
         p = self.predict_all_log_odds(df)
-        return self.logistic(p)
+        return utils.logistic(p)
 
     def _pseudo_residuals(self):
         # res = np.empty_like(self.df[self.y_name].values).astype(np.float64)
         # for i, x in enumerate(self.df.iloc):
         # res[i] = x[self.y_name] - self.predict(x)
         res = self.df[self.y_name] - self.predict_all(self.df)
-        return -res
+        return res
 
     def create_trees(self, M):
         self._initial_tree()
@@ -588,25 +753,13 @@ class GradientBoostedTree:
         delta = np.empty_like(y_hat)
         for i, x in enumerate(self.df.iloc):
             delta[i] = tree.predict(x).value
-
+        y = self.df[self.y_name].values
         def fun(gamma):
             y_ = y_hat + gamma * delta  # * self.learning_rate
-            y_hat_new = self.logistic(y_)
-            return self._logistic_loss(y_hat_new)
+            p = self.logistic(y_)
+            return utils.logistic_loss(y, p)
 
         return fun
-
-    def _logistic_loss(self, y_hat_new):
-        y = self.df[self.y_name].values
-        p = y_hat_new
-        # p = np.clip(p,1e-12,1.-1e-12)
-        l = -np.sum(y * np.log(p) + (1 - y) * np.log(1 - p))
-        return l
-
-    @staticmethod
-    def _dichotomize(y_hat):
-        y_hat = np.clip(y_hat, 0.0, 1.0)
-        return np.round(y_hat).astype(int)
 
     def validate(self, df=None):
         if df is None:
@@ -614,7 +767,6 @@ class GradientBoostedTree:
         y_hat = self.predict_all(df)
         # from binarybeech.metrics import LogisticMetrics
         # m = LogisticMetrics(self.y_name)
-        # m = metrics_factory.create_metrics(self.init_metrics_type,self.y_name)
         return self.metrics.validate(y_hat, df)
 
 

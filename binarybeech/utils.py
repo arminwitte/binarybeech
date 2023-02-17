@@ -59,6 +59,9 @@ def probability(x):
     if x == np.Inf:
         return 1.0
     return x / (1 + x)
+    
+def logistic(x):
+    return 1.0 / (1.0 + np.exp(-x))
 
 def precision(m):
     return np.diag(m) / np.sum(m, axis=1)
