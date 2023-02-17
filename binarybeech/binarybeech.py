@@ -761,11 +761,6 @@ class GradientBoostedTree:
 
         return fun
 
-    #@staticmethod
-    #def _dichotomize(y_hat):
-    #    y_hat = np.clip(y_hat, 0.0, 1.0)
-    #    return np.round(y_hat).astype(int)
-
     def validate(self, df=None):
         if df is None:
             df = self.df
