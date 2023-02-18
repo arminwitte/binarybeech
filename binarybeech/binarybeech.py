@@ -81,11 +81,11 @@ class Tree:
         for n in nodes:
             c.append(n.value)
         return np.unique(c).tolist()
-
+        
     def show(self):
-        tree_view = treelib.Tree()
-        self._show(self.root, tree_view)
-        tree_view.show()
+           tree_view = treelib.Tree()
+           self._show(self.root, tree_view)
+           tree_view.show()
 
     def _show(self, node, tree_view, parent=None, prefix=""):
         name = str(hash(node))
@@ -147,7 +147,7 @@ class Splitter(ABC):
 
 class NominalSplitter(Splitter):
     def __init__(self, y_name, attribute, metrics_type):
-        super().__init__(y_name, attribute, metrics_type)
+        super().__init__(y_name, metrics_type)
         
     def split(self, df):
         self.loss = np.Inf
@@ -190,10 +190,37 @@ class NominalSplitter(Splitter):
                 self.split_df = split_df
                 
         return success
+
+class DichotomousSplitter(Splitter):
+    def __init__(self, y_name, attribute, metrics_type):
+        super().__init__(y_name, metrics_type)
+        
+    def split(self, df):
+        self.loss = np.Inf
+        self.split_df = []
+        self.threshold = None
+        
+        success = False
+        
+        N = len(df.index)
+        
+        if np.sum(df[self.attribute]) >= N or np.sum(df[self.attribute]) <= 0.:
+            return success
+        
+        self.threshold = 0.5
+        self.split_df = [
+        df[df[self.attribute] == 1],
+        df[df[self.attribute] == 0]]
+        N = len(df.index)
+        n = [len(df_.index) for df_ in split_df]
+        self.loss = n[0] / N * self.metrics.loss(split_df[0]) + n[1] / N * self.metrics.loss(split_df[1])
+        
+        return success
+        
         
 class IntervalSplitter(Splitter):
     def __init__(self, y_name, attribute, metrics_type):
-        super().__init__(y_name, attribute, metrics_type)
+        super().__init__(y_name, metrics_type)
         
     def split(self, df):
         self.loss = np.Inf
@@ -229,14 +256,26 @@ class IntervalSplitter(Splitter):
     
         return fun
         
+class NullSplitter(Splitter):
+    def __init__(self, y_name, attribute, metrics_type):
+        super().__init__(y_name, metrics_type)
+            
+    def split(self, df):
+        self.loss = np.Inf
+        self.split_df = []
+        self.threshold = None
+            
+        success = False
+            
+        return success
         
 
 
 class CART:
     
     available_splitters = {"unknown":None,
-        "constant":None,
-        "dichotomous":NominalSplitter,
+        "constant":Null,
+        "dichotomous":DichotomousSplitter,
         "nominal":NominalSplitter,
         "interval":IntervalSplitter
     }
@@ -248,7 +287,7 @@ class CART:
         X_names=None,
         min_leaf_samples=1,
         min_split_samples=1,
-        max_depth=32767,
+        max_depth=10,
         metrics_type="regression",
     ):
         self.y_name = y_name
@@ -258,11 +297,10 @@ class CART:
         self.X_names = X_names
         self.df = self._handle_missings(df)
         self.tree = None
-        self.splittyness = 1.0
+        #self.splittyness = 1.0
         self.leaf_loss_threshold = 1e-12
         self.metrics_type = metrics_type
         self.metrics = metrics_factory.create_metrics(metrics_type, self.y_name)
-
 
         self.classes = np.unique(df[self.y_name]).tolist()
         self.variable_levels = self._variable_levels()
@@ -292,14 +330,14 @@ class CART:
                 if np.issubdtype(df.values.dtype, np.number):
                     d[name] = "interval"
                 else:
-                    d[name] = "nominal"
+                    d[name] = "nomimal"
         return d
                 
     def _init_splitters(self):
         d = {}
-        for key, val in self.variable_levels.items():
+        for key, val in self.variable_levels:
             splttr = self.available_splitters[val]
-            d[key] = splttr(self.y_name,key,self.metrics_type)
+            d[key] = splttr(self.y_name,key,metrics_type=self.metrics_type)
         return d
 
     def predict_all(self, df):
@@ -670,7 +708,7 @@ class GradientBoostedTree:
             metrics_type=self.init_metrics_type,
         )
         c.create_tree()
-        #c.prune()
+        c.prune()
         self.init_tree = c.tree
         return c
 
@@ -756,7 +794,7 @@ class GradientBoostedTree:
         y = self.df[self.y_name].values
         def fun(gamma):
             y_ = y_hat + gamma * delta  # * self.learning_rate
-            p = utils.logistic(y_)
+            p = self.logistic(y_)
             return utils.logistic_loss(y, p)
 
         return fun
