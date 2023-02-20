@@ -331,6 +331,7 @@ class CART:
                     d[name] = "interval"
                 else:
                     d[name] = "nomimal"
+            print(f"{name} is {d[name]}")
         return d
                 
     def _init_splitters(self):
