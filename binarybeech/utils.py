@@ -30,7 +30,7 @@ def print_tree(tree)
     _show(tree.root, tree_view)
     tree_view.show()
     
-def _k_fold_split(df, k=1, frac=None, random=False, shuffle=True, replace=True):
+def k_fold_split(df, k=1, frac=None, random=False, shuffle=True, replace=True):
     if shuffle:
         df = df.sample(frac=1., replace=False)
         

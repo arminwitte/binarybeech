@@ -268,7 +268,39 @@ class NullSplitter(Splitter):
         success = False
             
         return success
+    
+class Model(ABC):
+    def __init__(self,df, y_name, X_names=None):
+        self.y_name = y_name
+        if X_names is None:
+            X_names = list(df.columns)
+            X_names.remove(self.y_name)
+            self.X_names = X_names
+            self.df = self._handle_missings(df)
+            
+    def _handle_missings(self, df_in):
+        df_out = df_in.dropna(subset=[self.y_name])
+        # use nan as category
+        # use mean if numerical
+        for name in self.X_names:
+            if np.issubdtype(df_out[name].values.dtype, np.number):
+                df_out.loc[:,name] = df_out[name].fillna(np.nanmedian(df_out[name].values))
+            else:
+                df_out.loc[:,name] = df_out[name].fillna("missing")
+        return df_out
         
+    @abstractmethod
+    def train(self):
+        pass
+    
+    @abstractmethod
+    def predict(self, df):
+        pass
+    
+    @abstractmethod
+    def validate(self, df=None):
+        pass
+
 
 
 class CART:
@@ -324,7 +356,7 @@ class CART:
                 d[name] = "unknown"
             elif len(unique) == 1:
                 d[name] = "constant"
-            elif len(unique) == 2:
+            elif len(unique) == 2 and 0 in unique and 1 in unique:
                 d[name] = "dichotomous"
             else: 
                 if np.issubdtype(df.values.dtype, np.number):
@@ -445,17 +477,6 @@ class CART:
         self.logger.info(f"A tree with {n_leafs} leafs was created")
         return self.tree
 
-    def _opt_fun(self, df, split_name):
-        def fun(x):
-            split_df = [df[df[split_name] < x], df[df[split_name] >= x]]
-            N = len(df.index)
-            n = [len(df_.index) for df_ in split_df]
-            return n[0] / N * self._loss(split_df[0]) + n[1] / N * self._loss(
-                split_df[1]
-            )
-
-        return fun
-
     def _node_or_leaf(self, df):
         loss_parent = self._loss(df)
         # p = self._probability(df)
@@ -533,52 +554,8 @@ class CART:
 
         return loss, split_df, split_threshold, split_name
 
-    def _split_by_number(self, df, name):
-        if -df[name].min() + df[name].max() < np.finfo(float).tiny:
-            return np.Inf, None, None
-        res = opt.minimize_scalar(
-            self._opt_fun(df, name),
-            bounds=(df[name].min(), df[name].max()),
-            method="bounded",
-        )
-        split_threshold = res.x
-        split_df = [df[df[name] < split_threshold], df[df[name] >= split_threshold]]
-        loss = res.fun
-        return loss, split_df, split_threshold
-
-    def _split_by_class(self, df, name):
-        unique = np.unique(df[name])
-        comb = []
-        if len(unique) > 5:
-            comb = [(u,) for u in unique]
-        else:
-            for i in range(1, len(unique)):
-                comb += list(itertools.combinations(unique, i))
-
-        if len(comb) < 1:
-            return np.Inf, None, None
-
-        loss_ = np.Inf
-        loss = np.Inf
-        for c in comb:
-            split_threshold_ = c
-            split_df_ = [
-                df[df[name].isin(split_threshold_)],
-                df[~df[name].isin(split_threshold_)],
-            ]
-            N = len(df.index)
-            n = [len(df_.index) for df_ in split_df_]
-            loss_ = n[0] / N * self._loss(split_df_[0]) + n[1] / N * self._loss(
-                split_df_[1]
-            )
-            if loss_ < loss:
-                loss = loss_
-                split_threshold = split_threshold_
-                split_df = split_df_
-        return loss, split_df, split_threshold
-
-    def _loss(self, df):
-        return self.metrics.loss(df)
+    #def _loss(self, df):
+    #    return self.metrics.loss(df)
 
     def _node_value(self, df):
         return self.metrics.node_value(df)
@@ -662,7 +639,6 @@ class CART:
             n_leafs += nl
             R_desc += R
         return n_leafs, R_desc
-
 
 class GradientBoostedTree:
     def __init__(
