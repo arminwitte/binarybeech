@@ -212,8 +212,8 @@ class DichotomousSplitter(Splitter):
         df[df[self.attribute] == 1],
         df[df[self.attribute] == 0]]
         N = len(df.index)
-        n = [len(df_.index) for df_ in split_df]
-        self.loss = n[0] / N * self.metrics.loss(split_df[0]) + n[1] / N * self.metrics.loss(split_df[1])
+        n = [len(df_.index) for df_ in self.split_df]
+        self.loss = n[0] / N * self.metrics.loss(self.split_df[0]) + n[1] / N * self.metrics.loss(self.split_df[1])
         
         return success
         
@@ -346,7 +346,7 @@ class Model(ABC):
 class CART(Model):
     
     available_splitters = {"unknown":None,
-        "constant":Null,
+        "constant":NullSplitter,
         "dichotomous":DichotomousSplitter,
         "nominal":NominalSplitter,
         "interval":IntervalSplitter
@@ -403,7 +403,7 @@ class CART(Model):
             d[key] = splttr(self.y_name,key,metrics_type=self.metrics_type)
         return d
 
-    def predict_all(self, df):
+    def predict(self, df):
         y_hat = np.empty((len(df.index),))
         for i, x in enumerate(df.iloc):
             y_hat[i] = self.tree._predict(x).value
@@ -423,7 +423,7 @@ class CART(Model):
         qual_cv = np.zeros((len(beta), k))
         # split df for k-fold cross-validation
         sets = utils.k_fold_split(df, k)
-        for i, data in enumerate(sets)):
+        for i, data in enumerate(sets):
             c = CART(
                 data[0],
                 self.y_name,
@@ -700,7 +700,7 @@ class GradientBoostedTree(Model):
             metrics_type=self.init_metrics_type,
         )
         c.create_tree()
-        c.prune()
+        #c.prune()
         self.init_tree = c.tree
         return c
 
@@ -736,7 +736,7 @@ class GradientBoostedTree(Model):
         res = self.df[self.y_name] - self.predict_all(self.df)
         return res
 
-    def create_trees(self, M):
+    def train(self, M):
         self._initial_tree()
         res = self._pseudo_residuals()
         df = self.df
@@ -829,7 +829,7 @@ class RandomForest(Model):
         self.verbose = verbose
         self.logger = logging.getLogger(__name__)
 
-    def create_trees(self, M):
+    def train(self, M):
         self.trees = []
         for i in range(M):
             df = self.df.sample(frac=self.sample_frac, replace=True)
