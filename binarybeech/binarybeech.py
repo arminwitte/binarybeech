@@ -270,24 +270,66 @@ class NullSplitter(Splitter):
         return success
     
 class Model(ABC):
-    def __init__(self,df, y_name, X_names=None):
+    def __init__(self,df, y_name, X_names=None, handle_missings='simple', variable_levels=None):
         self.y_name = y_name
+        
         if X_names is None:
             X_names = list(df.columns)
             X_names.remove(self.y_name)
             self.X_names = X_names
-            self.df = self._handle_missings(df)
+        
+        self.variable_levels = self._variable_levels(variable_levels)
+        self.df = self._handle_missings(df, handle_missings)
             
-    def _handle_missings(self, df_in):
+    def _handle_missings(self, df_in, mode):
         df_out = df_in.dropna(subset=[self.y_name])
+        
+        if mode is None:
+            return df_out
         # use nan as category
         # use mean if numerical
-        for name in self.X_names:
-            if np.issubdtype(df_out[name].values.dtype, np.number):
+        for name, level in self.variable_levels.items():
+            if level == "unknown":
+                continue
+            elif level == "constant":
+                val = np.unique(df_out[~np.isnan(df_out[name])])[0]
+                df_out.loc[:,name] = df_out[name].fillna(val)
+            elif level == 'interval':
                 df_out.loc[:,name] = df_out[name].fillna(np.nanmedian(df_out[name].values))
-            else:
+            elif level == 'dichotomous':
+                unique, counts = np.unique(df_out[~np.isnan(df_out[name])], return_counts=True)
+                ind_max = np.argmax(counts)
+                val = unique[ind_max]
+                df_out.loc[:,name] = df_out[name].fillna(val)
+            elif level == 'nominal':
                 df_out.loc[:,name] = df_out[name].fillna("missing")
+            else:
+                raise ValueError("Unknown variable level")
         return df_out
+        
+    def _variable_levels(self, variable_levels=None):
+        if variable_levels is not None:
+            #TODO: include check whether variable_levels is comprehensive/complete
+            return variable_levels
+            
+        d = {}
+        vars = [self.y_name] + self.X_names
+        for name in vars:
+            df = self.df[name].dropna()
+            unique = np.unique(df)
+            if len(unique) == 0:
+                d[name] = "unknown"
+            elif len(unique) == 1:
+                d[name] = "constant"
+            elif len(unique) == 2 and 0 in unique and 1 in unique:
+                d[name] = "dichotomous"
+            else: 
+                if np.issubdtype(df.values.dtype, np.number):
+                    d[name] = "interval"
+                else:
+                    d[name] = "nominal"
+            print(f"{name} is {d[name]}")
+        return d
         
     @abstractmethod
     def train(self):
@@ -301,9 +343,7 @@ class Model(ABC):
     def validate(self, df=None):
         pass
 
-
-
-class CART:
+class CART(Model):
     
     available_splitters = {"unknown":None,
         "constant":Null,
@@ -321,18 +361,15 @@ class CART:
         min_split_samples=1,
         max_depth=10,
         metrics_type="regression",
+        handle_missings="simple",
+        variable_levels=None,
     ):
-        self.y_name = y_name
-        if X_names is None:
-            X_names = list(df.columns)
-            X_names.remove(self.y_name)
-        self.X_names = X_names
-        self.df = self._handle_missings(df)
+        super().__init__(df, y_name, X_names=X_names, handle_missings=handle_missings, variable_levels=variable_levels)
         self.tree = None
         #self.splittyness = 1.0
         self.leaf_loss_threshold = 1e-12
-        self.metrics_type = metrics_type
-        self.metrics = metrics_factory.create_metrics(metrics_type, self.y_name)
+        self.metrics_type = self._metrics_type(metrics_type)
+        self.metrics = metrics_factory.create_metrics(self.metrics_type, self.y_name)
 
         self.classes = np.unique(df[self.y_name]).tolist()
         self.variable_levels = self._variable_levels()
@@ -347,24 +384,17 @@ class CART:
 
         self.logger = logging.getLogger(__name__)
         
-    def _variable_levels(self):
-        d = {}
-        for name in self.X_names:
-            df = self.df[name].dropna()
-            unique = np.unique(df)
-            if len(unique) == 0:
-                d[name] = "unknown"
-            elif len(unique) == 1:
-                d[name] = "constant"
-            elif len(unique) == 2 and 0 in unique and 1 in unique:
-                d[name] = "dichotomous"
-            else: 
-                if np.issubdtype(df.values.dtype, np.number):
-                    d[name] = "interval"
-                else:
-                    d[name] = "nomimal"
-            print(f"{name} is {d[name]}")
-        return d
+    def _metrics_type(self, override=None):
+        if override is not None:
+            return override
+            
+        y_level = self.variable_levels[self.y_name]
+        
+        d = {"dichotomous":"logistic",
+            "nominal":"classification",
+            "interval":"regression"}
+            
+        return d[y_level]
                 
     def _init_splitters(self):
         d = {}
@@ -376,7 +406,7 @@ class CART:
     def predict_all(self, df):
         y_hat = np.empty((len(df.index),))
         for i, x in enumerate(df.iloc):
-            y_hat[i] = self.tree.predict(x).value
+            y_hat[i] = self.tree._predict(x).value
         return y_hat
 
     def train(self, k=5, plot=True, slack=1.0):
@@ -392,10 +422,10 @@ class CART:
         beta = self._beta(pres["alpha"])
         qual_cv = np.zeros((len(beta), k))
         # split df for k-fold cross-validation
-        training_sets, test_sets = self._k_fold_split(df, k)
-        for i in range(len(training_sets)):
+        sets = utils.k_fold_split(df, k)
+        for i, data in enumerate(sets)):
             c = CART(
-                training_sets[i],
+                data[0],
                 self.y_name,
                 X_names=self.X_names,
                 min_leaf_samples=self.min_leaf_samples,
@@ -404,7 +434,7 @@ class CART:
                 metrics_type=self.metrics_type,
             )
             c.create_tree()
-            pres = c.prune(test_set=test_sets[i])
+            pres = c.prune(test_set=data[1])
             qual = self._qualities(beta, pres)
             qual_cv[:, i] = np.array(qual)
         qual_mean = np.mean(qual_cv, axis=1)
@@ -444,19 +474,6 @@ class CART:
 
     def _qualities(self, beta, data):
         return [self._quality_at(b, data) for b in beta]
-
-    @staticmethod
-    def _k_fold_split(df, k):
-        N = len(df.index)
-        n = int(np.ceil(N / k))
-        training_sets = []
-        test_sets = []
-        for i in range(k):
-            test = df.iloc[i * n : min(N, (i + 1) * n), :]
-            training = df.loc[df.index.difference(test.index), :]
-            test_sets.append(test)
-            training_sets.append(training)
-        return training_sets, test_sets
 
     def _handle_missings(self, df_in):
         df_out = df_in.dropna(subset=[self.y_name])
@@ -565,15 +582,15 @@ class CART:
             df = self.df
         y_hat = []
         for x in df.iloc:
-            y_hat.append(self.tree.predict(x).value)
+            y_hat.append(self.tree._predict(x).value)
         y_hat = np.array(y_hat)
         return self.metrics.validate(y_hat, df)
 
-    def prune(self, alpha_max=None, test_set=None):
-        # if not alpha_max:
-        #    tree = copy.deepcopy(self.tree)
-        # else:
-        tree = self.tree
+    def prune(self, alpha_max=None, test_set=None, metrics_only=False):
+        if metrics_only:
+            tree = copy.deepcopy(self.tree)
+        else:
+            tree = self.tree
 
         d = {}
         d["alpha"] = []
@@ -640,7 +657,7 @@ class CART:
             R_desc += R
         return n_leafs, R_desc
 
-class GradientBoostedTree:
+class GradientBoostedTree(Model):
     def __init__(
         self,
         df,
@@ -652,14 +669,12 @@ class GradientBoostedTree:
         cart_settings={},
         init_metrics_type="logistic",
         gamma=None,
-    ):
-        self.df = df.copy()
+        handle_missings="simple",
+        variable_levels=None,
+        ):
+        super().__init__(df, y_name, X_names=X_names, handle_missings=handle_missings, variable_levels=variable_levels)
+        self.df = self.df.copy()
         self.N = len(self.df.index)
-        self.y_name = y_name
-        if X_names is None:
-            self.X_names = [s for s in df.columns if s not in [y_name]]
-        else:
-            self.X_names = X_names
 
         self.init_tree = None
         self.trees = []
@@ -693,15 +708,15 @@ class GradientBoostedTree:
     #def logistic(x):
     #    return 1.0 / (1.0 + np.exp(-x))
 
-    def predict_log_odds(self, x):
-        p = self.init_tree.predict(x).value
+    def _predict_log_odds(self, x):
+        p = self.init_tree._predict(x).value
         p = np.log(p / (1.0 - p))
         for i, t in enumerate(self.trees):
-            p += self.learning_rate * self.gamma[i] * t.predict(x).value
+            p += self.learning_rate * self.gamma[i] * t._predict(x).value
         return p
 
-    def predict(self, x):
-        p = self.predict_log_odds(x)
+    def _predict(self, x):
+        p = self._predict_log_odds(x)
         return utils.logistic(p)
 
     def predict_all_log_odds(self, df):
@@ -710,14 +725,14 @@ class GradientBoostedTree:
             y_hat[i] = self.predict_log_odds(x)
         return y_hat
 
-    def predict_all(self, df):
+    def predict(self, df):
         p = self.predict_all_log_odds(df)
         return utils.logistic(p)
 
     def _pseudo_residuals(self):
         # res = np.empty_like(self.df[self.y_name].values).astype(np.float64)
         # for i, x in enumerate(self.df.iloc):
-        # res[i] = x[self.y_name] - self.predict(x)
+        # res[i] = x[self.y_name] - self._predict(x)
         res = self.df[self.y_name] - self.predict_all(self.df)
         return res
 
@@ -767,7 +782,7 @@ class GradientBoostedTree:
         y_hat = self.predict_all_log_odds(self.df)
         delta = np.empty_like(y_hat)
         for i, x in enumerate(self.df.iloc):
-            delta[i] = tree.predict(x).value
+            delta[i] = tree._predict(x).value
         y = self.df[self.y_name].values
         def fun(gamma):
             y_ = y_hat + gamma * delta  # * self.learning_rate
@@ -785,7 +800,7 @@ class GradientBoostedTree:
         return self.metrics.validate(y_hat, df)
 
 
-class RandomForest:
+class RandomForest(Model):
     def __init__(
         self,
         df,
@@ -796,14 +811,12 @@ class RandomForest:
         n_attributes=None,
         cart_settings={},
         metrics_type="regression",
-    ):
-        self.df = df.copy()
+        handle_missings="simple",
+        variable_levels=None,
+        ):
+        super().__init__(df, y_name, X_names=X_names, handle_missings=handle_missings, variable_levels=variable_levels)
+        self.df = self.df.copy()
         self.N = len(self.df.index)
-        self.y_name = y_name
-        if X_names is None:
-            self.X_names = [s for s in df.columns if s not in [y_name]]
-        else:
-            self.X_names = X_names
 
         self.trees = []
         self.oob_indices = []
@@ -839,18 +852,18 @@ class RandomForest:
             if self.verbose:
                 print(f"{i:4d}: Tree with {c.tree.leaf_count()} leaves created.")
 
-    def predict(self, x):
+    def _predict(self, x):
         y = []
         for t in self.trees:
-            y.append(t.predict(x).value)
+            y.append(t._predict(x).value)
         unique, counts = np.unique(y, return_counts=True)
         ind_max = np.argmax(counts)
         return unique[ind_max]
 
-    def predict_all(self, df):
+    def predict(self, df):
         y_hat = []
         for x in df.iloc:
-            y_hat.append(self.predict(x))
+            y_hat.append(self._predict(x))
 
         return y_hat
 
@@ -872,7 +885,7 @@ class RandomForest:
             idx = self.oob_indices[i]
             for j in idx:
                 x = self.df.loc[j, :]
-                y = t.predict(x).value
+                y = t._predict(x).value
                 df.loc[j]["votes"].append(y)
         return df
 
