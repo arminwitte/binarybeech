@@ -423,7 +423,7 @@ class CART(Model):
         qual_cv = np.zeros((len(beta), k))
         # split df for k-fold cross-validation
         sets = utils.k_fold_split(df, k)
-        for i, data in enumerate(sets)):
+        for i, data in enumerate(sets):
             c = CART(
                 data[0],
                 self.y_name,
