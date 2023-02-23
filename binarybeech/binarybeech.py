@@ -403,7 +403,7 @@ class CART(Model):
             d[key] = splttr(self.y_name,key,metrics_type=self.metrics_type)
         return d
 
-    def predict_all(self, df):
+    def predict(self, df):
         y_hat = np.empty((len(df.index),))
         for i, x in enumerate(df.iloc):
             y_hat[i] = self.tree._predict(x).value
@@ -700,7 +700,7 @@ class GradientBoostedTree(Model):
             metrics_type=self.init_metrics_type,
         )
         c.create_tree()
-        c.prune()
+        #c.prune()
         self.init_tree = c.tree
         return c
 
@@ -736,7 +736,7 @@ class GradientBoostedTree(Model):
         res = self.df[self.y_name] - self.predict_all(self.df)
         return res
 
-    def create_trees(self, M):
+    def train(self, M):
         self._initial_tree()
         res = self._pseudo_residuals()
         df = self.df
@@ -829,7 +829,7 @@ class RandomForest(Model):
         self.verbose = verbose
         self.logger = logging.getLogger(__name__)
 
-    def create_trees(self, M):
+    def train(self, M):
         self.trees = []
         for i in range(M):
             df = self.df.sample(frac=self.sample_frac, replace=True)
