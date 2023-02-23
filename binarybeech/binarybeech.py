@@ -212,8 +212,8 @@ class DichotomousSplitter(Splitter):
         df[df[self.attribute] == 1],
         df[df[self.attribute] == 0]]
         N = len(df.index)
-        n = [len(df_.index) for df_ in split_df]
-        self.loss = n[0] / N * self.metrics.loss(split_df[0]) + n[1] / N * self.metrics.loss(split_df[1])
+        n = [len(df_.index) for df_ in self.split_df]
+        self.loss = n[0] / N * self.metrics.loss(self.split_df[0]) + n[1] / N * self.metrics.loss(self.split_df[1])
         
         return success
         
@@ -346,7 +346,7 @@ class Model(ABC):
 class CART(Model):
     
     available_splitters = {"unknown":None,
-        "constant":Null,
+        "constant":NullSplitter,
         "dichotomous":DichotomousSplitter,
         "nominal":NominalSplitter,
         "interval":IntervalSplitter
