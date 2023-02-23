@@ -81,7 +81,7 @@ class Tree:
         for n in nodes:
             c.append(n.value)
         return np.unique(c).tolist()
-        
+
     def show(self):
            tree_view = treelib.Tree()
            self._show(self.root, tree_view)

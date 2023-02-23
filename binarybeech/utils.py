@@ -9,7 +9,7 @@ def print_bars(d, max_width=70):
         l = int(round(usable_width * val / max_val))
         print(f"{key:10}|{'#'*l}{' '*(usable_width-l)}{val:4.2}")
 
-def print_tree(tree)
+def print_tree(tree):
 
     def _show(self, node, tree_view, parent=None, prefix=""):
         name = str(hash(node))
