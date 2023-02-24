@@ -276,9 +276,9 @@ class Model(ABC):
         if X_names is None:
             X_names = list(df.columns)
             X_names.remove(self.y_name)
-            self.X_names = X_names
+        self.X_names = X_names
         
-        self.variable_levels = self._variable_levels(variable_levels)
+        self.variable_levels = self._variable_levels(df, variable_levels)
         self.df = self._handle_missings(df, handle_missings)
             
     def _handle_missings(self, df_in, mode):
@@ -307,7 +307,7 @@ class Model(ABC):
                 raise ValueError("Unknown variable level")
         return df_out
         
-    def _variable_levels(self, variable_levels=None):
+    def _variable_levels(self, df, variable_levels=None):
         if variable_levels is not None:
             #TODO: include check whether variable_levels is comprehensive/complete
             return variable_levels
@@ -315,8 +315,8 @@ class Model(ABC):
         d = {}
         vars = [self.y_name] + self.X_names
         for name in vars:
-            df = self.df[name].dropna()
-            unique = np.unique(df)
+            df_ = df[name].dropna()
+            unique = np.unique(df_)
             if len(unique) == 0:
                 d[name] = "unknown"
             elif len(unique) == 1:
