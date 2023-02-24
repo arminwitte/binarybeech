@@ -147,7 +147,7 @@ class Splitter(ABC):
 
 class NominalSplitter(Splitter):
     def __init__(self, y_name, attribute, metrics_type):
-        super().__init__(y_name,  attribute, metrics_type)
+        super().__init__(y_name, metrics_type)
         
     def split(self, df):
         self.loss = np.Inf
@@ -193,7 +193,7 @@ class NominalSplitter(Splitter):
 
 class DichotomousSplitter(Splitter):
     def __init__(self, y_name, attribute, metrics_type):
-        super().__init__(y_name, attribute, metrics_type)
+        super().__init__(y_name, metrics_type)
         
     def split(self, df):
         self.loss = np.Inf
@@ -220,7 +220,7 @@ class DichotomousSplitter(Splitter):
         
 class IntervalSplitter(Splitter):
     def __init__(self, y_name, attribute, metrics_type):
-        super().__init__(y_name, attribute, metrics_type)
+        super().__init__(y_name, metrics_type)
         
     def split(self, df):
         self.loss = np.Inf
@@ -258,7 +258,7 @@ class IntervalSplitter(Splitter):
         
 class NullSplitter(Splitter):
     def __init__(self, y_name, attribute, metrics_type):
-        super().__init__(y_name, attribute, metrics_type)
+        super().__init__(y_name, metrics_type)
             
     def split(self, df):
         self.loss = np.Inf
@@ -297,7 +297,7 @@ class Model(ABC):
             elif level == 'interval':
                 df_out.loc[:,name] = df_out[name].fillna(np.nanmedian(df_out[name].values))
             elif level == 'dichotomous':
-                unique, counts = np.unique(df_out.dropna(subset=[name]).astype(int), return_counts=True)
+                unique, counts = np.unique(df_out[~np.isnan(df_out[name])], return_counts=True)
                 ind_max = np.argmax(counts)
                 val = unique[ind_max]
                 df_out.loc[:,name] = df_out[name].fillna(val)
@@ -321,7 +321,7 @@ class Model(ABC):
                 d[name] = "unknown"
             elif len(unique) == 1:
                 d[name] = "constant"
-            elif len(unique) == 2 and isinstance(unique[0],int) and 0 in unique and 1 in unique:
+            elif len(unique) == 2 and 0 in unique and 1 in unique:
                 d[name] = "dichotomous"
             else: 
                 if np.issubdtype(df.values.dtype, np.number):
@@ -398,7 +398,7 @@ class CART(Model):
                 
     def _init_splitters(self):
         d = {}
-        for key, val in self.variable_levels.items():
+        for key, val in self.variable_levels:
             splttr = self.available_splitters[val]
             d[key] = splttr(self.y_name,key,metrics_type=self.metrics_type)
         return d
@@ -475,6 +475,17 @@ class CART(Model):
     def _qualities(self, beta, data):
         return [self._quality_at(b, data) for b in beta]
 
+    def _handle_missings(self, df_in):
+        df_out = df_in.dropna(subset=[self.y_name])
+        # use nan as category
+        # use mean if numerical
+        for name in self.X_names:
+            if np.issubdtype(df_out[name].values.dtype, np.number):
+                df_out.loc[:,name] = df_out[name].fillna(np.nanmedian(df_out[name].values))
+            else:
+                df_out.loc[:,name] = df_out[name].fillna("missing")
+        return df_out
+
     def create_tree(self, leaf_loss_threshold=1e-12):
         self.leaf_loss_threshold = leaf_loss_threshold
         root = self._node_or_leaf(self.df)
@@ -484,7 +495,7 @@ class CART(Model):
         return self.tree
 
     def _node_or_leaf(self, df):
-        loss_parent = self.metrics.loss(df)
+        loss_parent = self._loss(df)
         # p = self._probability(df)
         if (
             loss_parent < self.leaf_loss_threshold
@@ -722,7 +733,7 @@ class GradientBoostedTree(Model):
         # res = np.empty_like(self.df[self.y_name].values).astype(np.float64)
         # for i, x in enumerate(self.df.iloc):
         # res[i] = x[self.y_name] - self._predict(x)
-        res = self.df[self.y_name] - self.predict(self.df)
+        res = self.df[self.y_name] - self.predict_all(self.df)
         return res
 
     def train(self, M):
@@ -783,7 +794,7 @@ class GradientBoostedTree(Model):
     def validate(self, df=None):
         if df is None:
             df = self.df
-        y_hat = self.predict(df)
+        y_hat = self.predict_all(df)
         # from binarybeech.metrics import LogisticMetrics
         # m = LogisticMetrics(self.y_name)
         return self.metrics.validate(y_hat, df)
@@ -888,7 +899,7 @@ class RandomForest(Model):
     def validate(self, df=None):
         if df is None:
             df = self.df
-        y_hat = self.predict(df)
+        y_hat = self.predict_all(df)
         return self.metrics.validate(y_hat, df)
 
     def variable_importance(self):
