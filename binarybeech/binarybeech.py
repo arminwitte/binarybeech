@@ -321,7 +321,7 @@ class Model(ABC):
                 d[name] = "unknown"
             elif len(unique) == 1:
                 d[name] = "constant"
-            elif len(unique) == 2 and 0 in unique and 1 in unique:
+            elif len(unique) == 2 and isinstance(unique[0],int) and 0 in unique and 1 in unique:
                 d[name] = "dichotomous"
             else: 
                 if np.issubdtype(df.values.dtype, np.number):
@@ -372,7 +372,7 @@ class CART(Model):
         self.metrics = metrics_factory.create_metrics(self.metrics_type, self.y_name)
 
         self.classes = np.unique(df[self.y_name]).tolist()
-        self.variable_levels = self._variable_levels()
+        self.variable_levels = self._variable_levels(df, variable_levels)
         self.splitters = self._init_splitters()
 
         # pre-pruning
@@ -398,7 +398,7 @@ class CART(Model):
                 
     def _init_splitters(self):
         d = {}
-        for key, val in self.variable_levels:
+        for key, val in self.variable_levels.items():
             splttr = self.available_splitters[val]
             d[key] = splttr(self.y_name,key,metrics_type=self.metrics_type)
         return d
@@ -475,17 +475,6 @@ class CART(Model):
     def _qualities(self, beta, data):
         return [self._quality_at(b, data) for b in beta]
 
-    def _handle_missings(self, df_in):
-        df_out = df_in.dropna(subset=[self.y_name])
-        # use nan as category
-        # use mean if numerical
-        for name in self.X_names:
-            if np.issubdtype(df_out[name].values.dtype, np.number):
-                df_out.loc[:,name] = df_out[name].fillna(np.nanmedian(df_out[name].values))
-            else:
-                df_out.loc[:,name] = df_out[name].fillna("missing")
-        return df_out
-
     def create_tree(self, leaf_loss_threshold=1e-12):
         self.leaf_loss_threshold = leaf_loss_threshold
         root = self._node_or_leaf(self.df)
@@ -495,7 +484,7 @@ class CART(Model):
         return self.tree
 
     def _node_or_leaf(self, df):
-        loss_parent = self._loss(df)
+        loss_parent = self.metrics.loss(df)
         # p = self._probability(df)
         if (
             loss_parent < self.leaf_loss_threshold
@@ -712,7 +701,7 @@ class GradientBoostedTree(Model):
         p = self.init_tree.traverse(x).value
         p = np.log(p / (1.0 - p))
         for i, t in enumerate(self.trees):
-            p += self.learning_rate * self.gamma[i] * t._predict(x).value
+            p += self.learning_rate * self.gamma[i] * t.traverse(x).value
         return p
 
     def _predict(self, x):
@@ -722,7 +711,7 @@ class GradientBoostedTree(Model):
     def predict_all_log_odds(self, df):
         y_hat = np.empty((len(df.index),))
         for i, x in enumerate(df.iloc):
-            y_hat[i] = self.predict_log_odds(x)
+            y_hat[i] = self._predict_log_odds(x)
         return y_hat
 
     def predict(self, df):
@@ -733,7 +722,7 @@ class GradientBoostedTree(Model):
         # res = np.empty_like(self.df[self.y_name].values).astype(np.float64)
         # for i, x in enumerate(self.df.iloc):
         # res[i] = x[self.y_name] - self._predict(x)
-        res = self.df[self.y_name] - self.predict_all(self.df)
+        res = self.df[self.y_name] - self.predict(self.df)
         return res
 
     def train(self, M):
@@ -756,7 +745,7 @@ class GradientBoostedTree(Model):
                 max_depth=3,
                 min_leaf_samples=5,
                 min_split_samples=4,
-                metrics_type="regression",
+                metrics_type="regression", variable_levels=self.variable_levels
             )
             kwargs = {**kwargs, **self.cart_settings}
             c = CART(
@@ -786,7 +775,7 @@ class GradientBoostedTree(Model):
         y = self.df[self.y_name].values
         def fun(gamma):
             y_ = y_hat + gamma * delta  # * self.learning_rate
-            p = self.logistic(y_)
+            p = utils.logistic(y_)
             return utils.logistic_loss(y, p)
 
         return fun
@@ -794,7 +783,7 @@ class GradientBoostedTree(Model):
     def validate(self, df=None):
         if df is None:
             df = self.df
-        y_hat = self.predict_all(df)
+        y_hat = self.predict(df)
         # from binarybeech.metrics import LogisticMetrics
         # m = LogisticMetrics(self.y_name)
         return self.metrics.validate(y_hat, df)
