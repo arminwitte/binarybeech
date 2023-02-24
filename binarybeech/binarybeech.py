@@ -48,7 +48,7 @@ class Tree:
     def __init__(self, root):
         self.root = root
 
-    def predict(self, x):
+    def traverse(self, x):
         item = self.root
         while not item.is_leaf:
             item = item.get_child(x)
@@ -408,7 +408,7 @@ class CART(Model):
     def predict(self, df):
         y_hat = np.empty((len(df.index),))
         for i, x in enumerate(df.iloc):
-            y_hat[i] = self.tree._predict(x).value
+            y_hat[i] = self.tree.traverse(x).value
         return y_hat
 
     def train(self, k=5, plot=True, slack=1.0):
@@ -573,7 +573,7 @@ class CART(Model):
             df = self.df
         y_hat = []
         for x in df.iloc:
-            y_hat.append(self.tree._predict(x).value)
+            y_hat.append(self.tree.traverse(x).value)
         y_hat = np.array(y_hat)
         return self.metrics.validate(y_hat, df)
 
@@ -700,7 +700,7 @@ class GradientBoostedTree(Model):
     #    return 1.0 / (1.0 + np.exp(-x))
 
     def _predict_log_odds(self, x):
-        p = self.init_tree._predict(x).value
+        p = self.init_tree.traverse(x).value
         p = np.log(p / (1.0 - p))
         for i, t in enumerate(self.trees):
             p += self.learning_rate * self.gamma[i] * t._predict(x).value
@@ -773,7 +773,7 @@ class GradientBoostedTree(Model):
         y_hat = self.predict_all_log_odds(self.df)
         delta = np.empty_like(y_hat)
         for i, x in enumerate(self.df.iloc):
-            delta[i] = tree._predict(x).value
+            delta[i] = tree.traverse(x).value
         y = self.df[self.y_name].values
         def fun(gamma):
             y_ = y_hat + gamma * delta  # * self.learning_rate
