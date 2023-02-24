@@ -204,13 +204,15 @@ class DichotomousSplitter(Splitter):
         
         N = len(df.index)
         
-        if np.sum(df[self.attribute]) >= N or np.sum(df[self.attribute]) <= 0.:
-            return success
+        unique = np.unique(df[self.attribute])
         
-        self.threshold = 0.5
+        if len(unique) < 2:
+            return success
+            
+        self.threshold = unique[0]
         self.split_df = [
-        df[df[self.attribute] == 1],
-        df[df[self.attribute] == 0]]
+        df[df[self.attribute] == self.threshold],
+        df[~df[self.attribute] == self.threshold]]
         N = len(df.index)
         n = [len(df_.index) for df_ in self.split_df]
         self.loss = n[0] / N * self.metrics.loss(self.split_df[0]) + n[1] / N * self.metrics.loss(self.split_df[1])
@@ -297,7 +299,7 @@ class Model(ABC):
             elif level == 'interval':
                 df_out.loc[:,name] = df_out[name].fillna(np.nanmedian(df_out[name].values))
             elif level == 'dichotomous':
-                unique, counts = np.unique(df_out[~np.isnan(df_out[name])], return_counts=True)
+                unique, counts = np.unique(df_out[name].dropna(), return_counts=True)
                 ind_max = np.argmax(counts)
                 val = unique[ind_max]
                 df_out.loc[:,name] = df_out[name].fillna(val)
@@ -313,18 +315,18 @@ class Model(ABC):
             return variable_levels
             
         d = {}
-        vars = [self.y_name] + self.X_names
-        for name in vars:
+        names = [self.y_name] + self.X_names
+        for name in names:
             df_ = df[name].dropna()
             unique = np.unique(df_)
             if len(unique) == 0:
                 d[name] = "unknown"
             elif len(unique) == 1:
                 d[name] = "constant"
-            elif len(unique) == 2 and isinstance(unique[0],int) and 0 in unique and 1 in unique:
+            elif len(unique) == 2:
                 d[name] = "dichotomous"
             else: 
-                if np.issubdtype(df.values.dtype, np.number):
+                if np.issubdtype(df_.values.dtype, np.number):
                     d[name] = "interval"
                 else:
                     d[name] = "nominal"
