@@ -147,7 +147,7 @@ class Splitter(ABC):
 
 class NominalSplitter(Splitter):
     def __init__(self, y_name, attribute, metrics_type):
-        super().__init__(y_name, metrics_type)
+        super().__init__(y_name, attribute, metrics_type)
         
     def split(self, df):
         self.loss = np.Inf
@@ -193,7 +193,7 @@ class NominalSplitter(Splitter):
 
 class DichotomousSplitter(Splitter):
     def __init__(self, y_name, attribute, metrics_type):
-        super().__init__(y_name, metrics_type)
+        super().__init__(y_name, attribute, metrics_type)
         
     def split(self, df):
         self.loss = np.Inf
@@ -220,7 +220,7 @@ class DichotomousSplitter(Splitter):
         
 class IntervalSplitter(Splitter):
     def __init__(self, y_name, attribute, metrics_type):
-        super().__init__(y_name, metrics_type)
+        super().__init__(y_name, attribute, metrics_type)
         
     def split(self, df):
         self.loss = np.Inf
@@ -258,7 +258,7 @@ class IntervalSplitter(Splitter):
         
 class NullSplitter(Splitter):
     def __init__(self, y_name, attribute, metrics_type):
-        super().__init__(y_name, metrics_type)
+        super().__init__(y_name, attribute, metrics_type)
             
     def split(self, df):
         self.loss = np.Inf
