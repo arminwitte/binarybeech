@@ -307,7 +307,7 @@ class Model(ABC):
                 raise ValueError("Unknown variable level")
         return df_out
         
-    def _variable_levels(self, df variable_levels=None):
+    def _variable_levels(self, df, variable_levels=None):
         if variable_levels is not None:
             #TODO: include check whether variable_levels is comprehensive/complete
             return variable_levels
