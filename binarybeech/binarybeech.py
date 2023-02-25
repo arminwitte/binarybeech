@@ -158,7 +158,7 @@ class NominalSplitter(Splitter):
         
         unique = np.unique(df[self.attribute])
         
-        if len(unique) < 1:
+        if len(unique) < 2:
             return success
         
         comb = []
@@ -208,11 +208,13 @@ class DichotomousSplitter(Splitter):
         
         if len(unique) < 2:
             return success
-            
-        self.threshold = unique[0]
+        
+        success = True
+        self.threshold = (unique[0],)
         self.split_df = [
-        df[df[self.attribute] == self.threshold],
-        df[df[self.attribute] != self.threshold]]
+                df[df[self.attribute].isin(self.threshold)],
+                        df[~df[self.attribute].isin(self.threshold)],
+                    ]
         N = len(df.index)
         n = [len(df_.index) for df_ in self.split_df]
         self.loss = n[0] / N * self.metrics.loss(self.split_df[0]) + n[1] / N * self.metrics.loss(self.split_df[1])
@@ -315,7 +317,8 @@ class Model(ABC):
             return variable_levels
             
         d = {}
-        names = [self.y_name] + self.X_names
+        names = [n for n in self.X_names]
+        names.append(self.y_name)
         for name in names:
             df_ = df[name].dropna()
             unique = np.unique(df_)
@@ -846,7 +849,7 @@ class RandomForest(Model):
     def _predict(self, x):
         y = []
         for t in self.trees:
-            y.append(t._predict(x).value)
+            y.append(t.traverse(x).value)
         unique, counts = np.unique(y, return_counts=True)
         ind_max = np.argmax(counts)
         return unique[ind_max]
@@ -876,7 +879,7 @@ class RandomForest(Model):
             idx = self.oob_indices[i]
             for j in idx:
                 x = self.df.loc[j, :]
-                y = t._predict(x).value
+                y = t.traverse(x).value
                 df.loc[j]["votes"].append(y)
         return df
 
@@ -890,7 +893,7 @@ class RandomForest(Model):
     def validate(self, df=None):
         if df is None:
             df = self.df
-        y_hat = self.predict_all(df)
+        y_hat = self.predict(df)
         return self.metrics.validate(y_hat, df)
 
     def variable_importance(self):
