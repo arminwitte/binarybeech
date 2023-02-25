@@ -212,7 +212,7 @@ class DichotomousSplitter(Splitter):
         self.threshold = unique[0]
         self.split_df = [
         df[df[self.attribute] == self.threshold],
-        df[~df[self.attribute] == self.threshold]]
+        df[df[self.attribute] != self.threshold]]
         N = len(df.index)
         n = [len(df_.index) for df_ in self.split_df]
         self.loss = n[0] / N * self.metrics.loss(self.split_df[0]) + n[1] / N * self.metrics.loss(self.split_df[1])
