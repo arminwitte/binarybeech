@@ -205,7 +205,7 @@ class ClassificationMetrics(Metrics):
         return confmat
 
 
-class MetricFactory:
+class MetricsFactory:
     def __init__(self):
         self.metrics = {}
 
@@ -219,7 +219,7 @@ class MetricFactory:
             raise ValueError("Invalid metrics type")
 
 
-metrics_factory = MetricFactory()
+metrics_factory = MetricsFactory()
 metrics_factory.register("regression", RegressionMetrics)
 metrics_factory.register("logistic", LogisticMetrics)
 metrics_factory.register("classification", ClassificationMetrics)
