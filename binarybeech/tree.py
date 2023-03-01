@@ -7,13 +7,20 @@ from abc import ABC, abstractmethod
 import numpy as np
 import pandas as pd
 
+import binarybeech.utils as utils
 import treelib
 from binarybeech.metrics import metrics_factory
-import binarybeech.utils as utils
 
 
 class Node:
-    def __init__(self, branches=None, attribute=None, threshold=None, value=None, desicion_fun=None):
+    def __init__(
+        self,
+        branches=None,
+        attribute=None,
+        threshold=None,
+        value=None,
+        desicion_fun=None,
+    ):
         if branches is None and value is None:
             raise ValueError(
                 "You have to specify either the branches emerging from this node or a value for this leaf."
@@ -28,7 +35,11 @@ class Node:
         self.pinfo = {}
 
     def get_child(self, df):
-        return self.branches[0] if self.desicion_fun(df[self.attribute], self.threshold) else self.branches[1]
+        return (
+            self.branches[0]
+            if self.desicion_fun(df[self.attribute], self.threshold)
+            else self.branches[1]
+        )
 
 
 class Tree:

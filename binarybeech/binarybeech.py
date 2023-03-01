@@ -10,34 +10,35 @@ import numpy as np
 import pandas as pd
 import scipy.optimize as opt
 
-import treelib
-from binarybeech.metrics import metrics_factory
 import binarybeech.utils as utils
-
+import treelib
+from binarybeech.datahandler import data_handler_factory
+from binarybeech.metrics import metrics_factory
+from binarybeech.reporter import Reporter
 from binarybeech.tree import Node, Tree
 
-from binarybeech.datahandler import data_handler_factory
 
-from binarybeech.reporter import Reporter
-    
 class Model(ABC):
-    def __init__(self,df, y_name, X_names, data_handlers, metrics_type, handle_missings):
+    def __init__(
+        self, df, y_name, X_names, data_handlers, metrics_type, handle_missings
+    ):
         self.y_name = y_name
-        
+
         if X_names is None:
             X_names = list(df.columns)
             X_names.remove(self.y_name)
         self.X_names = X_names
-        
+
         if data_handlers is None:
-            self.data_handlers = data_handler_factory.create_data_handlers(df, y_name, X_names, metrics_type)
-            
+            self.data_handlers = data_handler_factory.create_data_handlers(
+                df, y_name, X_names, metrics_type
+            )
+
         self.df = self._handle_missings(df, handle_missings)
-        
-            
+
     def _handle_missings(self, df, mode):
         df = df.dropna(subset=[self.y_name])
-        
+
         if mode is None:
             return df
         elif mode == "simple":
@@ -47,20 +48,21 @@ class Model(ABC):
                 df = dh.handle_missings(df)
         elif mode == "model":
             raise ValueError("Not implemented")
-            
+
         return df
-        
+
     @abstractmethod
     def train(self):
         pass
-    
+
     @abstractmethod
     def predict(self, df):
         pass
-    
+
     @abstractmethod
     def validate(self, df=None):
         pass
+
 
 class CART(Model):
     def __init__(
@@ -75,17 +77,14 @@ class CART(Model):
         handle_missings="simple",
         data_handlers=None,
     ):
-        super().__init__(df,
-            y_name,
-            X_names,
-            data_handlers,
-            metrics_type,
-            handle_missings)
+        super().__init__(
+            df, y_name, X_names, data_handlers, metrics_type, handle_missings
+        )
         self.tree = None
         self.leaf_loss_threshold = 1e-12
         self.metrics_type = self._metrics_type(metrics_type)
         self.metrics = metrics_factory.create_metrics(self.metrics_type, self.y_name)
- 
+
         # pre-pruning
         self.min_leaf_samples = min_leaf_samples
         self.min_split_samples = min_split_samples
@@ -332,6 +331,7 @@ class CART(Model):
             R_desc += R
         return n_leafs, R_desc
 
+
 class GradientBoostedTree(Model):
     def __init__(
         self,
@@ -346,13 +346,10 @@ class GradientBoostedTree(Model):
         gamma=None,
         handle_missings="simple",
         data_handlers=None,
-        ):
-        super().__init__(df,
-                    y_name,
-                    X_names,
-                    data_handlers,
-                    init_metrics_type,
-                    handle_missings)
+    ):
+        super().__init__(
+            df, y_name, X_names, data_handlers, init_metrics_type, handle_missings
+        )
         self.df = self.df.copy()
         self.N = len(self.df.index)
 
@@ -378,7 +375,7 @@ class GradientBoostedTree(Model):
             X_names=self.X_names,
             max_depth=0,
             metrics_type=self.init_metrics_type,
-            data_handlers=self.data_handlers
+            data_handlers=self.data_handlers,
         )
         c.create_tree()
         self.init_tree = c.tree
@@ -432,7 +429,8 @@ class GradientBoostedTree(Model):
                 max_depth=3,
                 min_leaf_samples=5,
                 min_split_samples=4,
-                metrics_type="regression", data_handlers=self.data_handlers
+                metrics_type="regression",
+                data_handlers=self.data_handlers,
             )
             kwargs = {**kwargs, **self.cart_settings}
             c = CART(
@@ -460,6 +458,7 @@ class GradientBoostedTree(Model):
         for i, x in enumerate(self.df.iloc):
             delta[i] = tree.traverse(x).value
         y = self.df[self.y_name].values
+
         def fun(gamma):
             y_ = y_hat + gamma * delta  # * self.learning_rate
             p = utils.logistic(y_)
@@ -489,13 +488,10 @@ class RandomForest(Model):
         metrics_type="regression",
         handle_missings="simple",
         data_handlers=None,
-        ):
-        super().__init__(df,
-                    y_name,
-                    X_names,
-                    data_handlers,
-                    metrics_type,
-                    handle_missings)
+    ):
+        super().__init__(
+            df, y_name, X_names, data_handlers, metrics_type, handle_missings
+        )
         self.df = self.df.copy()
         self.N = len(self.df.index)
 
@@ -524,7 +520,7 @@ class RandomForest(Model):
                 min_leaf_samples=5,
                 min_split_samples=4,
                 metrics_type=self.metrics_type,
-                data_handlers=self.data_handlers
+                data_handlers=self.data_handlers,
             )
             kwargs = {**kwargs, **self.cart_settings}
             c = CART(df, self.y_name, X_names=X_names, **kwargs)
