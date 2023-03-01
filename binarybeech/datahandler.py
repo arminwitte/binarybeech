@@ -80,9 +80,10 @@ class NominalDataHandler(DataHandlerBase):
                 self.split_df = split_df
                 
         return success
-   def handle_missings(self, df): 
-       df.loc[:,name] = df[name].fillna("missing")
-       return df
+
+    def handle_missings(self, df): 
+        df.loc[:,name] = df[name].fillna("missing")
+        return df
        
     @staticmethod        
     def decide(x, threshold):
@@ -197,9 +198,9 @@ class IntervalDataHandler(DataHandlerBase):
     
         return fun
    
-   def handle_missings(self, df): 
-       df.loc[:,name] = df[name].fillna(np.nanmedian(df[name].values))
-       return df
+    def handle_missings(self, df): 
+        df.loc[:,name] = df[name].fillna(np.nanmedian(df[name].values))
+        return df
        
     @staticmethod        
     def decide(x, threshold):
