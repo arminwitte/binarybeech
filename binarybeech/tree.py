@@ -28,8 +28,7 @@ class Node:
         self.pinfo = {}
 
     def get_child(self, df):
-        return self.branches[0]
-                if self.desicion_fun(df[self.attribute], self.threshold) else self.branches[1]
+        return self.branches[0] if self.desicion_fun(df[self.attribute], self.threshold) else self.branches[1]
 
 
 class Tree:
