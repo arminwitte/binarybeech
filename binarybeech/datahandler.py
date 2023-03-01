@@ -155,6 +155,7 @@ class DichotomousDataHandler(DataHandlerBase):
         ind_max = np.argmax(counts)
         val = unique[ind_max]
         df.loc[:, name] = df[name].fillna(val)
+        return df
 
     @staticmethod
     def decide(x, threshold):

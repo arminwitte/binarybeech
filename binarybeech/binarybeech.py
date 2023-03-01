@@ -31,6 +31,9 @@ class Model(ABC):
             self.data_handlers = data_handler_factory.create_data_handlers(
                 df, y_name, X_names, metrics_type
             )
+        else:
+            self.data_handlers = data_handlers
+        
 
         self.df = self._handle_missings(df, handle_missings)
 
@@ -80,8 +83,7 @@ class CART(Model):
         )
         self.tree = None
         self.leaf_loss_threshold = 1e-12
-        self.metrics_type = self._metrics_type(metrics_type)
-        self.metrics = metrics_factory.create_metrics(self.metrics_type, self.y_name)
+        self.metrics = metrics_factory.create_metrics(metrics_type, self.y_name)
 
         # pre-pruning
         self.min_leaf_samples = min_leaf_samples
