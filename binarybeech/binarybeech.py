@@ -18,177 +18,10 @@ from binarybeech.tree import Node, Tree
 
 from binarybeech.datahandler import data_handler_factory
 
-class Reporter:
-    def __init__(self, labels):
-        self.labels = labels
-        self.buffer = {}
-    
-    def set(self, **kwargs):
-        self.buffer.update(kwargs)
-        
-    def print(self):
-        s = ""
-        for l in self.labels:
-            v = self.buffer.get(l)
-            if v is None:
-                s += " - \t"
-            elif isinstance(v,float):
-                s += f"{v:4.2f}\t"
-            elif isinstance(v,int):
-                s += f"{v:6}\t"
-            elif isinstance(v,str):
-                s += f"{v[:9]}\t"
-            else:
-                s += f"{v:10}\t"
-        print(s)
-        self.buffer = {}
-
-
-class Splitter(ABC):
-    def __init__(self, y_name, attribute,  metrics_type):
-        self.y_name = y_name
-        self.attribute = attribute
-        self.metrics = metrics_factory.create_metrics(metrics_type, self.y_name)
-        
-        self.loss = None
-        self.split_df = []
-        self.threshold = None
-    
-    @abstractmethod
-    def split(self, df):
-        pass
-
-
-class NominalSplitter(Splitter):
-    def __init__(self, y_name, attribute, metrics_type):
-        super().__init__(y_name, attribute, metrics_type)
-        
-    def split(self, df):
-        self.loss = np.Inf
-        self.split_df = []
-        self.threshold = None
-        
-        success = False
-        
-        unique = np.unique(df[self.attribute])
-        
-        if len(unique) < 2:
-            return success
-        
-        comb = []
-        name = self.attribute
-        
-        if len(unique) > 5:
-            comb = [(u,) for u in unique]
-        else:
-            for i in range(1, len(unique)):
-                comb += list(itertools.combinations(unique, i))
-        
-        loss = np.Inf
-        
-        for c in comb:
-            threshold = c
-            split_df = [
-                df[df[name].isin(threshold)],
-                        df[~df[name].isin(threshold)],
-                    ]
-            N = len(df.index)
-            n = [len(df_.index) for df_ in split_df]
-            loss = n[0] / N * self.metrics.loss(split_df[0]) + n[1] / N * self.metrics.loss(
-                        split_df[1]
-                    )
-            if loss < self.loss:
-                success = True
-                self.loss = loss
-                self.threshold = threshold
-                self.split_df = split_df
-                
-        return success
-
-class DichotomousSplitter(Splitter):
-    def __init__(self, y_name, attribute, metrics_type):
-        super().__init__(y_name, attribute, metrics_type)
-        
-    def split(self, df):
-        self.loss = np.Inf
-        self.split_df = []
-        self.threshold = None
-        
-        success = False
-        
-        N = len(df.index)
-        
-        unique = np.unique(df[self.attribute])
-        
-        if len(unique) < 2:
-            return success
-        
-        success = True
-        self.threshold = (unique[0],)
-        self.split_df = [
-                df[df[self.attribute].isin(self.threshold)],
-                        df[~df[self.attribute].isin(self.threshold)],
-                    ]
-        N = len(df.index)
-        n = [len(df_.index) for df_ in self.split_df]
-        self.loss = n[0] / N * self.metrics.loss(self.split_df[0]) + n[1] / N * self.metrics.loss(self.split_df[1])
-        
-        return success
-        
-        
-class IntervalSplitter(Splitter):
-    def __init__(self, y_name, attribute, metrics_type):
-        super().__init__(y_name, attribute, metrics_type)
-        
-    def split(self, df):
-        self.loss = np.Inf
-        self.split_df = []
-        self.threshold = None
-        
-        success = False
-        
-        if -df[self.attribute].min() + df[self.attribute].max() < np.finfo(float).tiny:
-            return success
-            
-        mame = self.attribute
-        
-        res = opt.minimize_scalar(
-            self._opt_fun(df),
-            bounds=(df[self.attribute].min(), df[self.attribute].max()),
-            method="bounded",
-        )
-        self.threshold = res.x
-        self.split_df = [df[df[self.attribute] < self.threshold], df[df[self.attribute] >= self.threshold]]
-        self.loss = res.fun
-        return res.success
-                
-    def _opt_fun(self, df):
-        split_name = self.attribute
-        N = len(df.index)
-        def fun(x):
-            split_df = [df[df[split_name] < x], df[df[split_name] >= x]]
-            n = [len(df_.index) for df_ in split_df]
-            return n[0] / N * self.metrics.loss(split_df[0]) + n[1] / N * self.metrics.loss(
-                    split_df[1]
-                )
-    
-        return fun
-        
-class NullSplitter(Splitter):
-    def __init__(self, y_name, attribute, metrics_type):
-        super().__init__(y_name, attribute, metrics_type)
-            
-    def split(self, df):
-        self.loss = np.Inf
-        self.split_df = []
-        self.threshold = None
-            
-        success = False
-            
-        return success
+from binarybeech.reporter import Reporter
     
 class Model(ABC):
-    def __init__(self,df, y_name, X_names=None, handle_missings='simple', variable_levels=None):
+    def __init__(self,df, y_name, X_names, data_handlers, metrics_type, handle_missings):
         self.y_name = y_name
         
         if X_names is None:
@@ -196,59 +29,26 @@ class Model(ABC):
             X_names.remove(self.y_name)
         self.X_names = X_names
         
-        self.variable_levels = self._variable_levels(df, variable_levels)
-        self.df = self._handle_missings(df, handle_missings)
+        if data_handlers is None:
+            self.data_handlers = data_handler_factory.create_data_handlers(df, y_name, X_names, metrics_type)
             
-    def _handle_missings(self, df_in, mode):
-        df_out = df_in.dropna(subset=[self.y_name])
+        self.df = self._handle_missings(df, handle_missings)
+        
+            
+    def _handle_missings(self, df, mode):
+        df = df.dropna(subset=[self.y_name])
         
         if mode is None:
-            return df_out
-        # use nan as category
-        # use mean if numerical
-        for name, level in self.variable_levels.items():
-            if level == "unknown":
-                continue
-            elif level == "constant":
-                val = np.unique(df_out[~np.isnan(df_out[name])])[0]
-                df_out.loc[:,name] = df_out[name].fillna(val)
-            elif level == 'interval':
-                df_out.loc[:,name] = df_out[name].fillna(np.nanmedian(df_out[name].values))
-            elif level == 'dichotomous':
-                unique, counts = np.unique(df_out[name].dropna(), return_counts=True)
-                ind_max = np.argmax(counts)
-                val = unique[ind_max]
-                df_out.loc[:,name] = df_out[name].fillna(val)
-            elif level == 'nominal':
-                df_out.loc[:,name] = df_out[name].fillna("missing")
-            else:
-                raise ValueError("Unknown variable level")
-        return df_out
-        
-    def _variable_levels(self, df, variable_levels=None):
-        if variable_levels is not None:
-            #TODO: include check whether variable_levels is comprehensive/complete
-            return variable_levels
+            return df
+        elif mode == "simple":
+            # use nan as category
+            # use mean if numerical
+            for name, dh in self.data_handlers.items():
+                df = dh.handle_missings(df)
+        elif mode == "model":
+            raise ValueError("Not implemented")
             
-        d = {}
-        names = [n for n in self.X_names]
-        names.append(self.y_name)
-        for name in names:
-            df_ = df[name].dropna()
-            unique = np.unique(df_)
-            if len(unique) == 0:
-                d[name] = "unknown"
-            elif len(unique) == 1:
-                d[name] = "constant"
-            elif len(unique) == 2:
-                d[name] = "dichotomous"
-            else: 
-                if np.issubdtype(df_.values.dtype, np.number):
-                    d[name] = "interval"
-                else:
-                    d[name] = "nominal"
-            print(f"{name} is {d[name]}")
-        return d
+        return df
         
     @abstractmethod
     def train(self):
@@ -263,14 +63,6 @@ class Model(ABC):
         pass
 
 class CART(Model):
-    
-    available_splitters = {"unknown":None,
-        "constant":NullSplitter,
-        "dichotomous":DichotomousSplitter,
-        "nominal":NominalSplitter,
-        "interval":IntervalSplitter
-    }
-    
     def __init__(
         self,
         df,
@@ -281,19 +73,19 @@ class CART(Model):
         max_depth=10,
         metrics_type="regression",
         handle_missings="simple",
-        variable_levels=None,
+        data_handlers=None,
     ):
-        super().__init__(df, y_name, X_names=X_names, handle_missings=handle_missings, variable_levels=variable_levels)
+        super().__init__(df,
+            y_name,
+            X_names,
+            data_handlers,
+            metrics_type,
+            handle_missings)
         self.tree = None
-        #self.splittyness = 1.0
         self.leaf_loss_threshold = 1e-12
         self.metrics_type = self._metrics_type(metrics_type)
         self.metrics = metrics_factory.create_metrics(self.metrics_type, self.y_name)
-
-        self.classes = np.unique(df[self.y_name]).tolist()
-        self.variable_levels = self._variable_levels(df, variable_levels)
-        self.splitters = self._init_splitters()
-
+ 
         # pre-pruning
         self.min_leaf_samples = min_leaf_samples
         self.min_split_samples = min_split_samples
@@ -302,25 +94,6 @@ class CART(Model):
         self.depth = 0
 
         self.logger = logging.getLogger(__name__)
-        
-    def _metrics_type(self, override=None):
-        if override is not None:
-            return override
-            
-        y_level = self.variable_levels[self.y_name]
-        
-        d = {"dichotomous":"logistic",
-            "nominal":"classification",
-            "interval":"regression"}
-            
-        return d[y_level]
-                
-    def _init_splitters(self):
-        d = {}
-        for key, val in self.variable_levels.items():
-            splttr = self.available_splitters[val]
-            d[key] = splttr(self.y_name,key,metrics_type=self.metrics_type)
-        return d
 
     def predict(self, df):
         y_hat = np.empty((len(df.index),))
@@ -428,7 +201,7 @@ class CART(Model):
                 branches.append(self._node_or_leaf(split_df[i]))
             self.depth -= 1
             unique, counts = np.unique(df[self.y_name], return_counts=True)
-            value = self._node_value(df)
+            value = self.metrics.node_value(df)
             item = Node(
                 branches=branches,
                 attribute=split_name,
@@ -444,7 +217,7 @@ class CART(Model):
         return item
 
     def _leaf(self, df):
-        value = self._node_value(df)
+        value = self.metrics.node_value(df)
         leaf = Node(value=value)
 
         leaf.pinfo["N"] = len(df.index)
@@ -478,12 +251,6 @@ class CART(Model):
                 split_name = name
 
         return loss, split_df, split_threshold, split_name
-
-    #def _loss(self, df):
-    #    return self.metrics.loss(df)
-
-    def _node_value(self, df):
-        return self.metrics.node_value(df)
 
     def validate(self, df=None):
         if df is None:
@@ -578,9 +345,14 @@ class GradientBoostedTree(Model):
         init_metrics_type="logistic",
         gamma=None,
         handle_missings="simple",
-        variable_levels=None,
+        data_handlers=None,
         ):
-        super().__init__(df, y_name, X_names=X_names, handle_missings=handle_missings, variable_levels=variable_levels)
+        super().__init__(df,
+                    y_name,
+                    X_names,
+                    data_handlers,
+                    init_metrics_type,
+                    handle_missings)
         self.df = self.df.copy()
         self.N = len(self.df.index)
 
@@ -606,15 +378,11 @@ class GradientBoostedTree(Model):
             X_names=self.X_names,
             max_depth=0,
             metrics_type=self.init_metrics_type,
+            data_handlers=self.data_handlers
         )
         c.create_tree()
-        #c.prune()
         self.init_tree = c.tree
         return c
-
-    #@staticmethod
-    #def logistic(x):
-    #    return 1.0 / (1.0 + np.exp(-x))
 
     def _predict_log_odds(self, x):
         p = self.init_tree.traverse(x).value
@@ -664,7 +432,7 @@ class GradientBoostedTree(Model):
                 max_depth=3,
                 min_leaf_samples=5,
                 min_split_samples=4,
-                metrics_type="regression", variable_levels=self.variable_levels
+                metrics_type="regression", data_handlers=self.data_handlers
             )
             kwargs = {**kwargs, **self.cart_settings}
             c = CART(
@@ -720,9 +488,14 @@ class RandomForest(Model):
         cart_settings={},
         metrics_type="regression",
         handle_missings="simple",
-        variable_levels=None,
+        data_handlers=None,
         ):
-        super().__init__(df, y_name, X_names=X_names, handle_missings=handle_missings, variable_levels=variable_levels)
+        super().__init__(df,
+                    y_name,
+                    X_names,
+                    data_handlers,
+                    metrics_type,
+                    handle_missings)
         self.df = self.df.copy()
         self.N = len(self.df.index)
 
@@ -751,6 +524,7 @@ class RandomForest(Model):
                 min_leaf_samples=5,
                 min_split_samples=4,
                 metrics_type=self.metrics_type,
+                data_handlers=self.data_handlers
             )
             kwargs = {**kwargs, **self.cart_settings}
             c = CART(df, self.y_name, X_names=X_names, **kwargs)

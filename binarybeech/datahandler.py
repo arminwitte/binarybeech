@@ -17,6 +17,10 @@ class DataHandlerBase:
     def split(self,df):
         pass
     
+    @abstractmethod
+    def handle_missings(self,df):
+        pass
+    
     @abstractstaticmethod
     def decide(x,threshold):
         pass
@@ -76,7 +80,10 @@ class NominalDataHandler(DataHandlerBase):
                 self.split_df = split_df
                 
         return success
-   
+   def handle_missings(self, df): 
+       df.loc[:,name] = df[name].fillna("missing")
+       return df
+       
     @staticmethod        
     def decide(x, threshold):
         return True if x in threshold else False
@@ -126,6 +133,12 @@ class DichotomousDataHandler(DataHandlerBase):
         self.loss = n[0] / N * self.metrics.loss(self.split_df[0]) + n[1] / N * self.metrics.loss(self.split_df[1])
         
         return success
+        
+    def handle_missings(self,df):
+        unique, counts = np.unique(df[name].dropna(), return_counts=True)
+        ind_max = np.argmax(counts)
+        val = unique[ind_max]
+        df.loc[:,name] = df[name].fillna(val)
    
     @staticmethod        
     def decide(x, threshold):
@@ -184,6 +197,10 @@ class IntervalDataHandler(DataHandlerBase):
     
         return fun
    
+   def handle_missings(self, df): 
+       df.loc[:,name] = df[name].fillna(np.nanmedian(df[name].values))
+       return df
+       
     @staticmethod        
     def decide(x, threshold):
         return True if x < threshold else False
@@ -218,6 +235,9 @@ class NullDataHandler(DataHandlerBase):
         success = False
             
         return success
+        
+    def handle_missings(self, df):
+        return df
        
     @staticmethod    
     def decide(x, threshold):
@@ -240,12 +260,25 @@ class DataHandlerFactory:
     def register(self, data_level, data_handler_class):
         self.data_handlers[data_level] = data_handler_class
     
-    def create_data_handler(self, df):
+    def get_data_handler_class(self, df):
         for data_handler_class in self.data_handlers.values():
             if data_handler_class.check(df):
                 return data_handler_class
             
         raise ValueError("no data handler class for this type of data")
+        
+    def create_data_handlers(self,df,y_name,X_names,metrics_type):
+        dhc = self.get_data_handler_class(df[y_name])
+        if metrics_type is None:
+            metrics_type = dhc.metrics_hint()
+            
+        d = {y_name:dhc(y_name, y_name, metrics_type)}
+        
+        for name in X_names:
+            dhc = self.get_data_handler_class(df[name])
+            d[name] = dhc(y_name, name, metrics_type)
+            
+        return d
             
     
 data_handler_factory = DataHandlerFactory()
