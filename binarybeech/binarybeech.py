@@ -8,7 +8,6 @@ from abc import ABC, abstractmethod
 
 import numpy as np
 import pandas as pd
-import scipy.optimize as opt
 
 import treelib
 from binarybeech.metrics import metrics_factory

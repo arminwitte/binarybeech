@@ -1,7 +1,10 @@
 from abc import ABC, abstractmethod, abstractstaticmethod
 import numpy as np
+import itertools
 
 from binarybeech.metrics import metrics_factory
+
+import scipy.optimize as opt
 
 class DataHandlerBase:
     def __init__(self, y_name, attribute,  metrics_type):
@@ -82,6 +85,7 @@ class NominalDataHandler(DataHandlerBase):
         return success
 
     def handle_missings(self, df): 
+        name = self.attribute
         df.loc[:,name] = df[name].fillna("missing")
         return df
        
@@ -136,6 +140,7 @@ class DichotomousDataHandler(DataHandlerBase):
         return success
         
     def handle_missings(self,df):
+        name = self.attribute
         unique, counts = np.unique(df[name].dropna(), return_counts=True)
         ind_max = np.argmax(counts)
         val = unique[ind_max]
@@ -199,6 +204,7 @@ class IntervalDataHandler(DataHandlerBase):
         return fun
    
     def handle_missings(self, df): 
+        name = self.attribute
         df.loc[:,name] = df[name].fillna(np.nanmedian(df[name].values))
         return df
        
