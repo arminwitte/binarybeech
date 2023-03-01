@@ -2,6 +2,7 @@ import itertools
 from abc import ABC, abstractmethod
 
 import numpy as np
+import pandas as pd
 import scipy.optimize as opt
 
 from binarybeech.metrics import metrics_factory
@@ -101,6 +102,7 @@ class NominalDataHandler(DataHandlerBase):
 
     @staticmethod
     def check(x):
+        x = x[~pd.isna(x)]
         unique = np.unique(x)
         l = len(unique)
         dtype = x.values.dtype
@@ -160,6 +162,7 @@ class DichotomousDataHandler(DataHandlerBase):
 
     @staticmethod
     def check(x):
+        x = x[~pd.isna(x)]
         unique = np.unique(x)
         l = len(unique)
         dtype = x.values.dtype
@@ -227,6 +230,7 @@ class IntervalDataHandler(DataHandlerBase):
 
     @staticmethod
     def check(x):
+        x = x[~pd.isna(x)]
         unique = np.unique(x)
         l = len(unique)
         dtype = x.values.dtype
