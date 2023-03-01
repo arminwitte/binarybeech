@@ -2,7 +2,6 @@
 # coding: utf-8
 
 import copy
-import itertools
 import logging
 from abc import ABC, abstractmethod
 
@@ -11,7 +10,6 @@ import pandas as pd
 import scipy.optimize as opt
 
 import binarybeech.utils as utils
-import treelib
 from binarybeech.datahandler import data_handler_factory
 from binarybeech.metrics import metrics_factory
 from binarybeech.reporter import Reporter
@@ -130,7 +128,7 @@ class CART(Model):
             qual_cv[:, i] = np.array(qual)
         qual_mean = np.mean(qual_cv, axis=1)
         qual_sd = np.std(qual_cv, axis=1)
-        qual_sd_mean = np.mean(qual_sd)
+        # qual_sd_mean = np.mean(qual_sd)
         import matplotlib.pyplot as plt
 
         plt.errorbar(beta, qual_mean, yerr=qual_sd)

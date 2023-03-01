@@ -1,5 +1,5 @@
 import itertools
-from abc import ABC, abstractmethod, abstractstaticmethod
+from abc import ABC, abstractmethod
 
 import numpy as np
 import scipy.optimize as opt
@@ -7,7 +7,7 @@ import scipy.optimize as opt
 from binarybeech.metrics import metrics_factory
 
 
-class DataHandlerBase:
+class DataHandlerBase(ABC):
     def __init__(self, y_name, attribute, metrics_type):
         self.y_name = y_name
         self.attribute = attribute
@@ -25,15 +25,18 @@ class DataHandlerBase:
     def handle_missings(self, df):
         pass
 
-    @abstractstaticmethod
+    @staticmethod
+    @abstractmethod
     def decide(x, threshold):
         pass
 
-    @abstractstaticmethod
+    @staticmethod
+    @abstractmethod
     def check(x):
         pass
 
-    @abstractstaticmethod
+    @staticmethod
+    @abstractmethod
     def metrics_hint():
         pass
 
