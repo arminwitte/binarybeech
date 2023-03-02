@@ -81,8 +81,6 @@ class NominalDataHandler(DataHandlerBase):
             N = len(df.index)
             n = [len(df_.index) for df_ in split_df]
             loss = (n[0] / N * self.metrics.loss(split_df[0]) + n[1] / N * self.metrics.loss(split_df[1]))
-            if loss <= 0.:
-                print("loss=0!",unique)
             if loss < self.loss:
                 success = True
                 self.loss = loss
@@ -105,6 +103,10 @@ class NominalDataHandler(DataHandlerBase):
         x = x[~pd.isna(x)]
         unique = np.unique(x)
         l = len(unique)
+        
+        if l/len(x) > 0.2:
+            return False
+            
         dtype = x.values.dtype
 
         if not np.issubdtype(dtype, np.number) and l > 2:
@@ -164,6 +166,10 @@ class DichotomousDataHandler(DataHandlerBase):
         x = x[~pd.isna(x)]
         unique = np.unique(x)
         l = len(unique)
+        
+        if l/len(x) > 0.2:
+            return False
+                    
         dtype = x.values.dtype
 
         if l == 2:
