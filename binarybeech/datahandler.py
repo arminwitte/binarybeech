@@ -80,9 +80,7 @@ class NominalDataHandler(DataHandlerBase):
             ]
             N = len(df.index)
             n = [len(df_.index) for df_ in split_df]
-            loss = n[0] / N * self.metrics.loss(split_df[0]) + n[
-                1
-            ] / N * self.metrics.loss(split_df[1])
+            loss = (n[0] / N * self.metrics.loss(split_df[0]) + n[1] / N * self.metrics.loss(split_df[1]))
             if loss < self.loss:
                 success = True
                 self.loss = loss
@@ -143,9 +141,7 @@ class DichotomousDataHandler(DataHandlerBase):
         ]
         N = len(df.index)
         n = [len(df_.index) for df_ in self.split_df]
-        self.loss = n[0] / N * self.metrics.loss(self.split_df[0]) + n[
-            1
-        ] / N * self.metrics.loss(self.split_df[1])
+        self.loss = (n[0] / N * self.metrics.loss(self.split_df[0]) + n[1] / N * self.metrics.loss(self.split_df[1]))
 
         return success
 
