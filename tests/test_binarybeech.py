@@ -13,6 +13,7 @@ def test_cart():
     p = c._predict(df_titanic.iloc[0])
     print(c.validate())
     assert p == 0
+    assert c._predict(df_titanic.iloc[1]) == 1
     
 def test_cart2():
     df_titanic = pd.read_csv("data/titanic.csv")
@@ -20,8 +21,8 @@ def test_cart2():
     c.train()
     p = c._predict(df_titanic.iloc[0])
     print(c.validate())
-    assert p == 0
-    
+    assert p == 1
+    assert c._predict(df_titanic.iloc[1]) == 1
     
 def test_gbt():
     df_titanic = pd.read_csv("data/titanic.csv")
@@ -29,4 +30,5 @@ def test_gbt():
     gbt.train(10)
     p = gbt._predict(df_titanic.iloc[0])
     assert p == 0.9
+    assert c._predict(df_titanic.iloc[1]) == 1
     
