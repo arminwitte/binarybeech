@@ -210,9 +210,7 @@ class IntervalDataHandler(DataHandlerBase):
         def fun(x):
             split_df = [df[df[split_name] < x], df[df[split_name] >= x]]
             n = [len(df_.index) for df_ in split_df]
-            return n[0] / N * self.metrics.loss(split_df[0]) + n[
-                1
-            ] / N * self.metrics.loss(split_df[1])
+            return (n[0] / N * self.metrics.loss(split_df[0]) + n[1] / N * self.metrics.loss(split_df[1]))
 
         return fun
 
