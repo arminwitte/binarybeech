@@ -231,13 +231,13 @@ class CART(Model):
         split_name = None
         for name in self.X_names:
             loss_ = np.Inf
-            splitter = self.splitters[name]
-            success = splitter.split(df)
+            dh = self.data_handlers[name]
+            success = dh.split(df)
             if not success:
                 continue
-            loss_ = splitter.loss
-            split_df_ = splitter.split_df
-            split_threshold_ = splitter.threshold
+            loss_ = dh.loss
+            split_df_ = dh.split_df
+            split_threshold_ = dh.threshold
             # print(loss_)
             if (
                 loss_ < loss
