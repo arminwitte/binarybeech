@@ -83,6 +83,7 @@ class CART(Model):
         )
         self.tree = None
         self.leaf_loss_threshold = 1e-12
+        self.metrics_type = metrics_type
         self.metrics = metrics_factory.create_metrics(metrics_type, self.y_name)
 
         # pre-pruning
