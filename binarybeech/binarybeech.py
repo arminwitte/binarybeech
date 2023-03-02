@@ -83,7 +83,6 @@ class CART(Model):
         self.tree = None
         self.leaf_loss_threshold = 1e-12
         self.metrics_type = metrics_type
-        print(metrics_type)
         self.metrics = metrics_factory.create_metrics(metrics_type, self.y_name)
 
         # pre-pruning
@@ -181,6 +180,7 @@ class CART(Model):
         return self.tree
 
     def _node_or_leaf(self, df):
+        print("parent:",self.metrics.__class__)
         loss_parent = self.metrics.loss(df)
         # p = self._probability(df)
         if (
@@ -193,7 +193,7 @@ class CART(Model):
             return self._leaf(df)
 
         loss_best, split_df, split_threshold, split_name = self._loss_best(df)
-        if split_df is None:
+        if not split_df is None:
             return self._leaf(df)
         #print(
         #    f"Computed split:\nloss: {loss_best:.2f} (parent: {loss_parent:.2f})\nattribute: {split_name}\nthreshold: {split_threshold}\ncount: {[len(df_.index) for df_ in split_df]}"
@@ -239,6 +239,7 @@ class CART(Model):
         for name in self.X_names:
             loss_ = np.Inf
             dh = self.data_handlers[name]
+            print("child:",dh.metrics.__class__)
             success = dh.split(df)
             if not success:
                 continue
