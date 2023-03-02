@@ -244,7 +244,7 @@ class CART(Model):
             loss_ = dh.loss
             split_df_ = dh.split_df
             split_threshold_ = dh.threshold
-            print(name[:7],"\t:",loss_,"(",len(split_df_[0].index),",",len(split_df_[1].index),")")
+            #print(name[:7],"\t:",loss_,"(",len(split_df_[0].index),",",len(split_df_[1].index),")")
             if (
                 loss_ < loss
                 and np.min([len(df_.index) for df_ in split_df_])
