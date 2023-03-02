@@ -75,7 +75,7 @@ def misclassification_cost(x):
 
 
 def logistic_loss(y, p):
-    p_ = np.clip(p, 1e-12, 1.0 - 1e-12)
+    p = np.clip(p, 1e-12, 1.0 - 1e-12)
     return -np.sum(y * np.log(p) + (1 - y) * np.log(1 - p))
 
 

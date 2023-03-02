@@ -176,7 +176,7 @@ class CART(Model):
         root = self._node_or_leaf(self.df)
         self.tree = Tree(root)
         n_leafs = self.tree.leaf_count()
-        self.logger.info(f"A tree with {n_leafs} leafs was created")
+        print(f"A tree with {n_leafs} leafs was created")
         return self.tree
 
     def _node_or_leaf(self, df):
@@ -409,17 +409,12 @@ class GradientBoostedTree(Model):
         return utils.logistic(p)
 
     def _pseudo_residuals(self):
-        # res = np.empty_like(self.df[self.y_name].values).astype(np.float64)
-        # for i, x in enumerate(self.df.iloc):
-        # res[i] = x[self.y_name] - self._predict(x)
         res = self.df[self.y_name] - self.predict(self.df)
         return res
 
     def train(self, M):
         self._initial_tree()
-        res = self._pseudo_residuals()
         df = self.df
-        df["pseudo_residuals"] = res
         self.trees = []
         self.gamma = []
         for i in range(M):
