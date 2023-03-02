@@ -7,7 +7,7 @@ def test_node():
     assert n.is_leaf
     
 def test_gbt():
-    df = pd.read_csv("data/titanic.csv")
+    df_titanic = pd.read_csv("data/titanic.csv")
     gbt = GradientBoostedTree(df_titanic,"Survived",learning_rate=0.5)
     gbt.train(10)
     p = gbt._predict(df.iloc[0])
