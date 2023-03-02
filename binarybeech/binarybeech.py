@@ -419,6 +419,7 @@ class GradientBoostedTree(Model):
         self.gamma = []
         for i in range(M):
             res = self._pseudo_residuals()
+            print(res[:10])
             print(f"Norm of pseudo-residuals: {np.linalg.norm(res)}")
             df["pseudo_residuals"] = res
             if self.n_attributes is None:
