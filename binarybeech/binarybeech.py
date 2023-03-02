@@ -194,7 +194,7 @@ class CART(Model):
         loss_best, split_df, split_threshold, split_name = self._loss_best(df)
         if split_df is None:
             return self._leaf(df)
-        self.logger.debug(
+        print(
             f"Computed split:\nloss: {loss_best:.2f} (parent: {loss_parent:.2f})\nattribute: {split_name}\nthreshold: {split_threshold}\ncount: {[len(df_.index) for df_ in split_df]}"
         )
         if loss_best < loss_parent:
