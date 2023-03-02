@@ -180,7 +180,6 @@ class CART(Model):
         return self.tree
 
     def _node_or_leaf(self, df):
-        print("parent:",self.metrics.__class__)
         loss_parent = self.metrics.loss(df)
         # p = self._probability(df)
         if (
@@ -239,7 +238,6 @@ class CART(Model):
         for name in self.X_names:
             loss_ = np.Inf
             dh = self.data_handlers[name]
-            print("child:",dh.metrics.__class__)
             success = dh.split(df)
             if not success:
                 continue
@@ -421,7 +419,6 @@ class GradientBoostedTree(Model):
         self.gamma = []
         for i in range(M):
             res = self._pseudo_residuals()
-            print(res[:10])
             print(f"Norm of pseudo-residuals: {np.linalg.norm(res)}")
             df["pseudo_residuals"] = res
             if self.n_attributes is None:
@@ -434,7 +431,6 @@ class GradientBoostedTree(Model):
                 min_leaf_samples=5,
                 min_split_samples=4,
                 metrics_type="regression",
-                data_handlers=self.data_handlers,
             )
             kwargs = {**kwargs, **self.cart_settings}
             c = CART(
