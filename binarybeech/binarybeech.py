@@ -106,7 +106,7 @@ class CART(Model):
 
     def train(self, k=5, plot=True, slack=1.0):
         """
-        train desicion tree by k-fold cross-validation
+        train decision tree by k-fold cross-validation
         """
         # shuffle dataframe
         df = self.df.sample(frac=1.0)

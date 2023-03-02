@@ -11,7 +11,7 @@ class Node:
         attribute=None,
         threshold=None,
         value=None,
-        desicion_fun=None,
+        decision_fun=None,
     ):
         if branches is None and value is None:
             raise ValueError(
@@ -21,7 +21,7 @@ class Node:
         self.branches = branches
         self.threshold = threshold
         self.attribute = attribute
-        self.desicion_fun = desicion_fun
+        self.decision_fun = decision_fun
         self.is_leaf = True if self.branches is None else False
         self.value = value
         self.pinfo = {}
@@ -29,7 +29,7 @@ class Node:
     def get_child(self, df):
         return (
             self.branches[0]
-            if self.desicion_fun(df[self.attribute], self.threshold)
+            if self.decision_fun(df[self.attribute], self.threshold)
             else self.branches[1]
         )
 
