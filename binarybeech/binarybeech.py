@@ -28,11 +28,10 @@ class Model(ABC):
         self.X_names = X_names
 
         if data_handlers is None:
-            self.data_handlers = data_handler_factory.create_data_handlers(
+            data_handlers = data_handler_factory.create_data_handlers(
                 df, y_name, X_names, metrics_type
             )
-        else:
-            self.data_handlers = data_handlers
+        self.data_handlers = data_handlers
         
 
         self.df = self._handle_missings(df, handle_missings)
@@ -124,6 +123,7 @@ class CART(Model):
                 min_split_samples=self.min_split_samples,
                 max_depth=self.max_depth,
                 metrics_type=self.metrics_type,
+                data_handlers = self.data_handlers
             )
             c.create_tree()
             pres = c.prune(test_set=data[1])
