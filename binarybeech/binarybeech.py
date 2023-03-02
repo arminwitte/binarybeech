@@ -211,6 +211,7 @@ class CART(Model):
                 attribute=split_name,
                 threshold=split_threshold,
                 value=value,
+                decision_fun=self.data_handlers[split_name].decide
             )
             item.pinfo["N"] = len(df.index)
             item.pinfo["r"] = self.metrics.loss_prune(df)
