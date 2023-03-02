@@ -16,7 +16,7 @@ def test_cart():
 def test_cart2():
     df_titanic = pd.read_csv("data/titanic.csv")
     c = CART(df_titanic,"Survived", metrics_type="classification")
-    c.train(10)
+    c.train()
     p = c._predict(df_titanic.iloc[0])
     assert p == 0.9
     

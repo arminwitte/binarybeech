@@ -48,6 +48,7 @@ def k_fold_split(df, k=1, frac=None, random=False, shuffle=True, replace=True):
             test = df.sample(frac=1.0 - frac, replace=replace)
         else:
             test = df.iloc[i * n : min(N, (i + 1) * n), :]
+        print(N, len(test.index))
         training = df.loc[df.index.difference(test.index), :]
         sets.append((training, test))
     return sets

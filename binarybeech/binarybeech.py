@@ -93,11 +93,15 @@ class CART(Model):
         self.depth = 0
 
         self.logger = logging.getLogger(__name__)
+        
+    def _predict(self, x):
+        return self.tree.traverse(x).value
+        
 
     def predict(self, df):
         y_hat = np.empty((len(df.index),))
         for i, x in enumerate(df.iloc):
-            y_hat[i] = self.tree.traverse(x).value
+            y_hat[i] = self._predict(x)
         return y_hat
 
     def train(self, k=5, plot=True, slack=1.0):
