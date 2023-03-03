@@ -10,10 +10,11 @@ def test_cart():
     df_titanic = pd.read_csv("data/titanic.csv")
     c = CART(df_titanic,"Survived", metrics_type="classification")
     c.create_tree()
-    p = c._predict(df_titanic.iloc[0])
-    print(c.validate())
-    assert p == 0
-    assert c._predict(df_titanic.iloc[1]) == 1
+    p = c.predict(df_titanic)
+    val = c.validate()
+    np.testing.assert_allclose(p[:10], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+    acc = val["accuracy"]
+    assert acc < 1. and acc > 0.8
     
 def test_cart2():
     df_titanic = pd.read_csv("data/titanic.csv")
@@ -30,5 +31,13 @@ def test_gbt():
     gbt.train(10)
     p = gbt._predict(df_titanic.iloc[0])
     assert p == 0.9
-    assert c._predict(df_titanic.iloc[1]) == 1
+    assert gbt._predict(df_titanic.iloc[1]) == 1
+    
+def test_randomforest():
+    df_titanic = pd.read_csv("data/titanic.csv")
+    rf = RandomForest(df_titanic,"Survived",metrics_type="logistic")
+    rf.train(10)
+    p = rf._predict(df_titanic.iloc[0])
+    assert p == 0.9
+    assert rf._predict(df_titanic.iloc[1]) == 1
     
