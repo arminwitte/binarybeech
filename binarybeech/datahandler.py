@@ -5,14 +5,12 @@ import numpy as np
 import pandas as pd
 import scipy.optimize as opt
 
-from binarybeech.metrics import metrics_factory
-
 
 class DataHandlerBase(ABC):
-    def __init__(self, y_name, attribute, metrics_type):
+    def __init__(self, y_name, attribute, metrics):
         self.y_name = y_name
         self.attribute = attribute
-        self.metrics = metrics_factory.create_metrics(metrics_type, self.y_name)
+        self.metrics = metrics
 
         self.loss = None
         self.split_df = []
@@ -36,18 +34,13 @@ class DataHandlerBase(ABC):
     def check(x):
         pass
 
-    @staticmethod
-    @abstractmethod
-    def metrics_hint():
-        pass
-
 
 # =========================
 
 
 class NominalDataHandler(DataHandlerBase):
-    def __init__(self, y_name, attribute, metrics_type):
-        super().__init__(y_name, attribute, metrics_type)
+    def __init__(self, y_name, attribute, metrics):
+        super().__init__(y_name, attribute, metrics)
 
     def split(self, df):
         self.loss = np.Inf
@@ -114,14 +107,9 @@ class NominalDataHandler(DataHandlerBase):
 
         return False
 
-    @staticmethod
-    def metrics_hint():
-        return "classification"
-
-
 class DichotomousDataHandler(DataHandlerBase):
-    def __init__(self, y_name, attribute, metrics_type):
-        super().__init__(y_name, attribute, metrics_type)
+    def __init__(self, y_name, attribute, metrics):
+        super().__init__(y_name, attribute, metrics)
 
     def split(self, df):
         self.loss = np.Inf
@@ -177,14 +165,10 @@ class DichotomousDataHandler(DataHandlerBase):
 
         return False
 
-    @staticmethod
-    def metrics_hint():
-        return "logistic"
-
 
 class IntervalDataHandler(DataHandlerBase):
-    def __init__(self, y_name, attribute, metrics_type):
-        super().__init__(y_name, attribute, metrics_type)
+    def __init__(self, y_name, attribute, metrics):
+        super().__init__(y_name, attribute, metrics)
 
     def split(self, df):
         self.loss = np.Inf
@@ -243,14 +227,10 @@ class IntervalDataHandler(DataHandlerBase):
 
         return False
 
-    @staticmethod
-    def metrics_hint():
-        return "regression"
-
 
 class NullDataHandler(DataHandlerBase):
-    def __init__(self, y_name, attribute, metrics_type):
-        super().__init__(y_name, attribute, metrics_type)
+    def __init__(self, y_name, attribute, metrics):
+        super().__init__(y_name, attribute, metrics)
 
     def split(self, df):
         self.loss = np.Inf
@@ -272,10 +252,6 @@ class NullDataHandler(DataHandlerBase):
     def check(x):
         return True
 
-    @staticmethod
-    def metrics_hint():
-        return None
-
 
 # =========================
 
@@ -294,16 +270,14 @@ class DataHandlerFactory:
 
         raise ValueError("no data handler class for this type of data")
 
-    def create_data_handlers(self, df, y_name, X_names, metrics_type):
+    def create_data_handlers(self, df, y_name, X_names, metrics):
         dhc = self.get_data_handler_class(df[y_name])
-        if metrics_type is None:
-            metrics_type = dhc.metrics_hint()
 
-        d = {y_name: dhc(y_name, y_name, metrics_type)}
+        d = {y_name: dhc(y_name, y_name, metrics)}
 
         for name in X_names:
             dhc = self.get_data_handler_class(df[name])
-            d[name] = dhc(y_name, name, metrics_type)
+            d[name] = dhc(y_name, name, metrics)
 
         return d
 

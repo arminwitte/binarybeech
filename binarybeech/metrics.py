@@ -2,6 +2,7 @@
 from abc import ABC, abstractmethod
 
 import numpy as np
+import pandas as pd
 
 import binarybeech.utils as utils
 
@@ -108,6 +109,10 @@ class Metrics(ABC):
     def validate(self, y_hat, data):
         pass
 
+    @staticmethod
+    @abstractmethod
+    def check_data_type(arr):
+        pass
 
 class RegressionMetrics(Metrics):
     def __init__(self, y_name):
@@ -139,6 +144,20 @@ class RegressionMetrics(Metrics):
         sse = e.T @ e
         sst = np.sum((y - np.nanmean(y)) ** 2)
         return 1 - sse / sst
+        
+
+    @staticmethod
+    def check_data_type(arr):
+        x = arr[~pd.isna(x)]
+        unique = np.unique(x)
+        l = len(unique)
+        r = l/x.size
+        dtype = x.values.dtype
+
+        if np.issubdtype(dtype, np.number) and l > 2 and r > 0.01:
+            return True
+
+        return False
 
 
 class LogisticMetrics(Metrics):
@@ -169,6 +188,18 @@ class LogisticMetrics(Metrics):
             m[y, y_hat_i] += 1
         return m
 
+    @staticmethod
+    def check_data_type(arr):
+        x = arr[~pd.isna(x)]
+        unique = np.unique(x)
+        l = len(unique)
+        r = l/x.size
+        dtype = x.values.dtype
+
+        if np.issubdtype(dtype, np.number) and l == 2 and np.min(x) == 0 and np.max(x) == 1:
+            return True
+
+        return False
 
 class ClassificationMetrics(Metrics):
     def __init__(self, y_name):
@@ -203,6 +234,29 @@ class ClassificationMetrics(Metrics):
             i_true = classes.index(val_true)
             confmat[i_true, i_pred] += 1
         return confmat
+        
+
+    @staticmethod
+    def check_data_type(arr):
+        x = arr[~pd.isna(x)]
+        unique = np.unique(x)
+        l = len(unique)
+        #r = l/x.size
+        dtype = x.values.dtype
+
+        if not np.issubdtype(dtype, np.number) and l > 1:
+            return True
+
+        return False
+
+class ClassificationMetricsEntropy(ClassificationMetrics):
+    def __init__(self, y_name):
+        super().__init__(y_name)
+        
+
+    def loss(self, data):
+        # Implementation of the loss calculation for classification
+        return self._shannon_entropy(data)
 
 
 class MetricsFactory:
@@ -217,9 +271,17 @@ class MetricsFactory:
             return self.metrics[metrics_type](y_name)
         else:
             raise ValueError("Invalid metrics type")
+            
+    def from_data(self, df, y_name):
+        y = df[y_name]
+        for name, cls in self.metrics.items():
+            if cls.check_data_type(y):
+                return cls(y_name), name
 
 
 metrics_factory = MetricsFactory()
 metrics_factory.register("regression", RegressionMetrics)
+metrics_factory.register("classification:gini", ClassificationMetrics)
+metrics_factory.register("classification:entropy", ClassificationMetricsEntropy)
 metrics_factory.register("logistic", LogisticMetrics)
 metrics_factory.register("classification", ClassificationMetrics)

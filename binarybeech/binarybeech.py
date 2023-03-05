@@ -26,10 +26,17 @@ class Model(ABC):
             X_names = list(df.columns)
             X_names.remove(self.y_name)
         self.X_names = X_names
+        
+        if metrics_type is None:
+            metrics_type, metrics = metrics_factory.from_data(df, y_name)
+        else:
+            metrics = metrics_factory.create_metrics(metrics_type, y_name)
+        self.metrics_type = metrics_type
+        self.metrics = metrics
 
         if data_handlers is None:
             data_handlers = data_handler_factory.create_data_handlers(
-                df, y_name, X_names, metrics_type
+                df, y_name, X_names, self.metrics
             )
         self.data_handlers = data_handlers
         
@@ -82,8 +89,6 @@ class CART(Model):
         )
         self.tree = None
         self.leaf_loss_threshold = 1e-12
-        self.metrics_type = metrics_type
-        self.metrics = metrics_factory.create_metrics(metrics_type, self.y_name)
 
         # pre-pruning
         self.min_leaf_samples = min_leaf_samples
@@ -365,9 +370,6 @@ class GradientBoostedTree(Model):
         self.learning_rate = learning_rate
         self.cart_settings = cart_settings
         self.init_metrics_type = init_metrics_type
-        self.metrics = metrics_factory.create_metrics(
-            self.init_metrics_type, self.y_name
-        )
         self.sample_frac = sample_frac
         self.n_attributes = n_attributes
         self.gamma_setting = gamma
@@ -498,8 +500,6 @@ class RandomForest(Model):
         self.trees = []
         self.oob_indices = []
         self.cart_settings = cart_settings
-        self.metrics_type = metrics_type
-        self.metrics = metrics_factory.create_metrics(self.metrics_type, self.y_name)
         self.sample_frac = sample_frac
         self.n_attributes = n_attributes
 
