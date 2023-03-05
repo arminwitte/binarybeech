@@ -148,7 +148,7 @@ class RegressionMetrics(Metrics):
 
     @staticmethod
     def check_data_type(arr):
-        x = arr[~pd.isna(x)]
+        x = arr[~pd.isna(arr)]
         unique = np.unique(x)
         l = len(unique)
         r = l/x.size
@@ -190,7 +190,7 @@ class LogisticMetrics(Metrics):
 
     @staticmethod
     def check_data_type(arr):
-        x = arr[~pd.isna(x)]
+        x = arr[~pd.isna(arr)]
         unique = np.unique(x)
         l = len(unique)
         r = l/x.size
@@ -238,7 +238,7 @@ class ClassificationMetrics(Metrics):
 
     @staticmethod
     def check_data_type(arr):
-        x = arr[~pd.isna(x)]
+        x = arr[~pd.isna(arr)]
         unique = np.unique(x)
         l = len(unique)
         #r = l/x.size
