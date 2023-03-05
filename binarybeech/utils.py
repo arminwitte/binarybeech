@@ -12,7 +12,7 @@ def print_bars(d, max_width=70):
 
 
 def print_tree(tree):
-    def _show(self, node, tree_view, parent=None, prefix=""):
+    def _show(node, tree_view, parent=None, prefix=""):
         name = str(hash(node))
         if node.is_leaf:
             text = f"{prefix}{node.value}"
