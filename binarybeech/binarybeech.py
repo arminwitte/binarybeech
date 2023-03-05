@@ -554,8 +554,8 @@ class RandomForest(Model):
             unique, counts = np.unique(row["votes"], return_counts=True)
             idx_max = np.argmax(counts)
             df.loc[index, "majority_vote"] = unique[idx_max]
-        df = df.astype({"majority_vote": "int"})
         df = df.dropna(subset=["majority_vote"])
+        df = df.astype({"majority_vote": "int"})
         return self.metrics.validate(df["majority_vote"].values, df)
 
     def _oob_predict(self, df):

@@ -39,7 +39,7 @@ def test_gbt():
 def test_randomforest():
     df_titanic = pd.read_csv("data/titanic.csv")
     rf = RandomForest(df_titanic,"Survived",metrics_type="classification")
-    rf.train(10)
+    rf.train(20)
     p = rf.predict(df_titanic)
     val = rf.validate_oob()
     acc = val["accuracy"]
