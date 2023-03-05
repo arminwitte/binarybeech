@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+# coding: utf-8
 # Initially Created with ChatGPT
 from abc import ABC, abstractmethod
 
@@ -114,6 +116,7 @@ class Metrics(ABC):
     def check_data_type(arr):
         pass
 
+
 class RegressionMetrics(Metrics):
     def __init__(self, y_name):
         super().__init__(y_name)
@@ -144,14 +147,13 @@ class RegressionMetrics(Metrics):
         sse = e.T @ e
         sst = np.sum((y - np.nanmean(y)) ** 2)
         return 1 - sse / sst
-        
 
     @staticmethod
     def check_data_type(arr):
         x = arr[~pd.isna(arr)]
         unique = np.unique(x)
         l = len(unique)
-        r = l/x.size
+        r = l / x.size
         dtype = x.values.dtype
 
         if np.issubdtype(dtype, np.number) and l > 2 and r > 0.01:
@@ -193,13 +195,19 @@ class LogisticMetrics(Metrics):
         x = arr[~pd.isna(arr)]
         unique = np.unique(x)
         l = len(unique)
-        r = l/x.size
+        r = l / x.size
         dtype = x.values.dtype
 
-        if np.issubdtype(dtype, np.number) and l == 2 and np.min(x) == 0 and np.max(x) == 1:
+        if (
+            np.issubdtype(dtype, np.number)
+            and l == 2
+            and np.min(x) == 0
+            and np.max(x) == 1
+        ):
             return True
 
         return False
+
 
 class ClassificationMetrics(Metrics):
     def __init__(self, y_name):
@@ -234,14 +242,13 @@ class ClassificationMetrics(Metrics):
             i_true = classes.index(val_true)
             confmat[i_true, i_pred] += 1
         return confmat
-        
 
     @staticmethod
     def check_data_type(arr):
         x = arr[~pd.isna(arr)]
         unique = np.unique(x)
         l = len(unique)
-        #r = l/x.size
+        # r = l/x.size
         dtype = x.values.dtype
 
         if not np.issubdtype(dtype, np.number) and l > 1:
@@ -249,10 +256,10 @@ class ClassificationMetrics(Metrics):
 
         return False
 
+
 class ClassificationMetricsEntropy(ClassificationMetrics):
     def __init__(self, y_name):
         super().__init__(y_name)
-        
 
     def loss(self, data):
         # Implementation of the loss calculation for classification
@@ -271,7 +278,7 @@ class MetricsFactory:
             return self.metrics[metrics_type](y_name)
         else:
             raise ValueError("Invalid metrics type")
-            
+
     def from_data(self, df, y_name):
         y = df[y_name]
         for name, cls in self.metrics.items():

@@ -26,7 +26,7 @@ class Model(ABC):
             X_names = list(df.columns)
             X_names.remove(self.y_name)
         self.X_names = X_names
-        
+
         if metrics_type is None:
             metrics_type, metrics = metrics_factory.from_data(df, y_name)
         else:
@@ -39,7 +39,6 @@ class Model(ABC):
                 df, y_name, X_names, self.metrics
             )
         self.data_handlers = data_handlers
-        
 
         self.df = self._handle_missings(df, handle_missings)
 
@@ -98,10 +97,9 @@ class CART(Model):
         self.depth = 0
 
         self.logger = logging.getLogger(__name__)
-        
+
     def _predict(self, x):
         return self.tree.traverse(x).value
-        
 
     def predict(self, df):
         y_hat = np.empty((len(df.index),))
@@ -132,7 +130,7 @@ class CART(Model):
                 min_split_samples=self.min_split_samples,
                 max_depth=self.max_depth,
                 metrics_type=self.metrics_type,
-                data_handlers = self.data_handlers
+                data_handlers=self.data_handlers,
             )
             c.create_tree()
             pres = c.prune(test_set=data[1])
@@ -199,9 +197,9 @@ class CART(Model):
         loss_best, split_df, split_threshold, split_name = self._loss_best(df)
         if not split_df:
             return self._leaf(df)
-        #print(
+        # print(
         #    f"Computed split:\nloss: {loss_best:.2f} (parent: {loss_parent:.2f})\nattribute: {split_name}\nthreshold: {split_threshold}\ncount: {[len(df_.index) for df_ in split_df]}"
-        #)
+        # )
         if loss_best < loss_parent:
             # print(f"=> Node({split_name}, {split_threshold})")
             branches = []
@@ -216,7 +214,7 @@ class CART(Model):
                 attribute=split_name,
                 threshold=split_threshold,
                 value=value,
-                decision_fun=self.data_handlers[split_name].decide
+                decision_fun=self.data_handlers[split_name].decide,
             )
             item.pinfo["N"] = len(df.index)
             item.pinfo["r"] = self.metrics.loss_prune(df)
@@ -249,7 +247,7 @@ class CART(Model):
             loss_ = dh.loss
             split_df_ = dh.split_df
             split_threshold_ = dh.threshold
-            #print(name[:7],"\t:",loss_,"(",len(split_df_[0].index),",",len(split_df_[1].index),")")
+            # print(name[:7],"\t:",loss_,"(",len(split_df_[0].index),",",len(split_df_[1].index),")")
             if (
                 loss_ < loss
                 and np.min([len(df_.index) for df_ in split_df_])
@@ -462,7 +460,7 @@ class GradientBoostedTree(Model):
         y = self.df[self.y_name].values
 
         def fun(gamma):
-            y_ = y_hat + gamma * delta  # * self.learning_rate
+            y_ = y_hat + gamma * delta
             p = utils.logistic(y_)
             return utils.logistic_loss(y, p)
 
@@ -472,8 +470,6 @@ class GradientBoostedTree(Model):
         if df is None:
             df = self.df
         y_hat = self.predict(df)
-        # from binarybeech.metrics import LogisticMetrics
-        # m = LogisticMetrics(self.y_name)
         return self.metrics.validate(y_hat, df)
 
 
