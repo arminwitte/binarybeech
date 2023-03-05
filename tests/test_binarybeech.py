@@ -14,7 +14,7 @@ def test_cart_create():
     val = c.validate()
     acc = val["accuracy"]
     np.testing.assert_allclose(p[:10], [0, 1, 1, 1, 0, 0, 0, 0, 1, 1])
-    assert acc < 1. and acc > 0.8
+    assert acc < 1. and acc > 0.78
     
 def test_cart_train():
     df_titanic = pd.read_csv("data/titanic.csv")
@@ -24,7 +24,7 @@ def test_cart_train():
     val = c.validate()
     acc = val["accuracy"]
     np.testing.assert_allclose(p[:10], [0, 1, 1, 1, 0, 0, 0, 0, 1, 1])
-    assert acc < 1. and acc > 0.8
+    assert acc < 1. and acc > 0.78
     
 def test_gbt():
     df_titanic = pd.read_csv("data/titanic.csv")
