@@ -94,6 +94,10 @@ class Metrics(ABC):
     @staticmethod
     def _accuracy(m):
         return np.sum(np.diag(m)) / np.sum(np.sum(m))
+        
+    @staticmethod
+    def output_transform(arr):
+        return arr
 
     @abstractmethod
     def loss(self, data):
@@ -189,6 +193,9 @@ class LogisticMetrics(Metrics):
             y_hat_i = y_hat[i]
             m[y, y_hat_i] += 1
         return m
+        
+    def output_transform(arr):
+        return utils.logistic(arr)
 
     @staticmethod
     def check_data_type(arr):

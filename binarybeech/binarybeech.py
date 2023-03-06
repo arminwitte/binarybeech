@@ -98,14 +98,18 @@ class CART(Model):
 
         self.logger = logging.getLogger(__name__)
 
-    def _predict(self, x):
+    def _predict1(self, x):
         return self.tree.traverse(x).value
 
-    def predict(self, df):
+    def _predict_raw(self, df):
         y_hat = np.empty((len(df.index),))
         for i, x in enumerate(df.iloc):
-            y_hat[i] = self._predict(x)
+            y_hat[i] = self._predict1(x)
         return y_hat
+            
+    def predict(self, df): 
+        y_hat = self._predict_raw(df)
+        return self.metrics.output_transform(y_hat)
 
     def train(self, k=5, plot=True, slack=1.0):
         """
@@ -387,26 +391,22 @@ class GradientBoostedTree(Model):
         self.init_tree = c.tree
         return c
 
-    def _predict_log_odds(self, x):
+    def _predict1(self, x):
         p = self.init_tree.traverse(x).value
         p = np.log(p / (1.0 - p))
         for i, t in enumerate(self.trees):
             p += self.learning_rate * self.gamma[i] * t.traverse(x).value
         return p
 
-    def _predict(self, x):
-        p = self._predict_log_odds(x)
-        return utils.logistic(p)
-
-    def predict_all_log_odds(self, df):
+    def _predict_raw(self, df):
         y_hat = np.empty((len(df.index),))
         for i, x in enumerate(df.iloc):
-            y_hat[i] = self._predict_log_odds(x)
+            y_hat[i] = self._predict1(x)
         return y_hat
-
+        
     def predict(self, df):
-        p = self.predict_all_log_odds(df)
-        return utils.logistic(p)
+        y_hat = self._predict_raw(df)
+        return self.metrics.output_transform(y_hat)
 
     def _pseudo_residuals(self):
         res = self.df[self.y_name] - self.predict(self.df)
@@ -453,7 +453,7 @@ class GradientBoostedTree(Model):
         return res.x
 
     def _opt_fun(self, tree):
-        y_hat = self.predict_all_log_odds(self.df)
+        y_hat = self.predict_raw(self.df)
         delta = np.empty_like(y_hat)
         for i, x in enumerate(self.df.iloc):
             delta[i] = tree.traverse(x).value
@@ -526,7 +526,7 @@ class RandomForest(Model):
             if self.verbose:
                 print(f"{i:4d}: Tree with {c.tree.leaf_count()} leaves created.")
 
-    def _predict(self, x):
+    def _predict1(self, x):
         y = []
         for t in self.trees:
             y.append(t.traverse(x).value)
@@ -534,12 +534,16 @@ class RandomForest(Model):
         ind_max = np.argmax(counts)
         return unique[ind_max]
 
-    def predict(self, df):
+    def predict_raw(self, df):
         y_hat = []
         for x in df.iloc:
-            y_hat.append(self._predict(x))
+            y_hat.append(self._predict1(x))
 
         return y_hat
+        
+    def predict(self, df):
+        y_hat = self.predict_raw(df)
+        return self.metrics.output_transform(y_hat)
 
     def validate_oob(self):
         df = self._oob_df()
