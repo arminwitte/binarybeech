@@ -453,7 +453,7 @@ class GradientBoostedTree(Model):
         return res.x
 
     def _opt_fun(self, tree):
-        y_hat = self.predict_raw(self.df)
+        y_hat = self._predict_raw(self.df)
         delta = np.empty_like(y_hat)
         for i, x in enumerate(self.df.iloc):
             delta[i] = tree.traverse(x).value
@@ -534,7 +534,7 @@ class RandomForest(Model):
         ind_max = np.argmax(counts)
         return unique[ind_max]
 
-    def predict_raw(self, df):
+    def _predict_raw(self, df):
         y_hat = []
         for x in df.iloc:
             y_hat.append(self._predict1(x))
@@ -542,7 +542,7 @@ class RandomForest(Model):
         return y_hat
         
     def predict(self, df):
-        y_hat = self.predict_raw(df)
+        y_hat = self._predict_raw(df)
         return self.metrics.output_transform(y_hat)
 
     def validate_oob(self):
