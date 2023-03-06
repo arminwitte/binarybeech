@@ -194,6 +194,7 @@ class LogisticMetrics(Metrics):
             m[y, y_hat_i] += 1
         return m
         
+    @staticmethod
     def output_transform(arr):
         return utils.logistic(arr)
 
