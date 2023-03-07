@@ -1,5 +1,6 @@
 from binarybeech.binarybeech import CART, GradientBoostedTree, RandomForest
 import pandas as pd
+import numpy as np
 
     
 def test_cart_create():
