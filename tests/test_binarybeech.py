@@ -26,10 +26,10 @@ def test_cart_train():
     np.testing.assert_allclose(p[:10], [0, 1, 1, 1, 0, 0, 0, 0, 1, 1])
     assert acc < 1. and acc > 0.78
     
-def test_gbt():
+def test_gradientboostedtree():
     df_titanic = pd.read_csv("data/titanic.csv")
     gbt = GradientBoostedTree(df_titanic,"Survived",learning_rate=0.5,init_metrics_type="logistic")
-    gbt.train(10)
+    gbt.train(20)
     p = gbt.predict(df_titanic)
     val = gbt.validate()
     acc = val["accuracy"]
