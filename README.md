@@ -1,4 +1,4 @@
-7# binarybeech
+# binarybeech
 Simplistic algorithms to train decision trees for regression and classification
 
 > **NOTE:**  These pure python (and a bit of numpy) algorithms are many times slower than, e.g., `sklearn` or `xgboost`.
