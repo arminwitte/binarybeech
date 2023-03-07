@@ -1,10 +1,6 @@
-from binarybeech.binarybeech import *
+from binarybeech.binarybeech import CART, GradientBoostedTree, RandomForest
 import pandas as pd
 
-
-def test_node():
-    n = Node(value=1.0)
-    assert n.is_leaf
     
 def test_cart_create():
     df_titanic = pd.read_csv("data/titanic.csv")
