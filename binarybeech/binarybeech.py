@@ -106,8 +106,8 @@ class CART(Model):
         for i, x in enumerate(df.iloc):
             y_hat[i] = self._predict1(x)
         return y_hat
-            
-    def predict(self, df): 
+
+    def predict(self, df):
         y_hat = self._predict_raw(df)
         return self.metrics.output_transform(y_hat)
 
@@ -403,7 +403,7 @@ class GradientBoostedTree(Model):
         for i, x in enumerate(df.iloc):
             y_hat[i] = self._predict1(x)
         return y_hat
-        
+
     def predict(self, df):
         y_hat = self._predict_raw(df)
         return self.metrics.output_transform(y_hat)
@@ -540,7 +540,7 @@ class RandomForest(Model):
             y_hat.append(self._predict1(x))
 
         return y_hat
-        
+
     def predict(self, df):
         y_hat = self._predict_raw(df)
         return self.metrics.output_transform(y_hat)
