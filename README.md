@@ -1,4 +1,4 @@
-# binarybeech
+7# binarybeech
 Simplistic algorithms to train decision trees for regression and classification
 
 > **NOTE:**  These pure python (and a bit of numpy) algorithms are many times slower than, e.g., `sklearn` or `xgboost`.
@@ -14,7 +14,7 @@ p = c.predict(df_titanic)
 val = c.validate()
 ```
 
-Please have a look at the jupyter notebooks in this repository for more examples. To try them out online you can use [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/arminwitte/binarybeech/HEAD?labpath=notebook%2Ftitanic.ipynb).
+Please have a look at the jupyter notebooks in this repository for more examples. To try them out online you can use [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/arminwitte/binarybeech/HEAD?labpath=notebooks%2Ftitanic.ipynb).
 
 ## Usage
 
