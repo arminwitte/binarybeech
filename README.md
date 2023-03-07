@@ -14,7 +14,7 @@ p = c.predict(df_titanic)
 val = c.validate()
 ```
 
-Please have a look at the jupyter notebooks in this repository for more examples. To try them out online you can use [mybinder](https://mybinder.org/v2/gh/arminwitte/binarybeech/HEAD?labpath=treeGradientBoost.ipynb).
+Please have a look at the jupyter notebooks in this repository for more examples. To try them out online you can use [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/arminwitte/binarybeech/HEAD?labpath=notebook%2Ftitanic.ipynb).
 
 ## Usage
 
