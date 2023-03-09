@@ -15,11 +15,11 @@ from binarybeech.binarybeech import CART
 ```
 get the data from a csv file
 ```
-df_titanic = pd.read_csv("data/titanic.csv")
+df = pd.read_csv("data/titanic.csv")
 ```
 grow a decision tree
 ```
-c = CART(df_titanic,"Survived", metrics_type="classification")
+c = CART(df,"Survived", metrics_type="classification")
 c.create_tree()
 ```
 predict
@@ -35,26 +35,50 @@ Please have a look at the jupyter notebooks in this repository for more examples
 
 ## Usage
 ### binarybeech.binarybeech.CART
-**`CART()`**
-
-```CART(df, y_name, X_names=None, min_leaf_samples=1, min_split_samples=1, max_depth=10, metrics_type="regression", handle_missings="simple", data_handlers=None)```
+**CART(df, y_name, X_names=None, min_leaf_samples=1, min_split_samples=1, max_depth=10, metrics_type="regression", handle_missings="simple", data_handlers=None)**
 
 * Parameters
-    - **df**: pandas dataframe woth training data
+    - **df**: pandas _dataframe_ with training data
     - **y_name**: name of the column with the output data/labels
-    - **X_names**: list of names with the inputs to use for the modelling. If `None`, all columns except y_name are chosen. Default is `None`.
+    - **X_names**: _list_ of names with the inputs to use for the modelling. If _None_, all columns except y_name are chosen. Default is _None_.
     - **min_leaf_samples**: If the number of training samples is lower than this, a terminal node (leaf) is created. Default is 1.
     - **min_split_samples**: If a split of the training data is proposed with at least one branch containing less samples than this, the split is rejected. Default is 1.
     - **max_depth**: Maximum number of sequential splits. This corresponds to the number of vertical layers of the tree. Default is 10, which corresponds to a maximum number of 1024 terminal nodes.
-    - **metrics_type**: Metrics to use for the evaluation of split loss, etc. Can be either 'classification', 'logistic', 'regression', or None. Default is 'regression'. If None is chosen, the `metrics_type` is deduced from the training dataframe.
-    - **handle_missings**: Specify the way how missing data is handeled. Can be eiter None or `simple`.
-    - **data_handlers**: dict with data handler instances for each variable. The data handler determins, e.g., how splits of the dataset are made.
+    - **metrics_type**: Metrics to use for the evaluation of split loss, etc. Can be either 'classification', 'logistic', 'regression', or _None_. Default is 'regression'. If _None_ is chosen, the `metrics_type` is deduced from the training _dataframe_.
+    - **handle_missings**: Specify the way how missing data is handeled. Can be eiter _None_ or 'simple'.
+    - **data_handlers**: _dict_ with data handler instances for each variable. The data handler determins, e.g., how splits of the dataset are made.
 * Methods
-    - `train()`:
+    - **predict(df)**:
+        + Parameters:
+        + Returns:
+    - **train(self, k=5, plot=True, slack=1.0)**:
+        + Parameters:
+        + Returns:
+    - **create_tree(leaf_loss_threshold=1e-12)**
+    - **prune(alpha_max=None, test_set=None, metrics_only=False)**
+    - **validate(df=None)**
 * Attributes
     - **tree**:
 
+### binarybeech.binarybeech.GradientBoostedTree
+
+**GradientBoostedTree(df, y_name, X_names=None, sample_frac=1, n_attributes=None, learning_rate=0.1, cart_settings={}, init_metrics_type="logistic", gamma=None, handle_missings="simple", data_handlers=None)**
+* Parameters
+* Methods
+* Attributes
+
+### binarybeech.binarybeech.Random_Forest
+
+**RandomForest(df, y_name, X_names=None, verbose=False, sample_frac=1, n_attributes=None, cart_settings={}, metrics_type="regression", handle_missings="simple", data_handlers=None)**
+* Parameters
+* Methods
+* Attributes
+
+For more information please feel free to take a look at the code.
+
 ## Performance
+> **NOTE:**  These pure python (and a bit of numpy) algorithms are many times slower than, e.g., `sklearn` or `xgboost`.
+
 ### Kaggle
 
 ## Sources
@@ -70,3 +94,4 @@ Please have a look at the jupyter notebooks in this repository for more examples
 [pruning](https://online.stat.psu.edu/stat508/lesson/11/11.8/11.8.2)
 
 ## Contributions
+Contributions in the form of pull requests are always welcome.
