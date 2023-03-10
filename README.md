@@ -50,9 +50,12 @@ Please have a look at the jupyter notebooks in this repository for more examples
 * Methods
     - **predict(df)**:
         + Parameters:
+            * **df**: _dataframe_ with inputs for predictions.
         + Returns:
-    - **train(self, k=5, plot=True, slack=1.0)**:
+            * array with predicted values/labels.
+    - **train(k=5, plot=True, slack=1.0)**:
         + Parameters:
+            * **k**: number of different splits of the _dataframe_ into trainings and test sets for k-fold cross-validation.
         + Returns:
     - **create_tree(leaf_loss_threshold=1e-12)**
     - **prune(alpha_max=None, test_set=None, metrics_only=False)**
@@ -85,6 +88,11 @@ Please have a look at the jupyter notebooks in this repository for more examples
     - **df**: pandas _dataframe_ with training data
     - **y_name**: name of the column with the output data/labels
     - **X_names**: _list_ of names with the inputs to use for the modelling. If _None_, all columns except y_name are chosen. Default is _None_.
+    - **verbose**: if set to _True_, status messages are sent to stdout. Default is _False_.
+    - **sample_frac**: fraction (0, 1] of the training data to use for the training of an individual tree of the ensemble. Default is 1.
+    - **n_attributes**: number of attributes (elements of the X_names list) to use for the training of an individual tree of the ensemble. Default is _None_ which corresponds to all available attributes.
+    - **cart_settings**: _dict_ that is passed on to the constuctor of the individual tree (binarybeech.binarybeech.CART). For details cf. above.
+    - **metrics_type**: Metrics to use for the evaluation of split loss, etc. Can be either "classification", "logistic", "regression", or _None_. Default is "regression". If _None_ is chosen, the `metrics_type` is deduced from the training _dataframe_.
     - **handle_missings**: Specify the way how missing data is handeled. Can be eiter _None_ or "simple".
     - **data_handlers**: _dict_ with data handler instances for each variable. The data handler determins, e.g., how splits of the dataset are made.
 * Methods
