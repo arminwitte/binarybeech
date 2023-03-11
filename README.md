@@ -37,6 +37,8 @@ Please have a look at the jupyter notebooks in this repository for more examples
 ### binarybeech.binarybeech.CART
 **CART(df, y_name, X_names=None, min_leaf_samples=1, min_split_samples=1, max_depth=10, metrics_type="regression", handle_missings="simple", data_handlers=None)**
 
+Class for a Classification and Regression Tree (CART) model.
+
 * Parameters
     - **df**: pandas _dataframe_ with training data
     - **y_name**: name of the column with the output data/labels
@@ -55,17 +57,31 @@ Please have a look at the jupyter notebooks in this repository for more examples
             * array with predicted values/labels.
     - **train(k=5, plot=True, slack=1.0)**:
         + Parameters:
-            * **k**: number of different splits of the _dataframe_ into trainings and test sets for k-fold cross-validation.
+            * **k**: number of different splits of the _dataframe_ into training and test sets for k-fold cross-validation.
+            * **plot**: flag for plotting a diagram of the loss over cost complexity parameter alpha using _matplotlib_.
+            * **slack**: the amount of slack granted in chosing the best cost complexity parameter alpha. It is given as multiplier for the standard deviation of the alpha at minimum loss and allows thus to chose an alpha that is probably larger to account for the uncertainty in the k-fold cross validation procedure.
         + Returns:
     - **create_tree(leaf_loss_threshold=1e-12)**
+        + Returns
     - **prune(alpha_max=None, test_set=None, metrics_only=False)**
+        + Parameters:
+            * **alpha_max**: Stop the pruning procedure at this value of the cost complexity parameter alpha. If _None_, the tree is pruned down to its root giving the complete relationship between alpha and the loss. Default is _None_.
+            * **test_set**: data set to use for the evaluation off the losses. If _None_, the training set is used. Default is _None_.
+            * **metrics_only**: If _True_, pruning is performed on a copy of the tree, leaving the actual tree intact. Default is _False_
     - **validate(df=None)**
+        + Parameters:
+            * **df**: _dataframe_ to use for (cross-)validation. If _None_, the training set is used. Default is _None_.
+        + Returns:
+            * _dict_ with metrics, e.g. accuracy or RSquared.
 * Attributes
     - **tree**:
 
 ### binarybeech.binarybeech.GradientBoostedTree
 
 **GradientBoostedTree(df, y_name, X_names=None, sample_frac=1, n_attributes=None, learning_rate=0.1, cart_settings={}, init_metrics_type="logistic", gamma=None, handle_missings="simple", data_handlers=None)**
+
+Class for a Gradient Boosted Tree model.
+
 * Parameters
     - **df**: pandas _dataframe_ with training data
     - **y_name**: name of the column with the output data/labels
@@ -79,11 +95,29 @@ Please have a look at the jupyter notebooks in this repository for more examples
     - **handle_missings**: Specify the way how missing data is handeled. Can be eiter _None_ or "simple".
     - **data_handlers**: _dict_ with data handler instances for each variable. The data handler determins, e.g., how splits of the dataset are made.
 * Methods
+    - **predict(df)**
+        + Parameters:
+            * **df**: _dataframe_ with inputs for predictions.
+        + Returns:
+            * array with predicted values/labels.
+    - **train(M)**
+        + Parameters:
+            * **M**: Number of individual trees to create for the ensemble.
+        + Returns:
+    - **validate(df=None)**
+        + Parameters:
+            * **df**: _dataframe_ to use for (cross-)validation. If _None_, the training set is used. Default is _None_.
+        + Returns:
+            * _dict_ with metrics, e.g. accuracy or RSquared.
 * Attributes
+    - **trees**
 
-### binarybeech.binarybeech.Random_Forest
+### binarybeech.binarybeech.RandomForest
 
 **RandomForest(df, y_name, X_names=None, verbose=False, sample_frac=1, n_attributes=None, cart_settings={}, metrics_type="regression", handle_missings="simple", data_handlers=None)**
+
+Class for a Random Forest model.
+
 * Parameters
     - **df**: pandas _dataframe_ with training data
     - **y_name**: name of the column with the output data/labels
@@ -96,12 +130,31 @@ Please have a look at the jupyter notebooks in this repository for more examples
     - **handle_missings**: Specify the way how missing data is handeled. Can be eiter _None_ or "simple".
     - **data_handlers**: _dict_ with data handler instances for each variable. The data handler determins, e.g., how splits of the dataset are made.
 * Methods
+    - **predict(df)**
+        + Parameters:
+            * **df**: _dataframe_ with inputs for predictions.
+        + Returns:
+            * array with predicted values/labels.
+    - **train(M)**
+        + Parameters:
+            * **M**: Number of individual trees to create for the ensemble.
+        + Returns:
+    - **validate(df=None)**
+        + Parameters:
+            * **df**: _dataframe_ to use for (cross-)validation. If _None_, the training set is used. Default is _None_.
+        + Returns:
+            * _dict_ with metrics, e.g. accuracy or RSquared.
+    - **validate_oob()**:
+        + Returns:
+            * _dict_ with metrics, e.g. accuracy or RSquared.
+    - **variable_importance()**:
+        + Returns:
+            * _dict_ with normalized importance values.
 * Attributes
 
 For more information please feel free to take a look at the code.
 
 ## Performance
-> **NOTE:**  These pure python (and a bit of numpy) algorithms are many times slower than, e.g., `sklearn` or `xgboost`.
 
 ### Kaggle
 
