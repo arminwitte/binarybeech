@@ -11,24 +11,27 @@ Decision trees are, by design, data type agnostic. With only a few methods like 
 Load the Classification And Regression Tree model class
 
 ```
+import pandas as pd
 from binarybeech.binarybeech import CART
+from binarybeech.utils import k_fold_split
 ```
 get the data from a csv file
 ```
 df = pd.read_csv("data/titanic.csv")
+[(df_train, df_test)] = k_fold_split(df,frac=0.75,random=True,replace=False)
 ```
 grow a decision tree
 ```
-c = CART(df,"Survived", metrics_type="classification")
+c = CART(df_train,"Survived", metrics_type="classification")
 c.create_tree()
 ```
 predict
 ```
-p = c.predict(df)
+c.predict(df_test)
 ```
 validation metrics
 ```
-val = c.validate()
+c.validate(df=df_test)
 ```
 
 Please have a look at the jupyter notebooks in this repository for more examples. To try them out online, you can use [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/arminwitte/binarybeech/HEAD?labpath=notebooks%2Ftitanic.ipynb).
