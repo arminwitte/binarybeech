@@ -5,6 +5,7 @@ from abc import ABC, abstractmethod
 
 import numpy as np
 import pandas as pd
+from numba import jit
 
 import binarybeech.utils as utils
 
@@ -78,24 +79,29 @@ class Metrics(ABC):
         return {"precision": P, "recall": R, "F-score": F, "accuracy": A}
 
     @staticmethod
+    @jit(nopython=True)
     def _precision(m):
         return np.diag(m) / np.sum(m, axis=1)
 
     @staticmethod
+    @jit(nopython=True)
     def _recall(m):
         return np.diag(m) / np.sum(m, axis=0)
 
     @staticmethod
+    @jit(nopython=True)
     def _F1(P, R):
         # F = np.zeros_like(P)
         # for i in range(len(
         return 2 * P * R / (P + R)
 
     @staticmethod
+    @jit(nopython=True)
     def _accuracy(m):
         return np.sum(np.diag(m)) / np.sum(np.sum(m))
 
     @staticmethod
+    @jit(nopython=True)
     def output_transform(arr):
         return arr
 

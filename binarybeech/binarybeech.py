@@ -8,6 +8,7 @@ from abc import ABC, abstractmethod
 import numpy as np
 import pandas as pd
 import scipy.optimize as opt
+from numba import jit
 
 import binarybeech.utils as utils
 from binarybeech.datahandler import data_handler_factory

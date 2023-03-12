@@ -7,6 +7,7 @@ from abc import ABC, abstractmethod
 import numpy as np
 import pandas as pd
 import scipy.optimize as opt
+from numba import jit
 
 
 class DataHandlerBase(ABC):
@@ -117,6 +118,7 @@ class DichotomousDataHandler(DataHandlerBase):
     def __init__(self, y_name, attribute, metrics):
         super().__init__(y_name, attribute, metrics)
 
+    @jit
     def split(self, df):
         self.loss = np.Inf
         self.split_df = []
@@ -178,6 +180,7 @@ class IntervalDataHandler(DataHandlerBase):
     def __init__(self, y_name, attribute, metrics):
         super().__init__(y_name, attribute, metrics)
 
+    @jit
     def split(self, df):
         self.loss = np.Inf
         self.split_df = []
@@ -242,6 +245,7 @@ class NullDataHandler(DataHandlerBase):
     def __init__(self, y_name, attribute, metrics):
         super().__init__(y_name, attribute, metrics)
 
+    @jit
     def split(self, df):
         self.loss = np.Inf
         self.split_df = []
