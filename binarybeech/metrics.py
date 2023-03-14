@@ -155,7 +155,7 @@ class RegressionMetrics(Metrics):
         
         
     def goodness_of_fit(self, y_hat, data): 
-        R2 = self._r_squared(y_hat, df)
+        R2 = self._r_squared(y_hat, data)
         return R2
     
 
@@ -202,7 +202,7 @@ class LogisticMetrics(Metrics):
         return m
         
     def goodness_of_fit(self, y_hat, data): 
-        confmat = self._confusion_matrix(y_hat, df)
+        confmat = self._confusion_matrix(y_hat, data)
         A = self._accuracy(confmat)
         return A
 
