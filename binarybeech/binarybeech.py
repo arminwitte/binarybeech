@@ -315,8 +315,8 @@ class CART(Model):
             # print(f"{N}\t{R:.4f}\t{alpha:.2e}")
             if test_set is not None:
                 metrics = self.validate(df=test_set)
-                for key, val in metrics.items():
-                    d["".join((key,"_cv"))].append(val)
+                #for key, val in metrics.items():
+                #    d["".join((key,"_cv"))].append(val)
                 d["goodness_of_fit"] = self.goodness_of_fit(df=test_set)
             d["alpha"].append(alpha)
             d["n_leafs"].append(N)
