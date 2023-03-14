@@ -281,7 +281,8 @@ class CART(Model):
         d["alpha"] = []
         d["R"] = []
         d["n_leafs"] = []
-        #if test_set is not None:
+        if test_set is not None:
+            d["goodness_of_fit"] = []
         #    d["A_cv"] = []
         #    d["R_cv"] = []
         #    d["P_cv"] = []
