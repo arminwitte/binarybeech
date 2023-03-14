@@ -65,10 +65,17 @@ class Model(ABC):
     def predict(self, df):
         pass
 
-    @abstractmethod
     def validate(self, df=None):
-        pass
-
+        if df is None:
+            df = self.df
+        y_hat = self.predict(df)
+        return self.metrics.validate(y_hat, df)
+    
+    def goodness_of_fit(self, df=None):
+        if df is None:
+            df = self.df
+        y_hat = self.predict(df)
+        return self.metrics.goodness_of_fit(y_hat, df)
 
 class CART(Model):
     def __init__(
@@ -172,7 +179,7 @@ class CART(Model):
     def _quality_at(self, b, data):
         for i, a in enumerate(data["alpha"]):
             if a > b:
-                return data["A_cv"][i - 1]
+                return data["goodness_of_fit"][i - 1]
         return 0.0
 
     def _qualities(self, beta, data):
@@ -264,15 +271,6 @@ class CART(Model):
 
         return loss, split_df, split_threshold, split_name
 
-    def validate(self, df=None):
-        if df is None:
-            df = self.df
-        y_hat = []
-        for x in df.iloc:
-            y_hat.append(self.tree.traverse(x).value)
-        y_hat = np.array(y_hat)
-        return self.metrics.validate(y_hat, df)
-
     def prune(self, alpha_max=None, test_set=None, metrics_only=False):
         if metrics_only:
             tree = copy.deepcopy(self.tree)
@@ -283,11 +281,11 @@ class CART(Model):
         d["alpha"] = []
         d["R"] = []
         d["n_leafs"] = []
-        if test_set is not None:
-            d["A_cv"] = []
-            d["R_cv"] = []
-            d["P_cv"] = []
-            d["F_cv"] = []
+        #if test_set is not None:
+        #    d["A_cv"] = []
+        #    d["R_cv"] = []
+        #    d["P_cv"] = []
+        #    d["F_cv"] = []
         n_iter = 0
         g_min = 0
         alpha = 0
@@ -317,10 +315,9 @@ class CART(Model):
             # print(f"{N}\t{R:.4f}\t{alpha:.2e}")
             if test_set is not None:
                 metrics = self.validate(df=test_set)
-                d["A_cv"].append(metrics["accuracy"])
-                d["R_cv"].append(metrics["recall"])
-                d["P_cv"].append(metrics["precision"])
-                d["F_cv"].append(metrics["F-score"])
+                for key, val in metrics.items():
+                    d["".join(key,"_cv")].append(val)
+                d["goodness_of_fit"] = self.goodness_of_fit(df=test_set)
             d["alpha"].append(alpha)
             d["n_leafs"].append(N)
             d["R"].append(R)
