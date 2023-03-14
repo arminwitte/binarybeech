@@ -265,7 +265,7 @@ class ClassificationMetrics(Metrics):
         return confmat
         
     def goodness_of_fit(self, y_hat, data): 
-        confmat = self._confusion_matrix(y_hat, df)
+        confmat = self._confusion_matrix(y_hat, data)
         A = self._accuracy(confmat)
         return A
 
