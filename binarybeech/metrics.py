@@ -38,6 +38,10 @@ class Metrics(ABC):
         y = self._y(df)
         y_hat = self.node_value(df)
         return utils.mean_squared_error(y, y_hat)
+        
+    def _r_squared(self, y_hat, df):
+        y = self._y(df)
+        return utils.r_squared(y, y_hat)
 
     def _mean(self, df):
         y = self._y(df)
@@ -114,6 +118,10 @@ class Metrics(ABC):
     @abstractmethod
     def validate(self, y_hat, data):
         pass
+    
+    @abstractmethod
+    def goodness_of_fit(self, y_hat, data):
+        pass
 
     @staticmethod
     @abstractmethod
@@ -144,13 +152,12 @@ class RegressionMetrics(Metrics):
     def _regression_metrics(self, y_hat, df):
         R2 = self._r_squared(y_hat, df)
         return {"R_squared": R2}
-
-    def _r_squared(self, y_hat, df):
-        y = self._y(df)
-        e = y - y_hat
-        sse = e.T @ e
-        sst = np.sum((y - np.nanmean(y)) ** 2)
-        return 1 - sse / sst
+        
+        
+    def goodness_of_fit(self, y_hat, data): 
+        R2 = self._r_squared(y_hat, data)
+        return R2
+    
 
     @staticmethod
     def check_data_type(arr):
@@ -193,7 +200,13 @@ class LogisticMetrics(Metrics):
             y_hat_i = y_hat[i]
             m[y, y_hat_i] += 1
         return m
+        
+    def goodness_of_fit(self, y_hat, data): 
+        confmat = self._confusion_matrix(y_hat, data)
+        A = self._accuracy(confmat)
+        return A
 
+    
     @staticmethod
     def output_transform(arr):
         return utils.logistic(arr)
@@ -250,6 +263,12 @@ class ClassificationMetrics(Metrics):
             i_true = classes.index(val_true)
             confmat[i_true, i_pred] += 1
         return confmat
+        
+    def goodness_of_fit(self, y_hat, data): 
+        confmat = self._confusion_matrix(y_hat, data)
+        A = self._accuracy(confmat)
+        return A
+
 
     @staticmethod
     def check_data_type(arr):

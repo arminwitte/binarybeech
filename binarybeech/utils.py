@@ -83,6 +83,13 @@ def logistic_loss(y, p):
 def mean_squared_error(y, y_hat):
     e = y - y_hat
     return 1 / e.size * (e.T @ e)
+    
+
+def r_squared(y, y_hat): 
+    e = y - y_hat
+    sse = e.T @ e
+    sst = np.sum((y - np.nanmean(y)) ** 2)
+    return 1 - sse / sst
 
 
 def majority_class(x):
