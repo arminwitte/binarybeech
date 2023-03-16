@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 import scipy.optimize as opt
 
-from binarybeech.utils import k_fold_split
+from binarybeech.extra import k_fold_split
 import binarybeech.math as math
 from binarybeech.datahandler import data_handler_factory
 from binarybeech.metrics import metrics_factory

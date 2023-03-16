@@ -4,6 +4,7 @@ import numpy as np
 import treelib
 from binarybeech.binarybeech import CART
 
+from binarybeech.extra import k_fold_split
 
 def print_bars(d, max_width=70):
     max_val = max(d.values())
