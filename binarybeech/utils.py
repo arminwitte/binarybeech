@@ -75,7 +75,7 @@ def model_missings(df, y_name, X_names=None, cart_settings={}):
             )
         kwargs = {**kwargs, **cart_settings}
         mod = CART(df[~df[x_name].isnull()],x_name,X_names=m_X_names,**cart_settings)
-        mod.create_tree
+        mod.create_tree()
         df_.loc[df[x_name].isnull(),x_name] = mod.predict(df[df[x_name].isnull()])
         
     return df_
