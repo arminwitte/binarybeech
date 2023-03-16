@@ -6,7 +6,8 @@ from abc import ABC, abstractmethod
 import numpy as np
 import pandas as pd
 
-import binarybeech.utils as utils
+#import binarybeech.utils as utils
+import binarybeech.math as math
 
 
 class Metrics(ABC):
@@ -18,30 +19,30 @@ class Metrics(ABC):
 
     def _gini_impurity(self, df):
         y = self._y(df)
-        return utils.gini_impurity(y)
+        return math.gini_impurity(y)
 
     def _shannon_entropy(self, df):
         y = self._y(df)
-        return utils.shannon_entropy(y)
+        return math.shannon_entropy(y)
 
     def _misclassification_cost(self, df):
         y = self._y(df)
-        return utils.misclassification_cost(y)
+        return math.misclassification_cost(y)
 
     def _logistic_loss(self, df):
         y = self._y(df)
         p_ = self.node_value(df)
         p = np.ones_like(y) * p_
-        return utils.logistic_loss(y, p)
+        return math.logistic_loss(y, p)
 
     def _mean_squared_error(self, df):
         y = self._y(df)
         y_hat = self.node_value(df)
-        return utils.mean_squared_error(y, y_hat)
+        return math.mean_squared_error(y, y_hat)
         
     def _r_squared(self, y_hat, df):
         y = self._y(df)
-        return utils.r_squared(y, y_hat)
+        return math.r_squared(y, y_hat)
 
     def _mean(self, df):
         y = self._y(df)
@@ -49,11 +50,11 @@ class Metrics(ABC):
 
     def _majority_class(self, df):
         y = self._y(df)
-        return utils.majority_class(y)
+        return math.majority_class(y)
 
     def _odds(self, df):
         y = self._y(df)
-        return utils.odds(y)
+        return math.odds(y)
 
     def _log_odds(self, df):
         odds = self._odds(df)
@@ -209,7 +210,7 @@ class LogisticMetrics(Metrics):
     
     @staticmethod
     def output_transform(arr):
-        return utils.logistic(arr)
+        return math.logistic(arr)
 
     @staticmethod
     def check_data_type(arr):
