@@ -1,6 +1,6 @@
 import pandas as pd
 
-from binarybeech.utils import model_misings
+from binarybeech.utils import model_missings
 
 
 def test_model_missings():
