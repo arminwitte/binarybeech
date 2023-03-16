@@ -2,6 +2,7 @@
 # coding: utf-8
 import numpy as np
 import treelib
+from binarybeech.binarybeech import CART
 
 
 def print_bars(d, max_width=70):
@@ -53,12 +54,28 @@ def k_fold_split(df, k=1, frac=None, random=False, shuffle=True, replace=True):
         sets.append((training, test))
     return sets
     
-def model_missings(df, y_name, X_names=None):
+def model_missings(df, y_name, X_names=None, cart_settings={}):
     if X_names is None:
         X_names = [n for n in df.columns]
         X_names.remove(y_name)
     df_ = df.copy()
+    has_missings = df.isnull().any()
     for x_name in X_names:
-        mod = 1.
+        
+        if not has_missings[x_name]:
+            continue
+        
+        m_X_names = [n for n in df.columns]
+        m_X_names.remove(x_name)
+        m_X_names.remove(y_name)
+        kwargs = dict(
+            max_depth=3,
+            min_leaf_samples=5,
+            min_split_samples=4,
+            )
+        kwargs = {**kwargs, **cart_settings}
+        mod = CART(df,x_name,X_names=m_X_names,**cart_settings)
+        mod.create_tree
+        df_.loc[df[x_name].isnull(),x_name] = mod.predict(df[df[x_name].isnull()])
         
     return df_

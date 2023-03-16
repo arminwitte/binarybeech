@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 import scipy.optimize as opt
 
-import binarybeech.utils as utils
+from binarybeech.utils import k_fold_split
 import binarybeech.math as math
 from binarybeech.datahandler import data_handler_factory
 from binarybeech.metrics import metrics_factory
@@ -132,7 +132,7 @@ class CART(Model):
         beta = self._beta(pres["alpha"])
         qual_cv = np.zeros((len(beta), k))
         # split df for k-fold cross-validation
-        sets = utils.k_fold_split(df, k)
+        sets = k_fold_split(df, k)
         for i, data in enumerate(sets):
             c = CART(
                 data[0],
