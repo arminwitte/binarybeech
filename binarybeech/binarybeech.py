@@ -208,11 +208,11 @@ class CART(Model):
             or len(df.index) < self.min_leaf_samples
             or self.depth >= self.max_depth
         ):
-            return self._leaf(df)
+            return self._leaf(y_hat)
 
         loss_best, split_df, split_threshold, split_name = self._loss_best(df)
         if not split_df:
-            return self._leaf(df)
+            return self._leaf(y_hat)
         # print(
         #    f"Computed split:\nloss: {loss_best:.2f} (parent: {loss_parent:.2f})\nattribute: {split_name}\nthreshold: {split_threshold}\ncount: {[len(df_.index) for df_ in split_df]}"
         # )
@@ -233,15 +233,15 @@ class CART(Model):
                 decision_fun=self.data_handlers[split_name].decide,
             )
             item.pinfo["N"] = len(df.index)
-            item.pinfo["r"] = self.metrics.loss_prune(df)
+            item.pinfo["r"] = self.metrics.loss_prune(y, y_hat)
             item.pinfo["R"] = item.pinfo["N"] / len(self.df.index) * item.pinfo["r"]
         else:
-            item = self._leaf(df)
+            item = self._leaf(y_hat)
 
         return item
 
-    def _leaf(self, df):
-        value = self.metrics.node_value(df)
+    def _leaf(self, y_hat):
+        value = y_hat
         leaf = Node(value=value)
 
         leaf.pinfo["N"] = len(df.index)
@@ -473,7 +473,8 @@ class GradientBoostedTree(Model):
         if df is None:
             df = self.df
         y_hat = self.predict(df)
-        return self.metrics.validate(y_hat, df)
+        return self.
+        y = df[self.y_name].validate(y_hat, df)
 
 
 class RandomForest(Model):
@@ -559,7 +560,8 @@ class RandomForest(Model):
             df.loc[index, "majority_vote"] = unique[idx_max]
         df = df.dropna(subset=["majority_vote"])
         df = df.astype({"majority_vote": "int"})
-        return self.metrics.validate(df["majority_vote"].values, df)
+        y = df[self.y_name]
+        return self.metrics.validate(y, df["majority_vote"].values)
 
     def _oob_predict(self, df):
         for i, t in enumerate(self.trees):
@@ -581,7 +583,8 @@ class RandomForest(Model):
         if df is None:
             df = self.df
         y_hat = self.predict(df)
-        return self.metrics.validate(y_hat, df)
+        y = df[self.y_name]
+        return self.metrics.validate(y, y_hat)
 
     def variable_importance(self):
         d = {}
