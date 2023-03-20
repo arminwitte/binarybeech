@@ -29,7 +29,7 @@ class Model(ABC):
         self.X_names = X_names
 
         if metrics_type is None:
-            metrics_type, metrics = metrics_factory.from_data(df, y_name)
+            metrics_type, metrics = metrics_factory.from_data(df[self.y_name])
         else:
             metrics = metrics_factory.create_metrics(metrics_type, y_name)
         self.metrics_type = metrics_type
@@ -70,13 +70,15 @@ class Model(ABC):
         if df is None:
             df = self.df
         y_hat = self.predict(df)
-        return self.metrics.validate(y_hat, df)
+        y = df[self.y_name]
+        return self.metrics.validate(y, y_hat)
     
     def goodness_of_fit(self, df=None):
         if df is None:
             df = self.df
         y_hat = self.predict(df)
-        return self.metrics.goodness_of_fit(y_hat, df)
+        y = df[self.y_name]
+        return self.metrics.goodness_of_fit(y, y_hat)
 
 class CART(Model):
     def __init__(
@@ -195,7 +197,9 @@ class CART(Model):
         return self.tree
 
     def _node_or_leaf(self, df):
-        loss_parent = self.metrics.loss(df)
+        y = df[self.y_name]
+        y_hat = self.metrics.node_value(y)
+        loss_parent = self.metrics.loss(y, y_hat)
         # p = self._probability(df)
         if (
             loss_parent < self.leaf_loss_threshold
@@ -219,8 +223,8 @@ class CART(Model):
             for i in range(2):
                 branches.append(self._node_or_leaf(split_df[i]))
             self.depth -= 1
-            unique, counts = np.unique(df[self.y_name], return_counts=True)
-            value = self.metrics.node_value(df)
+            #unique, counts = np.unique(df[self.y_name], return_counts=True)
+            value = y_hat
             item = Node(
                 branches=branches,
                 attribute=split_name,
