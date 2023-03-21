@@ -10,7 +10,6 @@ import pandas as pd
 import scipy.optimize as opt
 
 from binarybeech.extra import k_fold_split
-import binarybeech.math as math
 from binarybeech.datahandler import data_handler_factory
 from binarybeech.metrics import metrics_factory
 from binarybeech.reporter import Reporter
@@ -463,8 +462,8 @@ class GradientBoostedTree(Model):
 
         def fun(gamma):
             y_ = y_hat + gamma * delta
-            p = math.logistic(y_)
-            return math.logistic_loss(y, p)
+            p = self.metrics.output_transform(y_)
+            return self.metrics.loss(y, p)
 
         return fun
 
