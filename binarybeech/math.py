@@ -65,8 +65,8 @@ def log_odds(x):
 
 
 def probability(x):
-    if x == np.Inf:
-        return 1.0
+    #if x == np.Inf:
+    #    return 1.0
     return x / (1 + x)
 
 
