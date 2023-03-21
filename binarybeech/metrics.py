@@ -4,7 +4,7 @@
 from abc import ABC, abstractmethod
 
 import numpy as np
-import panfas as pd
+import pandas as pd
 
 #import binarybeech.utils as utils
 import binarybeech.math as math
