@@ -129,7 +129,7 @@ class LogisticMetrics(Metrics):
 
     def node_value(self, y):
         # Implementation of the node value calculation for logistic
-        return math.probability(y)
+        return math.max_probability(y)
 
     def validate(self,y, y_hat):
         return self._classification_metrics(y, y_hat)

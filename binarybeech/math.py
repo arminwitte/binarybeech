@@ -68,6 +68,10 @@ def probability(x):
     #if x == np.Inf:
     #    return 1.0
     return x / (1 + x)
+    
+def max_probability(x):
+    unique, counts = np.unique(x, return_counts=True)
+    return np.max(counts) / y.size
 
 
 def logistic(x):
