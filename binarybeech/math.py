@@ -71,7 +71,7 @@ def probability(x):
     
 def max_probability(x):
     unique, counts = np.unique(x, return_counts=True)
-    return np.max(counts) / y.size
+    return np.max(counts) / x.size
 
 
 def logistic(x):
