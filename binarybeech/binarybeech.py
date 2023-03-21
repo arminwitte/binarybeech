@@ -9,8 +9,8 @@ import numpy as np
 import pandas as pd
 import scipy.optimize as opt
 
-from binarybeech.extra import k_fold_split
 from binarybeech.datahandler import data_handler_factory
+from binarybeech.extra import k_fold_split
 from binarybeech.metrics import metrics_factory
 from binarybeech.reporter import Reporter
 from binarybeech.tree import Node, Tree
@@ -71,13 +71,14 @@ class Model(ABC):
         y_hat = self.predict(df)
         y = df[self.y_name]
         return self.metrics.validate(y, y_hat)
-    
+
     def goodness_of_fit(self, df=None):
         if df is None:
             df = self.df
         y_hat = self.predict(df)
         y = df[self.y_name]
         return self.metrics.goodness_of_fit(y, y_hat)
+
 
 class CART(Model):
     def __init__(
@@ -222,7 +223,7 @@ class CART(Model):
             for i in range(2):
                 branches.append(self._node_or_leaf(split_df[i]))
             self.depth -= 1
-            #unique, counts = np.unique(df[self.y_name], return_counts=True)
+            # unique, counts = np.unique(df[self.y_name], return_counts=True)
             value = y_hat
             item = Node(
                 branches=branches,
@@ -239,7 +240,7 @@ class CART(Model):
 
         return item
 
-    def _leaf(self,y, y_hat):
+    def _leaf(self, y, y_hat):
         leaf = Node(value=y_hat)
 
         leaf.pinfo["N"] = y.size
@@ -319,7 +320,7 @@ class CART(Model):
             # print(f"{N}\t{R:.4f}\t{alpha:.2e}")
             if test_set is not None:
                 metrics = self.validate(df=test_set)
-                #for key, val in metrics.items():
+                # for key, val in metrics.items():
                 #    d["".join((key,"_cv"))].append(val)
                 d["goodness_of_fit"].append(self.goodness_of_fit(df=test_set))
             d["alpha"].append(alpha)

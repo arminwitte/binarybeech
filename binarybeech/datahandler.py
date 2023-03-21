@@ -141,9 +141,9 @@ class DichotomousDataHandler(DataHandlerBase):
         N = len(df.index)
         n = [len(df_.index) for df_ in self.split_df]
         val = [self.metrics.node_value(df_[self.y_name]) for df_ in self.split_df]
-        self.loss = n[0] / N * self.metrics.loss(self.split_df[0][self.y_name], val[0]) + n[
-            1
-        ] / N * self.metrics.loss(self.split_df[1][self.y_name], val[1])
+        self.loss = n[0] / N * self.metrics.loss(
+            self.split_df[0][self.y_name], val[0]
+        ) + n[1] / N * self.metrics.loss(self.split_df[1][self.y_name], val[1])
 
         return success
 

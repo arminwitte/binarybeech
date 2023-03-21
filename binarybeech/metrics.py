@@ -6,7 +6,7 @@ from abc import ABC, abstractmethod
 import numpy as np
 import pandas as pd
 
-#import binarybeech.utils as utils
+# import binarybeech.utils as utils
 import binarybeech.math as math
 
 
@@ -52,7 +52,7 @@ class Metrics(ABC):
         pass
 
     @abstractmethod
-    def loss_prune(self, y ,y_hat):
+    def loss_prune(self, y, y_hat):
         pass
 
     @abstractmethod
@@ -62,7 +62,7 @@ class Metrics(ABC):
     @abstractmethod
     def validate(self, y_hat, data):
         pass
-    
+
     @abstractmethod
     def goodness_of_fit(self, y_hat, data):
         pass
@@ -95,11 +95,10 @@ class RegressionMetrics(Metrics):
     def _regression_metrics(self, y, y_hat):
         R2 = math.r_squared(y, y_hat)
         return {"R_squared": R2}
-        
+
     def goodness_of_fit(self, y, y_hat):
         R2 = math.r_squared(y, y_hat)
         return R2
-    
 
     @staticmethod
     def check_data_type(arr):
@@ -131,7 +130,7 @@ class LogisticMetrics(Metrics):
         # Implementation of the node value calculation for logistic
         return math.max_probability(y)
 
-    def validate(self,y, y_hat):
+    def validate(self, y, y_hat):
         return self._classification_metrics(y, y_hat)
 
     def _confusion_matrix(self, y, y_hat):
@@ -142,13 +141,12 @@ class LogisticMetrics(Metrics):
             y_hat_i = y_hat[i]
             m[y_, y_hat_i] += 1
         return m
-        
-    def goodness_of_fit(self,y, y_hat): 
+
+    def goodness_of_fit(self, y, y_hat):
         confmat = self._confusion_matrix(y, y_hat)
         A = self._accuracy(confmat)
         return A
 
-    
     @staticmethod
     def output_transform(arr):
         return math.logistic(arr)
@@ -204,12 +202,11 @@ class ClassificationMetrics(Metrics):
             i_true = classes.index(val_true)
             confmat[i_true, i_pred] += 1
         return confmat
-        
+
     def goodness_of_fit(self, y, y_hat):
         confmat = self._confusion_matrix(y, y_hat)
         A = self._accuracy(confmat)
         return A
-
 
     @staticmethod
     def check_data_type(arr):

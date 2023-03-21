@@ -2,6 +2,7 @@
 # coding: utf-8
 import numpy as np
 
+
 def gini_impurity(x):
     unique, counts = np.unique(x, return_counts=True)
     N = x.size
@@ -31,9 +32,9 @@ def logistic_loss(y, p):
 def mean_squared_error(y, y_hat):
     e = y - y_hat
     return 1 / e.size * (e.T @ e)
-    
 
-def r_squared(y, y_hat): 
+
+def r_squared(y, y_hat):
     e = y - y_hat
     sse = e.T @ e
     sst = np.sum((y - np.nanmean(y)) ** 2)
@@ -65,10 +66,11 @@ def log_odds(x):
 
 
 def probability(x):
-    #if x == np.Inf:
+    # if x == np.Inf:
     #    return 1.0
     return x / (1 + x)
-    
+
+
 def max_probability(x):
     unique, counts = np.unique(x, return_counts=True)
     return np.max(counts) / x.size
