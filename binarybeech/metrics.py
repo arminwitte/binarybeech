@@ -116,6 +116,7 @@ class RegressionMetrics(Metrics):
 
 class LogisticMetrics(Metrics):
     def __init__(self):
+        pass
 
     def loss(self, y, y_hat):
         # Implementation of the loss calculation for logistic

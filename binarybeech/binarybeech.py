@@ -473,8 +473,8 @@ class GradientBoostedTree(Model):
         if df is None:
             df = self.df
         y_hat = self.predict(df)
-        return self.
-        y = df[self.y_name].validate(y_hat, df)
+        y = df[self.y_name]
+        return self.validate(y, y_hat)
 
 
 class RandomForest(Model):
