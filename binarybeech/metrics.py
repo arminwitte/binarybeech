@@ -4,6 +4,7 @@
 from abc import ABC, abstractmethod
 
 import numpy as np
+import panfas as pd
 
 #import binarybeech.utils as utils
 import binarybeech.math as math
@@ -130,7 +131,7 @@ class LogisticMetrics(Metrics):
         # Implementation of the node value calculation for logistic
         return math.probability(y)
 
-    def validate(self, y_hat, data):
+    def validate(self,y, y_hat):
         return self._classification_metrics(y, y_hat)
 
     def _confusion_matrix(self, y, y_hat):
@@ -142,7 +143,7 @@ class LogisticMetrics(Metrics):
             m[y_, y_hat_i] += 1
         return m
         
-    def goodness_of_fit(self, y_hat, data): 
+    def goodness_of_fit(self,y, y_hat): 
         confmat = self._confusion_matrix(y, y_hat)
         A = self._accuracy(confmat)
         return A
