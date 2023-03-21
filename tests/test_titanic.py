@@ -4,7 +4,7 @@ import pandas as pd
 from binarybeech.binarybeech import CART, GradientBoostedTree, RandomForest
 
 
-def test_cart_create():
+def test_titanic_cart_create():
     df_titanic = pd.read_csv("data/titanic.csv")
     c = CART(df_titanic, "Survived", metrics_type="classification")
     c.create_tree()
@@ -15,7 +15,7 @@ def test_cart_create():
     assert acc < 1.0 and acc > 0.78
 
 
-def test_cart_train():
+def test_titanic_cart_train():
     df_titanic = pd.read_csv("data/titanic.csv")
     c = CART(df_titanic, "Survived", metrics_type="classification")
     c.train()
@@ -26,7 +26,7 @@ def test_cart_train():
     assert acc < 1.0 and acc > 0.78
 
 
-def test_gradientboostedtree():
+def test_titanic_gradientboostedtree():
     df_titanic = pd.read_csv("data/titanic.csv")
     gbt = GradientBoostedTree(
         df_titanic, "Survived", learning_rate=0.5, init_metrics_type="logistic"
@@ -41,7 +41,7 @@ def test_gradientboostedtree():
     assert acc < 1.0 and acc > 0.8
 
 
-def test_randomforest():
+def test_titanic_randomforest():
     df_titanic = pd.read_csv("data/titanic.csv")
     rf = RandomForest(df_titanic, "Survived", metrics_type="classification")
     rf.train(20)
