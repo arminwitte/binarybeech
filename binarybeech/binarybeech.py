@@ -241,10 +241,9 @@ class CART(Model):
         return item
 
     def _leaf(self,y, y_hat):
-        value = y_hat
-        leaf = Node(value=value)
+        leaf = Node(value=y_hat)
 
-        leaf.pinfo["N"] = len(y_hat)
+        leaf.pinfo["N"] = y.size
         leaf.pinfo["r"] = self.metrics.loss_prune(y, y_hat)
         leaf.pinfo["R"] = leaf.pinfo["N"] / len(self.df.index) * leaf.pinfo["r"]
         return leaf
