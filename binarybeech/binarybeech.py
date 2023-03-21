@@ -31,7 +31,7 @@ class Model(ABC):
         if metrics_type is None:
             metrics_type, metrics = metrics_factory.from_data(df[self.y_name])
         else:
-            metrics = metrics_factory.create_metrics(metrics_type, y_name)
+            metrics = metrics_factory.create_metrics(metrics_type)
         self.metrics_type = metrics_type
         self.metrics = metrics
 
