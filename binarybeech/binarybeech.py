@@ -394,6 +394,7 @@ class GradientBoostedTree(Model):
         return c
 
     def _predict1(self, x):
+        print(">>", x)
         p = self.init_tree.traverse(x).value
         p = np.log(p / (1.0 - p))
         print(">>>", p)
