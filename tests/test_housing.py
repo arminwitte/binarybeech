@@ -10,18 +10,18 @@ def test_housing_cart_create():
     c.create_tree()
     p = c.predict(df_housing)
     val = c.validate()
-    acc = val["R2"]
+    acc = val["R_squared"]
     np.testing.assert_allclose(p[:10], [0, 1, 1, 1, 0, 0, 0, 0, 1, 1])
     assert acc < 1.0 and acc > 0.78
 
 
 def test_housing_cart_train():
     df_housing = pd.read_csv("data/Housing.csv")
-    c = CART(df_housing, "price", metrics_type="classification")
+    c = CART(df_housing, "price", metrics_type="regression")
     c.train()
     p = c.predict(df_housing)
     val = c.validate()
-    acc = val["R2"]
+    acc = val["R_squared"]
     np.testing.assert_allclose(p[:10], [0, 1, 1, 1, 0, 0, 0, 0, 1, 1])
     assert acc < 1.0 and acc > 0.78
 
@@ -34,7 +34,7 @@ def test_housing_gradientboostedtree():
     gbt.train(20)
     p = gbt.predict(df_housing)
     val = gbt.validate()
-    acc = val["R2"]
+    acc = val["R_squared"]
     np.testing.assert_allclose(
         np.round(p[:10]).astype(int), [0, 1, 1, 1, 0, 0, 0, 0, 1, 1]
     )
@@ -47,6 +47,6 @@ def test_housing_randomforest():
     rf.train(20)
     p = rf.predict(df_housing)
     val = rf.validate_oob()
-    acc = val["R2"]
+    acc = val["R_squared"]
     np.testing.assert_allclose(p[:10], [0, 1, 1, 1, 0, 0, 0, 0, 1, 1])
     assert acc < 1.0 and acc > 0.8

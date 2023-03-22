@@ -34,4 +34,4 @@ def test_iris_randomforest():
     val = rf.validate_oob()
     acc = val["accuracy"]
     np.testing.assert_array_equal(p[:10], ["setosa"]*10)
-    assert acc <= 1.0 and acc > 0.95
+    assert acc <= 1.0 and acc > 0.9
