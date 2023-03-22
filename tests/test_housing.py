@@ -11,7 +11,8 @@ def test_housing_cart_create():
     p = c.predict(df_housing)
     val = c.validate()
     acc = val["R_squared"]
-    np.testing.assert_allclose(p[:10], [0, 1, 1, 1, 0, 0, 0, 0, 1, 1])
+    np.testing.assert_allclose(p[:10], [13300000., 12250000., 12250000., 12215000., 11410000., 10850000.,
+           10150000., 10150000.,  9870000.,  9800000.])
     assert acc < 1.0 and acc > 0.78
 
 
@@ -22,7 +23,8 @@ def test_housing_cart_train():
     p = c.predict(df_housing)
     val = c.validate()
     acc = val["R_squared"]
-    np.testing.assert_allclose(p[:10], [0, 1, 1, 1, 0, 0, 0, 0, 1, 1])
+    np.testing.assert_allclose(p[:10], [12757500., 12250000., 12250000., 12757500., 11410000., 10500000.,
+           10500000.,  9915500.,  9835000.,  9450000.])
     assert acc < 1.0 and acc > 0.78
 
 
@@ -48,5 +50,5 @@ def test_housing_randomforest():
     p = rf.predict(df_housing)
     val = rf.validate_oob()
     acc = val["R_squared"]
-    np.testing.assert_allclose(p[:10], [0, 1, 1, 1, 0, 0, 0, 0, 1, 1])
+    np.testing.assert_allclose(p[:10], [6321721.649485, 11375000.      ,  4827425.287356,  6321721.649485, 4568416.666667, 11375000.      , 11375000.      ,  5116847.826087, 4775413.793103,  6399243.421053])
     assert acc < 1.0 and acc > 0.8
