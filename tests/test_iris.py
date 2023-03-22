@@ -11,7 +11,7 @@ def test_iris_cart_create():
     p = c.predict(df_iris)
     val = c.validate()
     acc = val["accuracy"]
-    np.testing.assert_allclose(p[:10], [0, 1, 1, 1, 0, 0, 0, 0, 1, 1])
+    np.testing.assert_string_equal(p[:10], ["setosa"]*10)
     assert acc < 1.0 and acc > 0.95
 
 
@@ -22,7 +22,7 @@ def test_iris_cart_train():
     p = c.predict(df_iris)
     val = c.validate()
     acc = val["accuracy"]
-    np.testing.assert_allclose(p[:10], [0, 1, 1, 1, 0, 0, 0, 0, 1, 1])
+    np.testing.assert_string_equal(p[:10], ["setosa"]*10)
     assert acc < 1.0 and acc > 0.95
 
 
@@ -33,5 +33,5 @@ def test_iris_randomforest():
     p = rf.predict(df_iris)
     val = rf.validate_oob()
     acc = val["accuracy"]
-    np.testing.assert_allclose(p[:10], [0, 1, 1, 1, 0, 0, 0, 0, 1, 1])
+    np.testing.assert_string_equal(p[:10], ["setosa"]*10)
     assert acc < 1.0 and acc > 0.8
