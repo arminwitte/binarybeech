@@ -112,10 +112,8 @@ class CART(Model):
         return self.tree.traverse(x).value
 
     def _predict_raw(self, df):
-        y_hat = np.empty((len(df.index),))
-        for i, x in enumerate(df.iloc):
-            y_hat[i] = self._predict1(x)
-        return y_hat
+        y_hat = [self._predict1(x) for x in df.iloc]
+        return np.array(y_hat)
 
     def predict(self, df):
         y_hat = self._predict_raw(df)
@@ -401,10 +399,8 @@ class GradientBoostedTree(Model):
         return p
 
     def _predict_raw(self, df):
-        y_hat = np.empty((len(df.index),))
-        for i, x in enumerate(df.iloc):
-            y_hat[i] = self._predict1(x)
-        return y_hat
+        y_hat = [self._predict1(x) for x in df.iloc]
+        return np.array(y_hat)
 
     def predict(self, df):
         y_hat = self._predict_raw(df)
@@ -538,11 +534,8 @@ class RandomForest(Model):
         return unique[ind_max]
 
     def _predict_raw(self, df):
-        y_hat = []
-        for x in df.iloc:
-            y_hat.append(self._predict1(x))
-
-        return y_hat
+        y_hat = [self._predict1(x) for x in df.iloc]
+        return np.array(y_hat)
 
     def predict(self, df):
         y_hat = self._predict_raw(df)
