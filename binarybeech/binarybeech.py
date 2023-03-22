@@ -551,7 +551,7 @@ class RandomForest(Model):
             idx_max = np.argmax(counts)
             df.loc[index, "majority_vote"] = unique[idx_max]
         df = df.dropna(subset=["majority_vote"])
-        df = df.astype({"majority_vote": "int"})
+        #df = df.astype({"majority_vote": "int"})
         y = df[self.y_name]
         return self.metrics.validate(y, df["majority_vote"].values)
 
