@@ -393,7 +393,7 @@ class GradientBoostedTree(Model):
 
     def _predict1(self, x):
         p = self.init_tree.traverse(x).value
-        p = np.log(p / (1.0 - p))
+        p = self.metrics.inverse_transform(p)
         for i, t in enumerate(self.trees):
             p += self.learning_rate * self.gamma[i] * t.traverse(x).value
         return p

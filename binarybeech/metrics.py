@@ -46,6 +46,10 @@ class Metrics(ABC):
     @staticmethod
     def output_transform(arr):
         return arr
+        
+    @staticmethod
+    def inverse_transform(arr):
+        return arr
 
     @abstractmethod
     def loss(self, y, y_hat):
@@ -150,6 +154,10 @@ class LogisticMetrics(Metrics):
     @staticmethod
     def output_transform(arr):
         return math.logistic(arr)
+        
+    @staticmethod
+    def inverse_transform(arr):
+        return math.logit(arr)
 
     @staticmethod
     def check_data_type(arr):

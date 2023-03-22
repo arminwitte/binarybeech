@@ -78,6 +78,10 @@ def max_probability(x):
 
 def logistic(x):
     return 1.0 / (1.0 + np.exp(-x))
+    
+
+def logit(x):
+    return np.log(x/(1.0 - x))
 
 
 def precision(m):
