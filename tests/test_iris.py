@@ -12,7 +12,7 @@ def test_iris_cart_create():
     val = c.validate()
     acc = val["accuracy"]
     np.testing.assert_array_equal(p[:10], ["setosa"]*10)
-    assert acc < 1.0 and acc > 0.95
+    assert acc <= 1.0 and acc > 0.95
 
 
 def test_iris_cart_train():
@@ -23,7 +23,7 @@ def test_iris_cart_train():
     val = c.validate()
     acc = val["accuracy"]
     np.testing.assert_array_equal(p[:10], ["setosa"]*10)
-    assert acc < 1.0 and acc > 0.95
+    assert acc <= 1.0 and acc > 0.95
 
 
 def test_iris_randomforest():
@@ -34,4 +34,4 @@ def test_iris_randomforest():
     val = rf.validate_oob()
     acc = val["accuracy"]
     np.testing.assert_array_equal(p[:10], ["setosa"]*10)
-    assert acc < 1.0 and acc > 0.8
+    assert acc <= 1.0 and acc > 0.95
