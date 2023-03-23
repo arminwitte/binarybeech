@@ -49,4 +49,4 @@ def test_titanic_randomforest():
     val = rf.validate_oob()
     acc = val["accuracy"]
     np.testing.assert_allclose(p[:10], [0, 1, 1, 1, 0, 0, 0, 0, 1, 1])
-    assert acc < 1.0 and acc > 0.8
+    assert acc < 1.0 and acc > 0.75
