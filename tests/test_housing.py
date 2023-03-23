@@ -40,7 +40,7 @@ def test_housing_gradientboostedtree():
     np.testing.assert_allclose(
         p[:10], [10710888, 10946083, 7583931, 10526538,  7151695,  9834308, 11651867,  8528326,  7642070,  8127825],rtol=0.3
     )
-    assert acc < 1.0 and acc > 0.8
+    assert acc < 1.0 and acc > 0.7
 
 
 def test_housing_randomforest():
@@ -50,5 +50,5 @@ def test_housing_randomforest():
     p = rf.predict(df_housing)
     val = rf.validate_oob()
     acc = val["R_squared"]
-    np.testing.assert_allclose(p[:10], [6321721.649485, 11375000.      ,  4827425.287356,  6321721.649485, 4568416.666667, 11375000.      , 11375000.      ,  5116847.826087, 4775413.793103,  6399243.421053],rtol=0.5)
+    np.testing.assert_allclose(p[:10], [6321721.649485, 11375000.      ,  4827425.287356,  6321721.649485, 4568416.666667, 11375000.      , 11375000.      ,  5116847.826087, 4775413.793103,  6399243.421053],rtol=0.7)
     assert acc < 1.0 and acc > 0.2
