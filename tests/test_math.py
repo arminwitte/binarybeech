@@ -6,4 +6,5 @@ def test_distance_matrix():
     D = math.distance_matrix(X)
     
     assert D.shape == (4,4)
-    np.testing.assert_allclose(D,[[0., 5., 10., 15.]]*4)
+    
+    np.testing.assert_allclose(D,np.array([[0., 1, 2, 3],[1, 0, 1, 2],[2,1,0,1],[3,2,1,0]])*np.sqrt(27))
