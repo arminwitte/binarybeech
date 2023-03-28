@@ -98,3 +98,14 @@ def F1(P, R):
 
 def accuracy(m):
     return np.sum(np.diag(m)) / np.sum(np.sum(m))
+
+
+
+
+
+def distance_matrix(X):
+    n = X.shape[1]
+    D = np.empty((n,n))
+    for i in range(n):
+        D[i,:] = np.linalg.norm(X-X[i,:],axis=1)
+    return D
