@@ -109,3 +109,7 @@ def distance_matrix(X):
     for i in range(n):
         D[i,:] = np.linalg.norm(X-X[i,:],axis=1)
     return D
+    
+def proximity_matrix(D):
+    d_max = np.max(np.max(D))
+    return 1. - D/d_max
