@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 import numpy as np
+import scipy.signal
 
 
 def gini_impurity(x):
@@ -113,3 +114,14 @@ def distance_matrix(X):
 def proximity_matrix(D):
     d_max = np.max(np.max(D))
     return 1. - D/d_max
+    
+def ambiguity(X):
+    D = distance_matrix(X)
+    mu = proximity_matrix(D)
+    return - np.sum(mu * (1 - mu))
+    
+def valley(x):
+    hist, bin_edges = np.histogram(x, bins="auto")
+    valley_ind, _ = scipy.signal.findpeaks(-hist)
+    v = [(bin_edges[i],bin_edges[i+1]) for i in valley_ind]
+    return v

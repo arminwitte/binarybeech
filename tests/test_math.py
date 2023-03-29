@@ -17,3 +17,11 @@ def test_proximity_matrix():
     assert mu.shape == (4,4)
     
     np.testing.assert_allclose(mu,np.array([[3, 2, 1, 0],[2, 3, 2, 1],[1,2,3,2],[0,1,2,3]])/3)
+    
+def test_valley():
+    rng = np.random.RandomState(10)  # deterministic random data
+    x = np.hstack((rng.normal(size=1000),
+                   rng.normal(loc=5, scale=2, size=1000)))
+    v = math.valley(x)
+    
+    np.testing.assert_allclose(v[0],(0.,1.))
