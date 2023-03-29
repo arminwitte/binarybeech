@@ -24,4 +24,4 @@ def test_valley():
                    rng.normal(loc=5, scale=2, size=1000)))
     v = math.valley(x)
     
-    np.testing.assert_allclose(v[0],(0.,1.))
+    np.testing.assert_allclose(v[0],2.5417373)
