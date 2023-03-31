@@ -121,6 +121,7 @@ def ambiguity(X):
     return - np.sum(mu * (1 - mu))
     
 def valley(x):
+    hist, bin_edges = np.histogram(x, bins="auto")
     valley_ind, _ = scipy.signal.find_peaks(-hist)
     v = [(bin_edges[i]+bin_edges[i+1])*0.5 for i in valley_ind]
     return v
