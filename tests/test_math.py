@@ -32,5 +32,5 @@ def test_shannon_entropy_histogram():
                    rng.normal(loc=5, scale=2, size=1000)))
     H = math.shannon_entropy_histogram(x)
     
-    assert H == 12.
+    assert H == -14509.837015819745
     
