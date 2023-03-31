@@ -25,3 +25,12 @@ def test_valley():
     v = math.valley(x)
     
     np.testing.assert_allclose(v[0],2.5417373)
+    
+def test_shannon_entropy_histogram():
+    rng = np.random.RandomState(10)  # deterministic random data
+    x = np.hstack((rng.normal(size=1000),
+                   rng.normal(loc=5, scale=2, size=1000)))
+    H = math.shannon_entropy_histogram(x)
+    
+    assert H == 12.
+    
