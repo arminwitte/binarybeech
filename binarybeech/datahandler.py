@@ -322,6 +322,10 @@ class IntervalUnsupervisedDataHandler(DataHandlerBase):
 
     @staticmethod
     def check(x):
+        
+        if y_name:
+            return False
+            
         x = x[~pd.isna(x)]
         unique = np.unique(x)
         l = len(unique)

@@ -5,6 +5,7 @@ from abc import ABC, abstractmethod
 
 import numpy as np
 import pandas as pd
+import uuid
 
 # import binarybeech.utils as utils
 import binarybeech.math as math
@@ -251,7 +252,7 @@ class UnsupervisedMetrics(Metrics):
         return None
 
     def node_value(self, y):
-        return "cluster"
+        return f"cluster {str(uuid.uuid4())}"
 
     def validate(self, y, y_hat):
         return {}
