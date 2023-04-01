@@ -323,7 +323,7 @@ class IntervalUnsupervisedDataHandler(DataHandlerBase):
     @staticmethod
     def check(x):
         
-        if y_name:
+        if self.y_name:
             return False
             
         x = x[~pd.isna(x)]
