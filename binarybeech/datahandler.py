@@ -268,6 +268,74 @@ class NullDataHandler(DataHandlerBase):
 
 # =========================
 
+class IntervalUnsupervisedDataHandler(DataHandlerBase):
+    def __init__(self, y_name, attribute, metrics):
+        super().__init__(y_name, attribute, metrics)
+
+    def split(self, df):
+        self.loss = np.Inf
+        self.split_df = []
+        self.threshold = None
+
+        success = False
+
+        if -df[self.attribute].min() + df[self.attribute].max() < np.finfo(float).tiny:
+            return success
+
+        mame = self.attribute
+
+        res = opt.minimize_scalar(
+            self._opt_fun(df),
+            bounds=(df[self.attribute].min(), df[self.attribute].max()),
+            method="bounded",
+        )
+        self.threshold = res.x
+        self.split_df = [
+            df[df[self.attribute] < self.threshold],
+            df[df[self.attribute] >= self.threshold],
+        ]
+        self.loss = res.fun
+        return res.success
+
+    def _opt_fun(self, df):
+        split_name = self.attribute
+        N = len(df.index)
+
+        def fun(x):
+            split_df = [df[df[split_name] < x], df[df[split_name] >= x]]
+            n = [len(df_.index) for df_ in split_df]
+            val = [self.metrics.node_value(df_[self.y_name]) for df_ in split_df]
+            return n[0] / N * self.metrics.loss(split_df[0][self.y_name], val[0]) + n[
+                1
+            ] / N * self.metrics.loss(split_df[1][self.y_name], val[1])
+
+        return fun
+
+    def handle_missings(self, df):
+        name = self.attribute
+        df.loc[:, name] = df[name].fillna(np.nanmedian(df[name].values))
+        return df
+
+    @staticmethod
+    def decide(x, threshold):
+        return True if x < threshold else False
+
+    @staticmethod
+    def check(x):
+        x = x[~pd.isna(x)]
+        unique = np.unique(x)
+        l = len(unique)
+        dtype = x.values.dtype
+
+        if np.issubdtype(dtype, np.number) and l > 2:
+            return True
+
+        return False
+
+
+
+# =========================
+
 
 class DataHandlerFactory:
     def __init__(self):

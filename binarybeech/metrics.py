@@ -238,6 +238,35 @@ class ClassificationMetricsEntropy(ClassificationMetrics):
         # Implementation of the loss calculation for classification
         return math.shannon_entropy(y)
 
+# =============================
+
+class UnsupervisedMetrics(Metrics):
+    def __init__(self):
+        pass
+
+    def loss(self, y, y_hat):
+        return None
+
+    def loss_prune(self, y, y_hat):
+        return None
+
+    def node_value(self, y):
+        return "cluster"
+
+    def validate(self, y, y_hat):
+        return {}
+
+    def goodness_of_fit(self, y, y_hat):
+        return 0.
+
+    @staticmethod
+    def check_data_type(arr):
+        if not arr:
+            return True
+
+        return False
+
+# =============================
 
 class MetricsFactory:
     def __init__(self):
@@ -264,3 +293,4 @@ metrics_factory.register("classification:gini", ClassificationMetrics)
 metrics_factory.register("classification:entropy", ClassificationMetricsEntropy)
 metrics_factory.register("logistic", LogisticMetrics)
 metrics_factory.register("classification", ClassificationMetrics)
+metrics_factory.register("clustering", UnsupervisedMetrics)
