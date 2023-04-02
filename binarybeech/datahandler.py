@@ -322,9 +322,6 @@ class IntervalUnsupervisedDataHandler(DataHandlerBase):
 
     @staticmethod
     def check(x):
-        
-        if self.y_name:
-            return False
             
         x = x[~pd.isna(x)]
         unique = np.unique(x)
@@ -348,9 +345,9 @@ class DataHandlerFactory:
     def register(self, data_level, data_handler_class):
         self.data_handlers[data_level] = data_handler_class
 
-    def get_data_handler_class(self, df):
+    def get_data_handler_class(self, arr):
         for data_handler_class in self.data_handlers.values():
-            if data_handler_class.check(df):
+            if data_handler_class.check(arr):
                 return data_handler_class
 
         raise ValueError("no data handler class for this type of data")
