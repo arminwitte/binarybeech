@@ -52,6 +52,10 @@ class Metrics(ABC):
     def inverse_transform(arr):
         return arr
 
+    @staticmethod
+    def data_handler_group():
+        return "default"
+
     @abstractmethod
     def loss(self, y, y_hat):
         pass
@@ -259,6 +263,10 @@ class UnsupervisedMetrics(Metrics):
 
     def goodness_of_fit(self, y, y_hat):
         return 0.
+    
+    @staticmethod   
+    def data_handler_group():
+        return "unsupervised"
 
     @staticmethod
     def check_data_type(arr):

@@ -355,13 +355,13 @@ class DataHandlerFactory:
 
         raise ValueError("no data handler class for this type of data")
 
-    def create_data_handlers(self, df, y_name, X_names, metrics, group_name="default"):
-        dhc = self.get_data_handler_class(df[y_name],group_name=group_name)
+    def create_data_handlers(self, df, y_name, X_names, metrics):
+        dhc = self.get_data_handler_class(df[y_name],group_name=metrics.data_handler_group())
 
         d = {y_name: dhc(y_name, y_name, metrics)}
 
         for name in X_names:
-            dhc = self.get_data_handler_class(df[name],group_name=group_name)
+            dhc = self.get_data_handler_class(df[name],group_name=metrics.data_handler_group())
             d[name] = dhc(y_name, name, metrics)
 
         return d
