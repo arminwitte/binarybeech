@@ -24,6 +24,7 @@ class Model(ABC):
 
         if X_names is None:
             X_names = list(df.columns)
+            if y_name:
             X_names.remove(self.y_name)
         self.X_names = X_names
 
