@@ -20,12 +20,14 @@ class Model(ABC):
     def __init__(
         self, df, y_name, X_names, data_handlers, metrics_type, handle_missings
     ):
+        if not y_name:
+            y_name = "__internal_placeholder_for_y__"
+            df[y_name] = 0
         self.y_name = y_name
 
         if X_names is None:
             X_names = list(df.columns)
-            if y_name:
-                X_names.remove(self.y_name)
+            X_names.remove(self.y_name)
         self.X_names = X_names
 
         if metrics_type is None:
