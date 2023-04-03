@@ -335,6 +335,7 @@ class IntervalUnsupervisedDataHandler(DataHandlerBase):
 
 
 
+
 # =========================
 
 
@@ -374,3 +375,5 @@ data_handler_factory.register("interval", IntervalDataHandler)
 data_handler_factory.register("null", NullDataHandler)
 data_handler_factory.register_group("unsupervised")
 data_handler_factory.register("interval", IntervalUnsupervisedDataHandler, group_name="unsupervised")
+data_handler_factory.register("null", NullDataHandler, group_name="unsupervised")
+
