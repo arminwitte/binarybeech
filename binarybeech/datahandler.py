@@ -340,25 +340,28 @@ class IntervalUnsupervisedDataHandler(DataHandlerBase):
 
 class DataHandlerFactory:
     def __init__(self):
-        self.data_handlers = {}
+        self.data_handlers = {'default': {}}
+        
+    def register_group(self,group_name):
+        self.data_handlers[group_name]={}
 
-    def register(self, data_level, data_handler_class):
-        self.data_handlers[data_level] = data_handler_class
+    def register(self, data_level, data_handler_class, group_name="default"):
+        self.data_handlers[group_name][data_level] = data_handler_class
 
-    def get_data_handler_class(self, arr):
-        for data_handler_class in self.data_handlers.values():
+    def get_data_handler_class(self, arr, group_name="default"):
+        for data_handler_class in self.data_handlers[group_name].values():
             if data_handler_class.check(arr):
                 return data_handler_class
 
         raise ValueError("no data handler class for this type of data")
 
-    def create_data_handlers(self, df, y_name, X_names, metrics):
-        dhc = self.get_data_handler_class(df[y_name])
+    def create_data_handlers(self, df, y_name, X_names, metrics, group_name="default"):
+        dhc = self.get_data_handler_class(df[y_name],group_name=group_name)
 
         d = {y_name: dhc(y_name, y_name, metrics)}
 
         for name in X_names:
-            dhc = self.get_data_handler_class(df[name])
+            dhc = self.get_data_handler_class(df[name],group_name=group_name)
             d[name] = dhc(y_name, name, metrics)
 
         return d
@@ -369,3 +372,5 @@ data_handler_factory.register("nominal", NominalDataHandler)
 data_handler_factory.register("dichotomous", DichotomousDataHandler)
 data_handler_factory.register("interval", IntervalDataHandler)
 data_handler_factory.register("null", NullDataHandler)
+data_handler_factory.register_group("unsupervised")
+data_handler_factory.register("interval", IntervalUnsupervisedDataHandler, group_name="unsupervised")
