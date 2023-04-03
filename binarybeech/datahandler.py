@@ -350,6 +350,7 @@ class DataHandlerFactory:
 
     def get_data_handler_class(self, arr, group_name="default"):
         for data_handler_class in self.data_handlers[group_name].values():
+            print("checking", data_handler_class)
             if data_handler_class.check(arr):
                 return data_handler_class
 
