@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+# coding: utf-8
 from binarybeech.datahandler import data_handler_factory
 from binarybeech.extra import k_fold_split
 from binarybeech.metrics import metrics_factory
