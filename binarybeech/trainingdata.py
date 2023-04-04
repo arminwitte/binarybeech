@@ -2,8 +2,16 @@ from binarybeech.datahandler import data_handler_factory
 from binarybeech.extra import k_fold_split
 from binarybeech.metrics import metrics_factory
 
+
 class TrainingData:
-    def __init__(self,df,y_name=None,X_names=None, data_handlers=None, metrics_type=None, handle_missings="simple"
+    def __init__(
+        self,
+        df,
+        y_name=None,
+        X_names=None,
+        data_handlers=None,
+        metrics_type=None,
+        handle_missings="simple",
     ):
         self.y_name = y_name
 
@@ -40,18 +48,18 @@ class TrainingData:
                 df = dh.handle_missings(df)
         elif mode == "model":
             raise ValueError("Not implemented")
-            
+
         self.df = df
 
         return df
-        
+
     def clean(self):
         # remove nan cols and rows
         pass
-    
+
     def split(self):
         pass
-    
+
     def report(self):
         # first loop over y and X
         # second show pandas stats
