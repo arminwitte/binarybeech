@@ -8,6 +8,8 @@ import numpy as np
 import pandas as pd
 import scipy.optimize as opt
 
+import binarybeech.math as math
+
 
 class DataHandlerBase(ABC):
     def __init__(self, y_name, attribute, metrics):
@@ -283,33 +285,20 @@ class IntervalUnsupervisedDataHandler(DataHandlerBase):
             return success
 
         mame = self.attribute
+        
+        valleys = math.valley(df[name])
+        if not valleys:
+            return success
+        else:
+            success = True
 
-        res = opt.minimize_scalar(
-            self._opt_fun(df),
-            bounds=(df[self.attribute].min(), df[self.attribute].max()),
-            method="bounded",
-        )
-        self.threshold = res.x
+        self.threshold = valleys[0]
         self.split_df = [
             df[df[self.attribute] < self.threshold],
             df[df[self.attribute] >= self.threshold],
         ]
-        self.loss = res.fun
-        return res.success
-
-    def _opt_fun(self, df):
-        split_name = self.attribute
-        N = len(df.index)
-
-        def fun(x):
-            split_df = [df[df[split_name] < x], df[df[split_name] >= x]]
-            n = [len(df_.index) for df_ in split_df]
-            val = [self.metrics.node_value(df_[self.y_name]) for df_ in split_df]
-            return n[0] / N * self.metrics.loss(split_df[0][self.y_name], val[0]) + n[
-                1
-            ] / N * self.metrics.loss(split_df[1][self.y_name], val[1])
-
-        return fun
+        self.loss = math.shannon_entropy_histogram(df[name])
+        return success
 
     def handle_missings(self, df):
         name = self.attribute
@@ -334,6 +323,76 @@ class IntervalUnsupervisedDataHandler(DataHandlerBase):
         return False
 
 
+
+class NominalUnsupervisedDataHandler(DataHandlerBase):
+    def __init__(self, y_name, attribute, metrics):
+        super().__init__(y_name, attribute, metrics)
+
+    def split(self, df):
+        self.loss = np.Inf
+        self.split_df = []
+        self.threshold = None
+
+        success = False
+
+        unique = np.unique(df[self.attribute])
+
+        if len(unique) < 2:
+            return success
+
+        comb = []
+        name = self.attribute
+
+        if len(unique) > 5:
+            comb = [(u,) for u in unique]
+        else:
+            for i in range(1, len(unique)):
+                comb += list(itertools.combinations(unique, i))
+
+        loss = np.Inf
+
+        for c in comb:
+            threshold = c
+            split_df = [
+                df[df[name].isin(threshold)],
+                df[~df[name].isin(threshold)],
+            ]
+            N = len(df.index)
+            n = [len(df_.index) for df_ in split_df]
+            val = [self.metrics.node_value(None) for df_ in split_df]
+            loss = math.shannon_entropy(df[c])
+            if loss < self.loss:
+                success = True
+                self.loss = loss
+                self.threshold = threshold
+                self.split_df = split_df
+
+        return success
+
+    def handle_missings(self, df):
+        name = self.attribute
+        df.loc[:, name] = df[name].fillna("missing")
+        return df
+
+    @staticmethod
+    def decide(x, threshold):
+        return True if x in threshold else False
+
+    @staticmethod
+    def check(x):
+        x = x[~pd.isna(x)]
+        unique = np.unique(x)
+        l = len(unique)
+
+        if l / len(x) > 0.2:
+            return False
+
+        dtype = x.values.dtype
+
+        if not np.issubdtype(dtype, np.number) and l > 2:
+            return True
+
+        return False
 
 
 # =========================
@@ -375,5 +434,6 @@ data_handler_factory.register("interval", IntervalDataHandler)
 data_handler_factory.register("null", NullDataHandler)
 data_handler_factory.register_group("unsupervised")
 data_handler_factory.register("interval", IntervalUnsupervisedDataHandler, group_name="unsupervised")
+data_handler_factory.register("nominal", IntervalUnsupervisedDataHandler, group_name="unsupervised")
 data_handler_factory.register("null", NullDataHandler, group_name="unsupervised")
 
