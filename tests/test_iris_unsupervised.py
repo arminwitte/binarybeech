@@ -11,5 +11,7 @@ def test_iris_cart_create():
     c.create_tree()
     p = c.predict(df_iris)
     assert isinstance(p, np.ndarray)
+    assert isinstance(p[0], str)
+    assert p[0] == p[1]
 
 
