@@ -192,7 +192,7 @@ class IntervalDataHandler(DataHandlerBase):
         if -df[self.attribute].min() + df[self.attribute].max() < np.finfo(float).tiny:
             return success
 
-        mame = self.attribute
+        name = self.attribute
 
         res = opt.minimize_scalar(
             self._opt_fun(df),
@@ -284,7 +284,7 @@ class IntervalUnsupervisedDataHandler(DataHandlerBase):
         if -df[self.attribute].min() + df[self.attribute].max() < np.finfo(float).tiny:
             return success
 
-        mame = self.attribute
+        name = self.attribute
         
         valleys = math.valley(df[name])
         if not valleys:
