@@ -250,10 +250,10 @@ class UnsupervisedMetrics(Metrics):
         pass
 
     def loss(self, y, y_hat):
-        return None
+        return np.inf
 
     def loss_prune(self, y, y_hat):
-        return None
+        return self.loss(y, y_hat)
 
     def node_value(self, y):
         return f"cluster {str(uuid.uuid4())}"
