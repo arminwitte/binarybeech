@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 import numpy as np
+import scipy.signal
 
 
 def gini_impurity(x):
@@ -78,10 +79,10 @@ def max_probability(x):
 
 def logistic(x):
     return 1.0 / (1.0 + np.exp(-x))
-    
+
 
 def logit(x):
-    return np.log(x/(1.0 - x))
+    return np.log(x / (1.0 - x))
 
 
 def precision(m):
@@ -98,3 +99,35 @@ def F1(P, R):
 
 def accuracy(m):
     return np.sum(np.diag(m)) / np.sum(np.sum(m))
+
+
+def distance_matrix(X):
+    n = X.shape[0]
+    D = np.empty((n, n))
+    for i in range(n):
+        D[i, :] = np.linalg.norm(X - X[i, :], axis=1)
+    return D
+
+
+def proximity_matrix(D):
+    d_max = np.max(np.max(D))
+    return 1.0 - D / d_max
+
+
+def ambiguity(X):
+    D = distance_matrix(X)
+    mu = proximity_matrix(D)
+    return -np.sum(mu * (1 - mu))
+
+
+def valley(x):
+    hist, bin_edges = np.histogram(x, bins="auto")
+    valley_ind, _ = scipy.signal.find_peaks(-hist)
+    v = [(bin_edges[i] + bin_edges[i + 1]) * 0.5 for i in valley_ind]
+    return v
+
+
+def shannon_entropy_histogram(x):
+    hist, bin_edges = np.histogram(x, bins="auto")
+    hist = np.maximum(hist, 1e-12)
+    return -np.sum(hist * np.log2(hist))

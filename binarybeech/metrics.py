@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 # coding: utf-8
 # Initially Created with ChatGPT
+import uuid
 from abc import ABC, abstractmethod
 
 import numpy as np
 import pandas as pd
 
-# import binarybeech.utils as utils
 import binarybeech.math as math
 
 
@@ -46,10 +46,14 @@ class Metrics(ABC):
     @staticmethod
     def output_transform(arr):
         return arr
-        
+
     @staticmethod
     def inverse_transform(arr):
         return arr
+
+    @staticmethod
+    def data_handler_group():
+        return "default"
 
     @abstractmethod
     def loss(self, y, y_hat):
@@ -154,7 +158,7 @@ class LogisticMetrics(Metrics):
     @staticmethod
     def output_transform(arr):
         return math.logistic(arr)
-        
+
     @staticmethod
     def inverse_transform(arr):
         return math.logit(arr)
@@ -239,6 +243,43 @@ class ClassificationMetricsEntropy(ClassificationMetrics):
         return math.shannon_entropy(y)
 
 
+# =============================
+
+
+class UnsupervisedMetrics(Metrics):
+    def __init__(self):
+        pass
+
+    def loss(self, y, y_hat):
+        return np.inf
+
+    def loss_prune(self, y, y_hat):
+        return self.loss(y, y_hat)
+
+    def node_value(self, y):
+        return f"cluster {str(uuid.uuid4())}"
+
+    def validate(self, y, y_hat):
+        return {}
+
+    def goodness_of_fit(self, y, y_hat):
+        return 0.0
+
+    @staticmethod
+    def data_handler_group():
+        return "unsupervised"
+
+    @staticmethod
+    def check_data_type(arr):
+        if not arr:
+            return True
+
+        return False
+
+
+# =============================
+
+
 class MetricsFactory:
     def __init__(self):
         self.metrics = {}
@@ -264,3 +305,4 @@ metrics_factory.register("classification:gini", ClassificationMetrics)
 metrics_factory.register("classification:entropy", ClassificationMetricsEntropy)
 metrics_factory.register("logistic", LogisticMetrics)
 metrics_factory.register("classification", ClassificationMetrics)
+metrics_factory.register("clustering", UnsupervisedMetrics)
