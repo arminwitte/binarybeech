@@ -13,5 +13,6 @@ def test_iris_cart_create():
     assert isinstance(p, np.ndarray)
     assert isinstance(p[0], str)
     assert p[0] == p[1]
+    assert p[0] != p[-1]
 
 
