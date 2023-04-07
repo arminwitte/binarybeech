@@ -1,13 +1,12 @@
 #!/usr/bin/env python
 # coding: utf-8
 # Initially Created with ChatGPT
+import uuid
 from abc import ABC, abstractmethod
 
 import numpy as np
 import pandas as pd
-import uuid
 
-# import binarybeech.utils as utils
 import binarybeech.math as math
 
 
@@ -47,7 +46,7 @@ class Metrics(ABC):
     @staticmethod
     def output_transform(arr):
         return arr
-        
+
     @staticmethod
     def inverse_transform(arr):
         return arr
@@ -159,7 +158,7 @@ class LogisticMetrics(Metrics):
     @staticmethod
     def output_transform(arr):
         return math.logistic(arr)
-        
+
     @staticmethod
     def inverse_transform(arr):
         return math.logit(arr)
@@ -243,7 +242,9 @@ class ClassificationMetricsEntropy(ClassificationMetrics):
         # Implementation of the loss calculation for classification
         return math.shannon_entropy(y)
 
+
 # =============================
+
 
 class UnsupervisedMetrics(Metrics):
     def __init__(self):
@@ -262,9 +263,9 @@ class UnsupervisedMetrics(Metrics):
         return {}
 
     def goodness_of_fit(self, y, y_hat):
-        return 0.
-    
-    @staticmethod   
+        return 0.0
+
+    @staticmethod
     def data_handler_group():
         return "unsupervised"
 
@@ -275,7 +276,9 @@ class UnsupervisedMetrics(Metrics):
 
         return False
 
+
 # =============================
+
 
 class MetricsFactory:
     def __init__(self):

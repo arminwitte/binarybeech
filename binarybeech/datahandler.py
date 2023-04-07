@@ -270,6 +270,7 @@ class NullDataHandler(DataHandlerBase):
 
 # =========================
 
+
 class IntervalUnsupervisedDataHandler(DataHandlerBase):
     def __init__(self, y_name, attribute, metrics):
         super().__init__(y_name, attribute, metrics)
@@ -285,7 +286,7 @@ class IntervalUnsupervisedDataHandler(DataHandlerBase):
             return success
 
         name = self.attribute
-        
+
         valleys = math.valley(df[name])
         if not valleys:
             return success
@@ -311,7 +312,7 @@ class IntervalUnsupervisedDataHandler(DataHandlerBase):
 
     @staticmethod
     def check(x):
-            
+
         x = x[~pd.isna(x)]
         unique = np.unique(x)
         l = len(unique)
@@ -321,7 +322,6 @@ class IntervalUnsupervisedDataHandler(DataHandlerBase):
             return True
 
         return False
-
 
 
 class NominalUnsupervisedDataHandler(DataHandlerBase):
@@ -400,10 +400,10 @@ class NominalUnsupervisedDataHandler(DataHandlerBase):
 
 class DataHandlerFactory:
     def __init__(self):
-        self.data_handlers = {'default': {}}
-        
-    def register_group(self,group_name):
-        self.data_handlers[group_name]={}
+        self.data_handlers = {"default": {}}
+
+    def register_group(self, group_name):
+        self.data_handlers[group_name] = {}
 
     def register(self, data_level, data_handler_class, group_name="default"):
         self.data_handlers[group_name][data_level] = data_handler_class
@@ -416,12 +416,16 @@ class DataHandlerFactory:
         raise ValueError("no data handler class for this type of data")
 
     def create_data_handlers(self, df, y_name, X_names, metrics):
-        dhc = self.get_data_handler_class(df[y_name],group_name=metrics.data_handler_group())
+        dhc = self.get_data_handler_class(
+            df[y_name], group_name=metrics.data_handler_group()
+        )
 
         d = {y_name: dhc(y_name, y_name, metrics)}
 
         for name in X_names:
-            dhc = self.get_data_handler_class(df[name],group_name=metrics.data_handler_group())
+            dhc = self.get_data_handler_class(
+                df[name], group_name=metrics.data_handler_group()
+            )
             d[name] = dhc(y_name, name, metrics)
 
         return d
@@ -433,7 +437,10 @@ data_handler_factory.register("dichotomous", DichotomousDataHandler)
 data_handler_factory.register("interval", IntervalDataHandler)
 data_handler_factory.register("null", NullDataHandler)
 data_handler_factory.register_group("unsupervised")
-data_handler_factory.register("interval", IntervalUnsupervisedDataHandler, group_name="unsupervised")
-data_handler_factory.register("nominal", IntervalUnsupervisedDataHandler, group_name="unsupervised")
+data_handler_factory.register(
+    "interval", IntervalUnsupervisedDataHandler, group_name="unsupervised"
+)
+data_handler_factory.register(
+    "nominal", IntervalUnsupervisedDataHandler, group_name="unsupervised"
+)
 data_handler_factory.register("null", NullDataHandler, group_name="unsupervised")
-
