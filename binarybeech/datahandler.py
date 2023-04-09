@@ -205,11 +205,11 @@ class IntervalDataHandler(DataHandlerBase):
             df[df[self.attribute] >= self.threshold],
         ]
         N = len(df.index)
-        n = [len(df_.index) for df_ in split_df]
-        val = [self.metrics.node_value(df_[self.y_name]) for df_ in split_df]
-        self.loss = (n[0] / N * self.metrics.loss(split_df[0][self.y_name], val[0]) , n[
+        n = [len(df_.index) for df_ in self.split_df]
+        val = [self.metrics.node_value(df_[self.y_name]) for df_ in self.split_df]
+        self.loss = (n[0] / N * self.metrics.loss(self.split_df[0][self.y_name], val[0]) , n[
                 1
-            ] / N * self.metrics.loss(split_df[1][self.y_name], val[1]))
+            ] / N * self.metrics.loss(self.split_df[1][self.y_name], val[1]))
 
         
         return res.success
@@ -306,8 +306,8 @@ class IntervalUnsupervisedDataHandler(DataHandlerBase):
             df[df[self.attribute] >= self.threshold],
         ]
         N = len(df.index)
-        n = [len(df_.index) for df_ in split_df]
-        self.loss = (n[0] /N * math.shannon_entropy_histogram(split_df[0][name]), n[1] / N * math.shannon_entropy_histogram(split_df[1][name]))
+        n = [len(df_.index) for df_ in self.split_df]
+        self.loss = (n[0] /N * math.shannon_entropy_histogram(self.split_df[0][name]), n[1] / N * math.shannon_entropy_histogram(self.split_df[1][name]))
         return success
 
     def handle_missings(self, df):
