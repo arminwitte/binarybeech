@@ -48,7 +48,7 @@ class NominalDataHandler(DataHandlerBase):
         super().__init__(y_name, attribute, metrics)
 
     def split(self, df):
-        self.loss = np.Inf
+        self.loss = (np.Inf,np.Inf)
         self.split_df = []
         self.threshold = None
 
@@ -68,7 +68,7 @@ class NominalDataHandler(DataHandlerBase):
             for i in range(1, len(unique)):
                 comb += list(itertools.combinations(unique, i))
 
-        loss = np.Inf
+        loss = (np.Inf,np.Inf)
 
         for c in comb:
             threshold = c
@@ -79,10 +79,10 @@ class NominalDataHandler(DataHandlerBase):
             N = len(df.index)
             n = [len(df_.index) for df_ in split_df]
             val = [self.metrics.node_value(df_[self.y_name]) for df_ in split_df]
-            loss = n[0] / N * self.metrics.loss(split_df[0][self.y_name], val[0]) + n[
+            loss = (n[0] / N * self.metrics.loss(split_df[0][self.y_name], val[0]), n[
                 1
-            ] / N * self.metrics.loss(split_df[1][self.y_name], val[1])
-            if loss < self.loss:
+            ] / N * self.metrics.loss(split_df[1][self.y_name], val[1]))
+            if np.sum(loss) < np.sum(self.loss):
                 success = True
                 self.loss = loss
                 self.threshold = threshold
@@ -121,7 +121,7 @@ class DichotomousDataHandler(DataHandlerBase):
         super().__init__(y_name, attribute, metrics)
 
     def split(self, df):
-        self.loss = np.Inf
+        self.loss = (np.Inf,np.Inf)
         self.split_df = []
         self.threshold = None
 
@@ -143,9 +143,9 @@ class DichotomousDataHandler(DataHandlerBase):
         N = len(df.index)
         n = [len(df_.index) for df_ in self.split_df]
         val = [self.metrics.node_value(df_[self.y_name]) for df_ in self.split_df]
-        self.loss = n[0] / N * self.metrics.loss(
+        self.loss = (n[0] / N * self.metrics.loss(
             self.split_df[0][self.y_name], val[0]
-        ) + n[1] / N * self.metrics.loss(self.split_df[1][self.y_name], val[1])
+        ) , n[1] / N * self.metrics.loss(self.split_df[1][self.y_name], val[1]))
 
         return success
 
@@ -183,7 +183,7 @@ class IntervalDataHandler(DataHandlerBase):
         super().__init__(y_name, attribute, metrics)
 
     def split(self, df):
-        self.loss = np.Inf
+        self.loss = (np.Inf,np.Inf)
         self.split_df = []
         self.threshold = None
 
@@ -204,7 +204,14 @@ class IntervalDataHandler(DataHandlerBase):
             df[df[self.attribute] < self.threshold],
             df[df[self.attribute] >= self.threshold],
         ]
-        self.loss = res.fun
+        N = len(df.index)
+        n = [len(df_.index) for df_ in split_df]
+        val = [self.metrics.node_value(df_[self.y_name]) for df_ in split_df]
+        self.loss = (n[0] / N * self.metrics.loss(split_df[0][self.y_name], val[0]) , n[
+                1
+            ] / N * self.metrics.loss(split_df[1][self.y_name], val[1]))
+
+        
         return res.success
 
     def _opt_fun(self, df):
@@ -248,7 +255,7 @@ class NullDataHandler(DataHandlerBase):
         super().__init__(y_name, attribute, metrics)
 
     def split(self, df):
-        self.loss = np.Inf
+        self.loss = (np.Inf,np.Inf)
         self.split_df = []
         self.threshold = None
 
@@ -276,7 +283,7 @@ class IntervalUnsupervisedDataHandler(DataHandlerBase):
         super().__init__(y_name, attribute, metrics)
 
     def split(self, df):
-        self.loss = np.Inf
+        self.loss = (np.Inf,np.Inf)
         self.split_df = []
         self.threshold = None
 
@@ -298,7 +305,9 @@ class IntervalUnsupervisedDataHandler(DataHandlerBase):
             df[df[self.attribute] < self.threshold],
             df[df[self.attribute] >= self.threshold],
         ]
-        self.loss = math.shannon_entropy_histogram(df[name])
+        N = len(df.index)
+        n = [len(df_.index) for df_ in split_df]
+        self.loss = (n[0] /N * math.shannon_entropy_histogram(split_df[0][name]), n[1] / N * math.shannon_entropy_histogram(split_df[1][name]))
         return success
 
     def handle_missings(self, df):
@@ -329,7 +338,7 @@ class NominalUnsupervisedDataHandler(DataHandlerBase):
         super().__init__(y_name, attribute, metrics)
 
     def split(self, df):
-        self.loss = np.Inf
+        self.loss = (np.Inf,np.Inf)
         self.split_df = []
         self.threshold = None
 
@@ -349,7 +358,7 @@ class NominalUnsupervisedDataHandler(DataHandlerBase):
             for i in range(1, len(unique)):
                 comb += list(itertools.combinations(unique, i))
 
-        loss = np.Inf
+        loss = (np.Inf,np.Inf)
 
         for c in comb:
             threshold = c
@@ -361,7 +370,7 @@ class NominalUnsupervisedDataHandler(DataHandlerBase):
             n = [len(df_.index) for df_ in split_df]
             val = [self.metrics.node_value(None) for df_ in split_df]
             loss = math.shannon_entropy(df[c])
-            if loss < self.loss:
+            if np.sum(loss) < np.sum(self.loss):
                 success = True
                 self.loss = loss
                 self.threshold = threshold

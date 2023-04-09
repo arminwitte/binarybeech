@@ -191,16 +191,16 @@ class CART(Model):
 
     def create_tree(self, leaf_loss_threshold=1e-12):
         self.leaf_loss_threshold = leaf_loss_threshold
-        root = self._node_or_leaf(self.df)
+        root = self._node_or_leaf(self.df,np.Inf)
         self.tree = Tree(root)
         n_leafs = self.tree.leaf_count()
         print(f"A tree with {n_leafs} leafs was created")
         return self.tree
 
-    def _node_or_leaf(self, df):
+    def _node_or_leaf(self, df, loss_parent):
         y = df[self.y_name]
         y_hat = self.metrics.node_value(y)
-        loss_parent = self.metrics.loss(y, y_hat)
+        #loss_parent = self.metrics.loss(y, y_hat)
         # p = self._probability(df)
         if (
             loss_parent < self.leaf_loss_threshold
@@ -217,12 +217,12 @@ class CART(Model):
         # print(
         #    f"Computed split:\nloss: {loss_best:.2f} (parent: {loss_parent:.2f})\nattribute: {split_name}\nthreshold: {split_threshold}\ncount: {[len(df_.index) for df_ in split_df]}"
         # )
-        if loss_best < loss_parent:
+        if np.sum(loss_best) < loss_parent:
             # print(f"=> Node({split_name}, {split_threshold})")
             branches = []
             self.depth += 1
             for i in range(2):
-                branches.append(self._node_or_leaf(split_df[i]))
+                branches.append(self._node_or_leaf(split_df[i],loss_best[i]))
             self.depth -= 1
             # unique, counts = np.unique(df[self.y_name], return_counts=True)
             value = y_hat
@@ -250,26 +250,28 @@ class CART(Model):
         return leaf
 
     def _loss_best(self, df):
-        loss = np.Inf
+        L = np.Inf
         split_df = None
         split_threshold = None
         split_name = None
         for name in self.X_names:
-            loss_ = np.Inf
+            L_ = np.Inf
             dh = self.data_handlers[name]
             success = dh.split(df)
             if not success:
                 continue
             loss_ = dh.loss
+            L_ = np.sum(loss_)
             split_df_ = dh.split_df
             split_threshold_ = dh.threshold
             # print(name[:7],"\t:",loss_,"(",len(split_df_[0].index),",",len(split_df_[1].index),")")
             if (
-                loss_ < loss
+                L_ < L
                 and np.min([len(df_.index) for df_ in split_df_])
                 >= self.min_split_samples
             ):
                 loss = loss_
+                L = L_
                 split_threshold = split_threshold_
                 split_df = split_df_
                 split_name = name
