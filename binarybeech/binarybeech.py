@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 import scipy.optimize as opt
 
-from binarybeech.datahandler import data_handler_factory
+from binarybeech.attributehandler import attribute_handler_factory
 from binarybeech.extra import k_fold_split
 from binarybeech.metrics import metrics_factory
 from binarybeech.reporter import Reporter
@@ -18,7 +18,7 @@ from binarybeech.tree import Node, Tree
 
 class Model(ABC):
     def __init__(
-        self, df, y_name, X_names, data_handlers, metrics_type, handle_missings
+        self, df, y_name, X_names, attribute_handlers, metrics_type, handle_missings
     ):
         if not y_name:
             y_name = "__internal_placeholder_for_y__"
@@ -37,11 +37,11 @@ class Model(ABC):
         self.metrics_type = metrics_type
         self.metrics = metrics
 
-        if data_handlers is None:
-            data_handlers = data_handler_factory.create_data_handlers(
+        if attribute_handlers is None:
+            attribute_handlers = attribute_handler_factory.create_attribute_handlers(
                 df, y_name, X_names, self.metrics
             )
-        self.data_handlers = data_handlers
+        self.attribute_handlers = attribute_handlers
 
         self.df = self._handle_missings(df, handle_missings)
 
@@ -53,7 +53,7 @@ class Model(ABC):
         elif mode == "simple":
             # use nan as category
             # use mean if numerical
-            for name, dh in self.data_handlers.items():
+            for name, dh in self.attribute_handlers.items():
                 df = dh.handle_missings(df)
         elif mode == "model":
             raise ValueError("Not implemented")
@@ -94,10 +94,10 @@ class CART(Model):
         max_depth=10,
         metrics_type="regression",
         handle_missings="simple",
-        data_handlers=None,
+        attribute_handlers=None,
     ):
         super().__init__(
-            df, y_name, X_names, data_handlers, metrics_type, handle_missings
+            df, y_name, X_names, attribute_handlers, metrics_type, handle_missings
         )
         self.tree = None
         self.leaf_loss_threshold = 1e-12
@@ -145,7 +145,7 @@ class CART(Model):
                 min_split_samples=self.min_split_samples,
                 max_depth=self.max_depth,
                 metrics_type=self.metrics_type,
-                data_handlers=self.data_handlers,
+                attribute_handlers=self.attribute_handlers,
             )
             c.create_tree()
             pres = c.prune(test_set=data[1])
@@ -231,7 +231,7 @@ class CART(Model):
                 attribute=split_name,
                 threshold=split_threshold,
                 value=value,
-                decision_fun=self.data_handlers[split_name].decide,
+                decision_fun=self.attribute_handlers[split_name].decide,
             )
             item.pinfo["N"] = len(df.index)
             item.pinfo["r"] = self.metrics.loss_prune(y, y_hat)
@@ -256,7 +256,7 @@ class CART(Model):
         split_name = None
         for name in self.X_names:
             loss_ = np.Inf
-            dh = self.data_handlers[name]
+            dh = self.attribute_handlers[name]
             success = dh.split(df)
             if not success:
                 continue
@@ -361,10 +361,10 @@ class GradientBoostedTree(Model):
         init_metrics_type="logistic",
         gamma=None,
         handle_missings="simple",
-        data_handlers=None,
+        attribute_handlers=None,
     ):
         super().__init__(
-            df, y_name, X_names, data_handlers, init_metrics_type, handle_missings
+            df, y_name, X_names, attribute_handlers, init_metrics_type, handle_missings
         )
         self.df = self.df.copy()
         self.N = len(self.df.index)
@@ -388,7 +388,7 @@ class GradientBoostedTree(Model):
             X_names=self.X_names,
             max_depth=0,
             metrics_type=self.init_metrics_type,
-            data_handlers=self.data_handlers,
+            attribute_handlers=self.attribute_handlers,
         )
         c.create_tree()
         self.init_tree = c.tree
@@ -487,10 +487,10 @@ class RandomForest(Model):
         cart_settings={},
         metrics_type="regression",
         handle_missings="simple",
-        data_handlers=None,
+        attribute_handlers=None,
     ):
         super().__init__(
-            df, y_name, X_names, data_handlers, metrics_type, handle_missings
+            df, y_name, X_names, attribute_handlers, metrics_type, handle_missings
         )
         self.df = self.df.copy()
         self.N = len(self.df.index)
@@ -518,7 +518,7 @@ class RandomForest(Model):
                 min_leaf_samples=5,
                 min_split_samples=4,
                 metrics_type=self.metrics_type,
-                data_handlers=self.data_handlers,
+                attribute_handlers=self.attribute_handlers,
             )
             kwargs = {**kwargs, **self.cart_settings}
             c = CART(df, self.y_name, X_names=X_names, **kwargs)

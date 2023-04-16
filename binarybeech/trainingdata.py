@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
-from binarybeech.datahandler import data_handler_factory
+from binarybeech.attributehandler import attribute_handler_factory
 from binarybeech.extra import k_fold_split
 from binarybeech.metrics import metrics_factory
 
@@ -11,7 +11,7 @@ class TrainingData:
         df,
         y_name=None,
         X_names=None,
-        data_handlers=None,
+        attribute_handlers=None,
         metrics_type=None,
         handle_missings="simple",
     ):
@@ -30,11 +30,11 @@ class TrainingData:
         self.metrics_type = metrics_type
         self.metrics = metrics
 
-        if data_handlers is None:
-            data_handlers = data_handler_factory.create_data_handlers(
+        if attribute_handlers is None:
+            attribute_handlers = attribute_handler_factory.create_attribute_handlers(
                 df, y_name, X_names, self.metrics
             )
-        self.data_handlers = data_handlers
+        self.attribute_handlers = attribute_handlers
 
         self.df = df
 
@@ -46,7 +46,7 @@ class TrainingData:
         if mode == "simple":
             # use nan as category
             # use mean if numerical
-            for name, dh in self.data_handlers.items():
+            for name, dh in self.attribute_handlers.items():
                 df = dh.handle_missings(df)
         elif mode == "model":
             raise ValueError("Not implemented")

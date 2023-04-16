@@ -38,7 +38,7 @@ Please have a look at the jupyter notebooks in this repository for more examples
 
 ## Usage
 ### binarybeech.binarybeech.CART
-**CART(df, y_name, X_names=None, min_leaf_samples=1, min_split_samples=1, max_depth=10, metrics_type="regression", handle_missings="simple", data_handlers=None)**
+**CART(df, y_name, X_names=None, min_leaf_samples=1, min_split_samples=1, max_depth=10, metrics_type="regression", handle_missings="simple", attribute_handlers=None)**
 
 Class for a Classification and Regression Tree (CART) model.
 
@@ -51,7 +51,7 @@ Class for a Classification and Regression Tree (CART) model.
     - **max_depth**: Maximum number of sequential splits. This corresponds to the number of vertical layers of the tree. Default is 10, which corresponds to a maximum number of 1024 terminal nodes.
     - **metrics_type**: Metrics to use for the evaluation of split loss, etc. Can be either "classification", "logistic", "regression", or _None_. Default is "regression". If _None_ is chosen, the `metrics_type` is deduced from the training _dataframe_.
     - **handle_missings**: Specify the way how missing data is handeled. Can be eiter _None_ or "simple".
-    - **data_handlers**: _dict_ with data handler instances for each variable. The data handler determins, e.g., how splits of the dataset are made.
+    - **attribute_handlers**: _dict_ with attribute handler instances for each variable. The data handler determins, e.g., how splits of the dataset are made.
 * Methods
     - **predict(df)**:
         + Parameters:
@@ -81,7 +81,7 @@ Class for a Classification and Regression Tree (CART) model.
 
 ### binarybeech.binarybeech.GradientBoostedTree
 
-**GradientBoostedTree(df, y_name, X_names=None, sample_frac=1, n_attributes=None, learning_rate=0.1, cart_settings={}, init_metrics_type="logistic", gamma=None, handle_missings="simple", data_handlers=None)**
+**GradientBoostedTree(df, y_name, X_names=None, sample_frac=1, n_attributes=None, learning_rate=0.1, cart_settings={}, init_metrics_type="logistic", gamma=None, handle_missings="simple", s=None)**
 
 Class for a Gradient Boosted Tree model.
 
@@ -96,7 +96,7 @@ Class for a Gradient Boosted Tree model.
     - **init_metrics_type**: Metrics to use for the evaluation of split loss, etc if the initial tree (stump). Can be either "classification", "logistic", "regression", or _None_. Default is "regression". If _None_ is chosen, the `metrics_type` is deduced from the training _dataframe_.
     - **gamma**: weight for individual trees of the ensemble. If _None_, the weight for each tree is chosen by line search minimizing the loss given by _init_metrics_type_.
     - **handle_missings**: Specify the way how missing data is handeled. Can be eiter _None_ or "simple".
-    - **data_handlers**: _dict_ with data handler instances for each variable. The data handler determins, e.g., how splits of the dataset are made.
+    - **attribute_handlers**: _dict_ with data handler instances for each variable. The data handler determins, e.g., how splits of the dataset are made.
 * Methods
     - **predict(df)**
         + Parameters:
@@ -117,7 +117,7 @@ Class for a Gradient Boosted Tree model.
 
 ### binarybeech.binarybeech.RandomForest
 
-**RandomForest(df, y_name, X_names=None, verbose=False, sample_frac=1, n_attributes=None, cart_settings={}, metrics_type="regression", handle_missings="simple", data_handlers=None)**
+**RandomForest(df, y_name, X_names=None, verbose=False, sample_frac=1, n_attributes=None, cart_settings={}, metrics_type="regression", handle_missings="simple", attribute_handlers=None)**
 
 Class for a Random Forest model.
 
@@ -131,7 +131,7 @@ Class for a Random Forest model.
     - **cart_settings**: _dict_ that is passed on to the constuctor of the individual tree (binarybeech.binarybeech.CART). For details cf. above.
     - **metrics_type**: Metrics to use for the evaluation of split loss, etc. Can be either "classification", "logistic", "regression", or _None_. Default is "regression". If _None_ is chosen, the `metrics_type` is deduced from the training _dataframe_.
     - **handle_missings**: Specify the way how missing data is handeled. Can be eiter _None_ or "simple".
-    - **data_handlers**: _dict_ with data handler instances for each variable. The data handler determins, e.g., how splits of the dataset are made.
+    - **attribute_handlers**: _dict_ with attribute handler instances for each variable. The data handler determins, e.g., how splits of the dataset are made.
 * Methods
     - **predict(df)**
         + Parameters:

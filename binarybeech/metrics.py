@@ -52,7 +52,7 @@ class Metrics(ABC):
         return arr
 
     @staticmethod
-    def data_handler_group():
+    def attribute_handler_group():
         return "default"
 
     @abstractmethod
@@ -266,7 +266,7 @@ class UnsupervisedMetrics(Metrics):
         return 0.0
 
     @staticmethod
-    def data_handler_group():
+    def attribute_handler_group():
         return "unsupervised"
 
     @staticmethod

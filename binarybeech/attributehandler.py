@@ -11,7 +11,7 @@ import scipy.optimize as opt
 import binarybeech.math as math
 
 
-class DataHandlerBase(ABC):
+class AttributeHandlerBase(ABC):
     def __init__(self, y_name, attribute, metrics):
         self.y_name = y_name
         self.attribute = attribute
@@ -43,7 +43,7 @@ class DataHandlerBase(ABC):
 # =========================
 
 
-class NominalDataHandler(DataHandlerBase):
+class NominalAttributeHandler(AttributeHandlerBase):
     def __init__(self, y_name, attribute, metrics):
         super().__init__(y_name, attribute, metrics)
 
@@ -116,7 +116,7 @@ class NominalDataHandler(DataHandlerBase):
         return False
 
 
-class DichotomousDataHandler(DataHandlerBase):
+class DichotomousAttributeHandler(AttributeHandlerBase):
     def __init__(self, y_name, attribute, metrics):
         super().__init__(y_name, attribute, metrics)
 
@@ -178,7 +178,7 @@ class DichotomousDataHandler(DataHandlerBase):
         return False
 
 
-class IntervalDataHandler(DataHandlerBase):
+class IntervalAttributeHandler(AttributeHandlerBase):
     def __init__(self, y_name, attribute, metrics):
         super().__init__(y_name, attribute, metrics)
 
@@ -243,7 +243,7 @@ class IntervalDataHandler(DataHandlerBase):
         return False
 
 
-class NullDataHandler(DataHandlerBase):
+class NullAttributeHandler(AttributeHandlerBase):
     def __init__(self, y_name, attribute, metrics):
         super().__init__(y_name, attribute, metrics)
 
@@ -271,7 +271,7 @@ class NullDataHandler(DataHandlerBase):
 # =========================
 
 
-class IntervalUnsupervisedDataHandler(DataHandlerBase):
+class UnsupervisedIntervalAttributeHandler(AttributeHandlerBase):
     def __init__(self, y_name, attribute, metrics):
         super().__init__(y_name, attribute, metrics)
 
@@ -324,7 +324,7 @@ class IntervalUnsupervisedDataHandler(DataHandlerBase):
         return False
 
 
-class NominalUnsupervisedDataHandler(DataHandlerBase):
+class UnsupervisedNominalAttributeHandler(AttributeHandlerBase):
     def __init__(self, y_name, attribute, metrics):
         super().__init__(y_name, attribute, metrics)
 
@@ -398,49 +398,49 @@ class NominalUnsupervisedDataHandler(DataHandlerBase):
 # =========================
 
 
-class DataHandlerFactory:
+class AttributeHandlerFactory:
     def __init__(self):
-        self.data_handlers = {"default": {}}
+        self.attribute_handlers = {"default": {}}
 
     def register_group(self, group_name):
-        self.data_handlers[group_name] = {}
+        self.attribute_handlers[group_name] = {}
 
-    def register(self, data_level, data_handler_class, group_name="default"):
-        self.data_handlers[group_name][data_level] = data_handler_class
+    def register(self, data_level, attribute_handler_class, group_name="default"):
+        self.attribute_handlers[group_name][data_level] = attribute_handler_class
 
-    def get_data_handler_class(self, arr, group_name="default"):
-        for data_handler_class in self.data_handlers[group_name].values():
-            if data_handler_class.check(arr):
-                return data_handler_class
+    def get_attribute_handler_class(self, arr, group_name="default"):
+        for attribute_handler_class in self.attribute_handlers[group_name].values():
+            if attribute_handler_class.check(arr):
+                return attribute_handler_class
 
         raise ValueError("no data handler class for this type of data")
 
-    def create_data_handlers(self, df, y_name, X_names, metrics):
-        dhc = self.get_data_handler_class(
-            df[y_name], group_name=metrics.data_handler_group()
+    def create_attribute_handlers(self, df, y_name, X_names, metrics):
+        dhc = self.get_attribute_handler_class(
+            df[y_name], group_name=metrics.attribute_handler_group()
         )
 
         d = {y_name: dhc(y_name, y_name, metrics)}
 
         for name in X_names:
-            dhc = self.get_data_handler_class(
-                df[name], group_name=metrics.data_handler_group()
+            dhc = self.get_attribute_handler_class(
+                df[name], group_name=metrics.attribute_handler_group()
             )
             d[name] = dhc(y_name, name, metrics)
 
         return d
 
 
-data_handler_factory = DataHandlerFactory()
-data_handler_factory.register("nominal", NominalDataHandler)
-data_handler_factory.register("dichotomous", DichotomousDataHandler)
-data_handler_factory.register("interval", IntervalDataHandler)
-data_handler_factory.register("null", NullDataHandler)
-data_handler_factory.register_group("unsupervised")
-data_handler_factory.register(
-    "interval", IntervalUnsupervisedDataHandler, group_name="unsupervised"
+attribute_handler_factory = AttributeHandlerFactory()
+attribute_handler_factory.register("nominal", NominalAttributeHandler)
+attribute_handler_factory.register("dichotomous", DichotomousAttributeHandler)
+attribute_handler_factory.register("interval", IntervalAttributeHandler)
+attribute_handler_factory.register("null", NullAttributeHandler)
+attribute_handler_factory.register_group("unsupervised")
+attribute_handler_factory.register(
+    "interval", UnsupervisedIntervalAttributeHandler, group_name="unsupervised"
 )
-data_handler_factory.register(
-    "nominal", IntervalUnsupervisedDataHandler, group_name="unsupervised"
+attribute_handler_factory.register(
+    "nominal", UnsupervisedNominalAttributeHandler, group_name="unsupervised"
 )
-data_handler_factory.register("null", NullDataHandler, group_name="unsupervised")
+attribute_handler_factory.register("null", NullAttributeHandler, group_name="unsupervised")
