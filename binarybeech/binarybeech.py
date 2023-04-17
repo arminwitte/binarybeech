@@ -30,19 +30,6 @@ class Model(ABC):
         self.X_names = X_names
 
         self.dmgr = DataManager(df, y_name, X_names, metrics_type, attribute_handlers)
-        
-        if metrics_type is None:
-            metrics_type, metrics = metrics_factory.from_data(df[self.y_name])
-        else:
-            metrics = metrics_factory.create_metrics(metrics_type)
-        self.metrics_type = metrics_type
-        self.metrics = metrics
-
-        if attribute_handlers is None:
-            attribute_handlers = attribute_handler_factory.create_attribute_handlers(
-                df, y_name, X_names, self.metrics
-            )
-        self.attribute_handlers = attribute_handlers
 
         self.df = self._handle_missings(df, handle_missings)
 
@@ -54,7 +41,7 @@ class Model(ABC):
         elif mode == "simple":
             # use nan as category
             # use mean if numerical
-            for name, dh in self.attribute_handlers.items():
+            for name, dh in self.dmgr.items():
                 df = dh.handle_missings(df)
         elif mode == "model":
             raise ValueError("Not implemented")
@@ -74,14 +61,14 @@ class Model(ABC):
             df = self.df
         y_hat = self.predict(df)
         y = df[self.y_name]
-        return self.metrics.validate(y, y_hat)
+        return self.dmgr.metrics.validate(y, y_hat)
 
     def goodness_of_fit(self, df=None):
         if df is None:
             df = self.df
         y_hat = self.predict(df)
         y = df[self.y_name]
-        return self.metrics.goodness_of_fit(y, y_hat)
+        return self.dmgr.metrics.goodness_of_fit(y, y_hat)
 
 
 class CART(Model):
@@ -121,7 +108,7 @@ class CART(Model):
 
     def predict(self, df):
         y_hat = self._predict_raw(df)
-        return self.metrics.output_transform(y_hat)
+        return self.dmgr.metrics.output_transform(y_hat)
 
     def train(self, k=5, plot=True, slack=1.0):
         """
@@ -145,8 +132,8 @@ class CART(Model):
                 min_leaf_samples=self.min_leaf_samples,
                 min_split_samples=self.min_split_samples,
                 max_depth=self.max_depth,
-                metrics_type=self.metrics_type,
-                attribute_handlers=self.attribute_handlers,
+                metrics_type=self.dmgr.metrics_type,
+                attribute_handlers=self.dmgr,
             )
             c.create_tree()
             pres = c.prune(test_set=data[1])
@@ -200,8 +187,8 @@ class CART(Model):
 
     def _node_or_leaf(self, df):
         y = df[self.y_name]
-        y_hat = self.metrics.node_value(y)
-        loss_parent = self.metrics.loss(y, y_hat)
+        y_hat = self.dmgr.metrics.node_value(y)
+        loss_parent = self.dmgr.metrics.loss(y, y_hat)
         # p = self._probability(df)
         if (
             loss_parent < self.leaf_loss_threshold
@@ -232,10 +219,10 @@ class CART(Model):
                 attribute=split_name,
                 threshold=split_threshold,
                 value=value,
-                decision_fun=self.attribute_handlers[split_name].decide,
+                decision_fun=self.dmgr[split_name].decide,
             )
             item.pinfo["N"] = len(df.index)
-            item.pinfo["r"] = self.metrics.loss_prune(y, y_hat)
+            item.pinfo["r"] = self.dmgr.metrics.loss_prune(y, y_hat)
             item.pinfo["R"] = item.pinfo["N"] / len(self.df.index) * item.pinfo["r"]
         else:
             item = self._leaf(y, y_hat)
@@ -246,7 +233,7 @@ class CART(Model):
         leaf = Node(value=y_hat)
 
         leaf.pinfo["N"] = y.size
-        leaf.pinfo["r"] = self.metrics.loss_prune(y, y_hat)
+        leaf.pinfo["r"] = self.dmgr.metrics.loss_prune(y, y_hat)
         leaf.pinfo["R"] = leaf.pinfo["N"] / len(self.df.index) * leaf.pinfo["r"]
         return leaf
 
@@ -257,7 +244,7 @@ class CART(Model):
         split_name = None
         for name in self.X_names:
             loss_ = np.Inf
-            dh = self.attribute_handlers[name]
+            dh = self.dmgr[name]
             success = dh.split(df)
             if not success:
                 continue
@@ -389,7 +376,7 @@ class GradientBoostedTree(Model):
             X_names=self.X_names,
             max_depth=0,
             metrics_type=self.init_metrics_type,
-            attribute_handlers=self.attribute_handlers,
+            attribute_handlers=self.dmgr,
         )
         c.create_tree()
         self.init_tree = c.tree
@@ -397,7 +384,7 @@ class GradientBoostedTree(Model):
 
     def _predict1(self, x):
         p = self.init_tree.traverse(x).value
-        p = self.metrics.inverse_transform(p)
+        p = self.dmgr.metrics.inverse_transform(p)
         for i, t in enumerate(self.trees):
             p += self.learning_rate * self.gamma[i] * t.traverse(x).value
         return p
@@ -408,7 +395,7 @@ class GradientBoostedTree(Model):
 
     def predict(self, df):
         y_hat = self._predict_raw(df)
-        return self.metrics.output_transform(y_hat)
+        return self.dmgr.metrics.output_transform(y_hat)
 
     def _pseudo_residuals(self):
         res = self.df[self.y_name] - self.predict(self.df)
@@ -463,8 +450,8 @@ class GradientBoostedTree(Model):
 
         def fun(gamma):
             y_ = y_hat + gamma * delta
-            p = self.metrics.output_transform(y_)
-            return self.metrics.loss(y, p)
+            p = self.dmgr.metrics.output_transform(y_)
+            return self.dmgr.metrics.loss(y, p)
 
         return fun
 
@@ -473,7 +460,7 @@ class GradientBoostedTree(Model):
             df = self.df
         y_hat = self.predict(df)
         y = df[self.y_name]
-        return self.metrics.validate(y, y_hat)
+        return self.dmgr.metrics.validate(y, y_hat)
 
 
 class RandomForest(Model):
@@ -518,8 +505,8 @@ class RandomForest(Model):
                 max_depth=3,
                 min_leaf_samples=5,
                 min_split_samples=4,
-                metrics_type=self.metrics_type,
-                attribute_handlers=self.attribute_handlers,
+                metrics_type=self.dmgr.metrics_type,
+                attribute_handlers=self.dmgr,
             )
             kwargs = {**kwargs, **self.cart_settings}
             c = CART(df, self.y_name, X_names=X_names, **kwargs)
@@ -543,7 +530,7 @@ class RandomForest(Model):
 
     def predict(self, df):
         y_hat = self._predict_raw(df)
-        return self.metrics.output_transform(y_hat)
+        return self.dmgr.metrics.output_transform(y_hat)
 
     def validate_oob(self):
         df = self._oob_df()
@@ -557,7 +544,7 @@ class RandomForest(Model):
         df = df.dropna(subset=["majority_vote"])
         # df = df.astype({"majority_vote": "int"})
         y = df[self.y_name]
-        return self.metrics.validate(y, df["majority_vote"].values)
+        return self.dmgr.metrics.validate(y, df["majority_vote"].values)
 
     def _oob_predict(self, df):
         for i, t in enumerate(self.trees):
@@ -580,7 +567,7 @@ class RandomForest(Model):
             df = self.df
         y_hat = self.predict(df)
         y = df[self.y_name]
-        return self.metrics.validate(y, y_hat)
+        return self.dmgr.metrics.validate(y, y_hat)
 
     def variable_importance(self):
         d = {}

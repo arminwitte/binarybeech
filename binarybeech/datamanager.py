@@ -21,6 +21,7 @@ class DataManager:
                 df, y_name, X_names, self.metrics
             )
         self.attribute_handlers = attribute_handlers
+        self.items = self.attribute_handlers.items
 
     
     def __getitem__(self, key):
