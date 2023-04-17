@@ -9,9 +9,8 @@ import numpy as np
 import pandas as pd
 import scipy.optimize as opt
 
-from binarybeech.attributehandler import attribute_handler_factory
 from binarybeech.extra import k_fold_split
-from binarybeech.metrics import metrics_factory
+from binarybeech.datamanager import DataManager
 from binarybeech.reporter import Reporter
 from binarybeech.tree import Node, Tree
 
@@ -30,6 +29,8 @@ class Model(ABC):
             X_names.remove(self.y_name)
         self.X_names = X_names
 
+        self.dmgr = DataManager(df, y_name, X_names, metrics_type, attribute_handlers)
+        
         if metrics_type is None:
             metrics_type, metrics = metrics_factory.from_data(df[self.y_name])
         else:
