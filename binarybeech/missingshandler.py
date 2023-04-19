@@ -55,7 +55,7 @@ class MissingsHandlerFactory:
 
     def register_handler(self, data_level, missings_handler_class, group_names=["default"]):
         for name in group_names:
-        self.missings_handlers[name][data_level] = missings_handler_class
+            self.missings_handlers[name][data_level] = missings_handler_class
 
     def get_missings_handler_class(self, arr, group_name="default"):
         for missings_handler_class in self.missings_handlers[group_name].values():
