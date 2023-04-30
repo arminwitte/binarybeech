@@ -6,7 +6,7 @@ from binarybeech.binarybeech import CART, GradientBoostedTree, RandomForest
 
 def test_titanic_cart_create():
     df_titanic = pd.read_csv("data/titanic.csv")
-    c = CART(df=df_titanic, "Survived", metrics_type="classification")
+    c = CART(df=df_titanic, y_name="Survived", metrics_type="classification")
     c.create_tree()
     p = c.predict(df_titanic)
     val = c.validate()
@@ -17,7 +17,7 @@ def test_titanic_cart_create():
 
 def test_titanic_cart_train():
     df_titanic = pd.read_csv("data/titanic.csv")
-    c = CART(df=df_titanic, "Survived", metrics_type="classification")
+    c = CART(df=df_titanic, y_name="Survived", metrics_type="classification")
     c.train()
     p = c.predict(df_titanic)
     val = c.validate()
@@ -29,7 +29,7 @@ def test_titanic_cart_train():
 def test_titanic_gradientboostedtree():
     df_titanic = pd.read_csv("data/titanic.csv")
     gbt = GradientBoostedTree(
-        df=df_titanic, "Survived", learning_rate=0.5, init_metrics_type="logistic"
+        df=df_titanic, y_name="Survived", learning_rate=0.5, init_metrics_type="logistic"
     )
     gbt.train(20)
     p = gbt.predict(df_titanic)
@@ -43,7 +43,7 @@ def test_titanic_gradientboostedtree():
 
 def test_titanic_randomforest():
     df_titanic = pd.read_csv("data/titanic.csv")
-    rf = RandomForest(df=df_titanic, "Survived", metrics_type="classification")
+    rf = RandomForest(df=df_titanic, y_name="Survived", metrics_type="classification")
     rf.train(20)
     p = rf.predict(df_titanic)
     val = rf.validate_oob()

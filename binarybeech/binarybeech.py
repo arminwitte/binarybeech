@@ -22,7 +22,7 @@ class Model(ABC):
     ):
         if isinstance(training_data, TrainingData):
             self.training_data = training_data
-        elif isinstance(df, pd.DataFrame)
+        elif isinstance(df, pd.DataFrame):
             self.training_data = TrainingData(df, y_name=y_name, X_names=X_names, handle_missings=handle_missings)
         else:
             raise TypeError("Wrong data type. Either pass training_data as a TrainingData object or df as a pandas DataFrame.")
