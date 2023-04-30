@@ -75,7 +75,7 @@ class Model(ABC):
 class CART(Model):
     def __init__(
         self,
-        training_data=None
+        training_data=None,
         df=None,
         y_name=None,
         X_names=None,
@@ -341,7 +341,7 @@ class CART(Model):
 class GradientBoostedTree(Model):
     def __init__(
         self,
-        training_data=None
+        training_data=None,
         df=None,
         y_name=None,
         X_names=None,
@@ -469,7 +469,7 @@ class GradientBoostedTree(Model):
 class RandomForest(Model):
     def __init__(
         self,
-        training_data=None
+        training_data=None,
         df=None,
         y_name=None,
         X_names=None,
