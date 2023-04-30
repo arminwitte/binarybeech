@@ -12,8 +12,13 @@ class TrainingData:
         df,
         y_name=None,
         X_names=None,
-        handle_missings="simple",
+        handle_missings=None,
     ):
+        
+        if not y_name:
+            y_name = "__internal_placeholder_for_y__"
+            df[y_name] = 0
+        
         self.y_name = y_name
 
         if X_names is None:
@@ -23,6 +28,9 @@ class TrainingData:
         self.X_names = X_names
 
         self.df = df
+        if handle_missings is not None:
+            self.handle_missings(handle_missings, df=df)
+
         self.data_sets = [(self.df,None),]
 
     def handle_missings(self, method, df=None):
@@ -46,7 +54,8 @@ class TrainingData:
     def report(self):
         # first loop over y and X
         # second show pandas stats
-        # - m
+        # - missings
+        # - Pearson correlation
         pass
     
     
