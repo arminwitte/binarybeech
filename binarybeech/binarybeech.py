@@ -86,7 +86,7 @@ class CART(Model):
         handle_missings="simple",
         attribute_handlers=None,
     ):
-        super().__init__(
+        super().__init__(training_data,
             df, y_name, X_names, attribute_handlers, metrics_type, handle_missings
         )
         self.tree = None
