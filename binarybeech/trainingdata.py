@@ -3,7 +3,6 @@
 from binarybeech.attributehandler import attribute_handler_factory
 from binarybeech.extra import k_fold_split
 from binarybeech.metrics import metrics_factory
-from binarybeech.extra import k_fold_split
 
 
 class TrainingData:
@@ -14,11 +13,11 @@ class TrainingData:
         X_names=None,
         handle_missings=None,
     ):
-        
+
         if not y_name:
             y_name = "__internal_placeholder_for_y__"
             df[y_name] = 0
-        
+
         self.y_name = y_name
 
         if X_names is None:
@@ -31,12 +30,14 @@ class TrainingData:
         if handle_missings is not None:
             self.handle_missings(handle_missings, df=df)
 
-        self.data_sets = [(self.df,None),]
+        self.data_sets = [
+            (self.df, None),
+        ]
 
     def handle_missings(self, method, df=None):
         if df is None:
             df = self.df
-            
+
         if df is None:
             self.df = df
         return df
@@ -46,9 +47,18 @@ class TrainingData:
         self.df.dropna(inplace=True, how="all", axis=0)
         self.df.dropna(inplace=True, how="all", axis=1)
 
-
-    def split(self, k=1, frac=None, random=False, shuffle=True, replace=True, seed=None):
-        sets = k_fold_split(self.df, k=k, frac=frac, random=random, shuffle=shuffle, replace=replace, seed=seed)
+    def split(
+        self, k=1, frac=None, random=False, shuffle=True, replace=True, seed=None
+    ):
+        sets = k_fold_split(
+            self.df,
+            k=k,
+            frac=frac,
+            random=random,
+            shuffle=shuffle,
+            replace=replace,
+            seed=seed,
+        )
         self.data_sets = sets
 
     def report(self):
@@ -57,5 +67,3 @@ class TrainingData:
         # - missings
         # - Pearson correlation
         pass
-    
-    

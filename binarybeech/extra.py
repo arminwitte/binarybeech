@@ -3,7 +3,9 @@
 import numpy as np
 
 
-def k_fold_split(df, k=1, frac=None, random=False, shuffle=True, replace=True, seed=None):
+def k_fold_split(
+    df, k=1, frac=None, random=False, shuffle=True, replace=True, seed=None
+):
     if shuffle:
         df = df.sample(frac=1.0, replace=False, random_state=seed)
 

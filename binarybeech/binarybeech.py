@@ -9,25 +9,36 @@ import numpy as np
 import pandas as pd
 import scipy.optimize as opt
 
-from binarybeech.extra import k_fold_split
 from binarybeech.datamanager import DataManager
+from binarybeech.extra import k_fold_split
 from binarybeech.reporter import Reporter
-from binarybeech.tree import Node, Tree
 from binarybeech.trainingdata import TrainingData
+from binarybeech.tree import Node, Tree
 
 
 class Model(ABC):
     def __init__(
-        self, training_data, df, y_name, X_names, attribute_handlers, metrics_type, handle_missings
+        self,
+        training_data,
+        df,
+        y_name,
+        X_names,
+        attribute_handlers,
+        metrics_type,
+        handle_missings,
     ):
         if isinstance(training_data, TrainingData):
             self.training_data = training_data
         elif isinstance(df, pd.DataFrame):
-            self.training_data = TrainingData(df, y_name=y_name, X_names=X_names, handle_missings=handle_missings)
+            self.training_data = TrainingData(
+                df, y_name=y_name, X_names=X_names, handle_missings=handle_missings
+            )
         else:
-            raise TypeError("Wrong data type. Either pass training_data as a TrainingData object or df as a pandas DataFrame.")
-        
-        self.y_name=self.training_data.y_name
+            raise TypeError(
+                "Wrong data type. Either pass training_data as a TrainingData object or df as a pandas DataFrame."
+            )
+
+        self.y_name = self.training_data.y_name
         self.X_names = self.training_data.X_names
 
         self.dmgr = DataManager(self.training_data, metrics_type, attribute_handlers)
@@ -86,8 +97,14 @@ class CART(Model):
         handle_missings="simple",
         attribute_handlers=None,
     ):
-        super().__init__(training_data,
-            df, y_name, X_names, attribute_handlers, metrics_type, handle_missings
+        super().__init__(
+            training_data,
+            df,
+            y_name,
+            X_names,
+            attribute_handlers,
+            metrics_type,
+            handle_missings,
         )
         self.tree = None
         self.leaf_loss_threshold = 1e-12
@@ -226,7 +243,9 @@ class CART(Model):
             )
             item.pinfo["N"] = len(df.index)
             item.pinfo["r"] = self.dmgr.metrics.loss_prune(y, y_hat)
-            item.pinfo["R"] = item.pinfo["N"] / len(self.training_data.df.index) * item.pinfo["r"]
+            item.pinfo["R"] = (
+                item.pinfo["N"] / len(self.training_data.df.index) * item.pinfo["r"]
+            )
         else:
             item = self._leaf(y, y_hat)
 
@@ -237,7 +256,9 @@ class CART(Model):
 
         leaf.pinfo["N"] = y.size
         leaf.pinfo["r"] = self.dmgr.metrics.loss_prune(y, y_hat)
-        leaf.pinfo["R"] = leaf.pinfo["N"] / len(self.training_data.df.index) * leaf.pinfo["r"]
+        leaf.pinfo["R"] = (
+            leaf.pinfo["N"] / len(self.training_data.df.index) * leaf.pinfo["r"]
+        )
         return leaf
 
     def _loss_best(self, df):
@@ -355,8 +376,14 @@ class GradientBoostedTree(Model):
         handle_missings="simple",
         attribute_handlers=None,
     ):
-        super().__init__(training_data, 
-            df, y_name, X_names, attribute_handlers, init_metrics_type, handle_missings
+        super().__init__(
+            training_data,
+            df,
+            y_name,
+            X_names,
+            attribute_handlers,
+            init_metrics_type,
+            handle_missings,
         )
         self.df = self.training_data.df.copy()
         self.N = len(self.df.index)
@@ -482,8 +509,14 @@ class RandomForest(Model):
         handle_missings="simple",
         attribute_handlers=None,
     ):
-        super().__init__( training_data,
-            df, y_name, X_names, attribute_handlers, metrics_type, handle_missings
+        super().__init__(
+            training_data,
+            df,
+            y_name,
+            X_names,
+            attribute_handlers,
+            metrics_type,
+            handle_missings,
         )
         self.df = self.training_data.df.copy()
         self.N = len(self.df.index)

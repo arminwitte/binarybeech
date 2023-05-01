@@ -29,7 +29,10 @@ def test_titanic_cart_train():
 def test_titanic_gradientboostedtree():
     df_titanic = pd.read_csv("data/titanic.csv")
     gbt = GradientBoostedTree(
-        df=df_titanic, y_name="Survived", learning_rate=0.5, init_metrics_type="logistic"
+        df=df_titanic,
+        y_name="Survived",
+        learning_rate=0.5,
+        init_metrics_type="logistic",
     )
     gbt.train(20)
     p = gbt.predict(df_titanic)

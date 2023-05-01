@@ -43,8 +43,8 @@ class MissingsHandlerBase(ABC):
 # =========================
 
 
-
 # =========================
+
 
 class MissingsHandlerFactory:
     def __init__(self):
@@ -53,9 +53,11 @@ class MissingsHandlerFactory:
     def register_group(self, group_name):
         self.missings_handlers[group_name] = {}
 
-    def register_handler(self, data_level, missings_handler_class, group_names=["default"]):
+    def register_handler(
+        self, data_level, missings_handler_class, group_names=["default"]
+    ):
         for name in group_names:
-        self.missings_handlers[name][data_level] = missings_handler_class
+            self.missings_handlers[name][data_level] = missings_handler_class
 
     def get_missings_handler_class(self, arr, group_name="default"):
         for missings_handler_class in self.missings_handlers[group_name].values():
@@ -64,16 +66,17 @@ class MissingsHandlerFactory:
 
         raise ValueError("no missings handler class for this type of data")
 
+
 missings_handler_factory = MissingsHandlerFactory()
-missings_handler_factory.register("nominal", NominalAttributeHandler)
-missings_handler_factory.register("dichotomous", DichotomousAttributeHandler)
-missings_handler_factory.register("interval", IntervalAttributeHandler)
-missings_handler_factory.register("null", NullAttributeHandler)
-missings_handler_factory.register_group("unsupervised")
-missings_handler_factory.register(
-    "interval", UnsupervisedIntervalAttributeHandler, group_name="unsupervised"
-)
-missings_handler_factory.register(
-    "nominal", UnsupervisedNominalAttributeHandler, group_name="unsupervised"
-)
-missings_handler_factory.register("null", NullAttributeHandler, group_name="unsupervised")
+# missings_handler_factory.register("nominal", NominalAttributeHandler)
+# missings_handler_factory.register("dichotomous", DichotomousAttributeHandler)
+# missings_handler_factory.register("interval", IntervalAttributeHandler)
+# missings_handler_factory.register("null", NullAttributeHandler)
+# missings_handler_factory.register_group("unsupervised")
+# missings_handler_factory.register(
+#     "interval", UnsupervisedIntervalAttributeHandler, group_name="unsupervised"
+# )
+# missings_handler_factory.register(
+#     "nominal", UnsupervisedNominalAttributeHandler, group_name="unsupervised"
+# )
+# missings_handler_factory.register("null", NullAttributeHandler, group_name="unsupervised")
