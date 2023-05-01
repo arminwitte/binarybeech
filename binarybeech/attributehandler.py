@@ -101,19 +101,7 @@ class NominalAttributeHandler(AttributeHandlerBase):
 
     @staticmethod
     def check(x):
-        x = x[~pd.isna(x)]
-        unique = np.unique(x)
-        l = len(unique)
-
-        if l / len(x) > 0.2:
-            return False
-
-        dtype = x.values.dtype
-
-        if not np.issubdtype(dtype, np.number) and l > 2:
-            return True
-
-        return False
+        return math.check_nominal(x, max_unique_fraction=0.2, exclude_dichotomous=True)
 
 
 class DichotomousAttributeHandler(AttributeHandlerBase):
@@ -163,19 +151,7 @@ class DichotomousAttributeHandler(AttributeHandlerBase):
 
     @staticmethod
     def check(x):
-        x = x[~pd.isna(x)]
-        unique = np.unique(x)
-        l = len(unique)
-
-        if l / len(x) > 0.2:
-            return False
-
-        dtype = x.values.dtype
-
-        if l == 2:
-            return True
-
-        return False
+        return math.check_dichotomous(x)
 
 
 class IntervalAttributeHandler(AttributeHandlerBase):
@@ -232,15 +208,7 @@ class IntervalAttributeHandler(AttributeHandlerBase):
 
     @staticmethod
     def check(x):
-        x = x[~pd.isna(x)]
-        unique = np.unique(x)
-        l = len(unique)
-        dtype = x.values.dtype
-
-        if np.issubdtype(dtype, np.number) and l > 2:
-            return True
-
-        return False
+        return math.check_interval(x)
 
 
 class NullAttributeHandler(AttributeHandlerBase):
@@ -312,16 +280,7 @@ class UnsupervisedIntervalAttributeHandler(AttributeHandlerBase):
 
     @staticmethod
     def check(x):
-
-        x = x[~pd.isna(x)]
-        unique = np.unique(x)
-        l = len(unique)
-        dtype = x.values.dtype
-
-        if np.issubdtype(dtype, np.number) and l > 2:
-            return True
-
-        return False
+        return math.check_interval(x)
 
 
 class UnsupervisedNominalAttributeHandler(AttributeHandlerBase):
@@ -380,19 +339,7 @@ class UnsupervisedNominalAttributeHandler(AttributeHandlerBase):
 
     @staticmethod
     def check(x):
-        x = x[~pd.isna(x)]
-        unique = np.unique(x)
-        l = len(unique)
-
-        if l / len(x) > 0.2:
-            return False
-
-        dtype = x.values.dtype
-
-        if not np.issubdtype(dtype, np.number) and l > 2:
-            return True
-
-        return False
+        return math.check_nominal(x, max_unique_fraction=0.2, exclude_dichotomous=False)
 
 
 # =========================
@@ -415,7 +362,10 @@ class AttributeHandlerFactory:
 
         raise ValueError("no data handler class for this type of data")
 
-    def create_attribute_handlers(self, df, y_name, X_names, metrics):
+    def create_attribute_handlers(self, training_data, metrics):
+        df = training_data.df
+        y_name = training_data.y_name
+        X_names = training_data.X_names
         dhc = self.get_attribute_handler_class(
             df[y_name], group_name=metrics.attribute_handler_group()
         )
@@ -443,4 +393,6 @@ attribute_handler_factory.register(
 attribute_handler_factory.register(
     "nominal", UnsupervisedNominalAttributeHandler, group_name="unsupervised"
 )
-attribute_handler_factory.register("null", NullAttributeHandler, group_name="unsupervised")
+attribute_handler_factory.register(
+    "null", NullAttributeHandler, group_name="unsupervised"
+)

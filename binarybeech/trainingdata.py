@@ -11,10 +11,13 @@ class TrainingData:
         df,
         y_name=None,
         X_names=None,
-        attribute_handlers=None,
-        metrics_type=None,
-        handle_missings="simple",
+        handle_missings=None,
     ):
+
+        if not y_name:
+            y_name = "__internal_placeholder_for_y__"
+            df[y_name] = 0
+
         self.y_name = y_name
 
         if X_names is None:
@@ -23,46 +26,44 @@ class TrainingData:
                 X_names.remove(self.y_name)
         self.X_names = X_names
 
-        if metrics_type is None:
-            metrics_type, metrics = metrics_factory.from_data(df[self.y_name])
-        else:
-            metrics = metrics_factory.create_metrics(metrics_type)
-        self.metrics_type = metrics_type
-        self.metrics = metrics
-
-        if attribute_handlers is None:
-            attribute_handlers = attribute_handler_factory.create_attribute_handlers(
-                df, y_name, X_names, self.metrics
-            )
-        self.attribute_handlers = attribute_handlers
-
         self.df = df
+        if handle_missings is not None:
+            self.handle_missings(handle_missings, df=df)
 
-    def handle_missings(self, mode):
-        df = self.df
-        if self.y_name is not None:
-            df = df.dropna(subset=[self.y_name])
+        self.data_sets = [
+            (self.df, None),
+        ]
 
-        if mode == "simple":
-            # use nan as category
-            # use mean if numerical
-            for name, dh in self.attribute_handlers.items():
-                df = dh.handle_missings(df)
-        elif mode == "model":
-            raise ValueError("Not implemented")
+    def handle_missings(self, method, df=None):
+        if df is None:
+            df = self.df
 
-        self.df = df
-
+        if df is None:
+            self.df = df
         return df
 
     def clean(self):
         # remove nan cols and rows
-        pass
+        self.df.dropna(inplace=True, how="all", axis=0)
+        self.df.dropna(inplace=True, how="all", axis=1)
 
-    def split(self):
-        pass
+    def split(
+        self, k=1, frac=None, random=False, shuffle=True, replace=True, seed=None
+    ):
+        sets = k_fold_split(
+            self.df,
+            k=k,
+            frac=frac,
+            random=random,
+            shuffle=shuffle,
+            replace=replace,
+            seed=seed,
+        )
+        self.data_sets = sets
 
     def report(self):
         # first loop over y and X
         # second show pandas stats
+        # - missings
+        # - Pearson correlation
         pass

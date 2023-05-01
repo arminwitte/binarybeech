@@ -9,29 +9,41 @@ import numpy as np
 import pandas as pd
 import scipy.optimize as opt
 
-from binarybeech.extra import k_fold_split
 from binarybeech.datamanager import DataManager
+from binarybeech.extra import k_fold_split
 from binarybeech.reporter import Reporter
+from binarybeech.trainingdata import TrainingData
 from binarybeech.tree import Node, Tree
 
 
 class Model(ABC):
     def __init__(
-        self, df, y_name, X_names, attribute_handlers, metrics_type, handle_missings
+        self,
+        training_data,
+        df,
+        y_name,
+        X_names,
+        attribute_handlers,
+        metrics_type,
+        handle_missings,
     ):
-        if not y_name:
-            y_name = "__internal_placeholder_for_y__"
-            df[y_name] = 0
-        self.y_name = y_name
+        if isinstance(training_data, TrainingData):
+            self.training_data = training_data
+        elif isinstance(df, pd.DataFrame):
+            self.training_data = TrainingData(
+                df, y_name=y_name, X_names=X_names, handle_missings=handle_missings
+            )
+        else:
+            raise TypeError(
+                "Wrong data type. Either pass training_data as a TrainingData object or df as a pandas DataFrame."
+            )
 
-        if X_names is None:
-            X_names = list(df.columns)
-            X_names.remove(self.y_name)
-        self.X_names = X_names
+        self.y_name = self.training_data.y_name
+        self.X_names = self.training_data.X_names
 
-        self.dmgr = DataManager(df, y_name, X_names, metrics_type, attribute_handlers)
+        self.dmgr = DataManager(self.training_data, metrics_type, attribute_handlers)
 
-        self.df = self._handle_missings(df, handle_missings)
+        self.training_data.df = self._handle_missings(df, handle_missings)
 
     def _handle_missings(self, df, mode):
         df = df.dropna(subset=[self.y_name])
@@ -58,14 +70,14 @@ class Model(ABC):
 
     def validate(self, df=None):
         if df is None:
-            df = self.df
+            df = self.training_data.df
         y_hat = self.predict(df)
         y = df[self.y_name]
         return self.dmgr.metrics.validate(y, y_hat)
 
     def goodness_of_fit(self, df=None):
         if df is None:
-            df = self.df
+            df = self.training_data.df
         y_hat = self.predict(df)
         y = df[self.y_name]
         return self.dmgr.metrics.goodness_of_fit(y, y_hat)
@@ -74,8 +86,9 @@ class Model(ABC):
 class CART(Model):
     def __init__(
         self,
-        df,
-        y_name,
+        training_data=None,
+        df=None,
+        y_name=None,
         X_names=None,
         min_leaf_samples=1,
         min_split_samples=1,
@@ -85,7 +98,13 @@ class CART(Model):
         attribute_handlers=None,
     ):
         super().__init__(
-            df, y_name, X_names, attribute_handlers, metrics_type, handle_missings
+            training_data,
+            df,
+            y_name,
+            X_names,
+            attribute_handlers,
+            metrics_type,
+            handle_missings,
         )
         self.tree = None
         self.leaf_loss_threshold = 1e-12
@@ -115,7 +134,7 @@ class CART(Model):
         train decision tree by k-fold cross-validation
         """
         # shuffle dataframe
-        df = self.df.sample(frac=1.0)
+        df = self.training_data.df.sample(frac=1.0)
 
         # train tree with full dataset
         self.create_tree()
@@ -123,11 +142,12 @@ class CART(Model):
         beta = self._beta(pres["alpha"])
         qual_cv = np.zeros((len(beta), k))
         # split df for k-fold cross-validation
-        sets = k_fold_split(df, k)
+        self.training_data.split(k=k)
+        sets = self.training_data.data_sets
         for i, data in enumerate(sets):
             c = CART(
-                data[0],
-                self.y_name,
+                df=data[0],
+                y_name=self.y_name,
                 X_names=self.X_names,
                 min_leaf_samples=self.min_leaf_samples,
                 min_split_samples=self.min_split_samples,
@@ -179,7 +199,7 @@ class CART(Model):
 
     def create_tree(self, leaf_loss_threshold=1e-12):
         self.leaf_loss_threshold = leaf_loss_threshold
-        root = self._node_or_leaf(self.df)
+        root = self._node_or_leaf(self.training_data.df)
         self.tree = Tree(root)
         n_leafs = self.tree.leaf_count()
         print(f"A tree with {n_leafs} leafs was created")
@@ -223,7 +243,9 @@ class CART(Model):
             )
             item.pinfo["N"] = len(df.index)
             item.pinfo["r"] = self.dmgr.metrics.loss_prune(y, y_hat)
-            item.pinfo["R"] = item.pinfo["N"] / len(self.df.index) * item.pinfo["r"]
+            item.pinfo["R"] = (
+                item.pinfo["N"] / len(self.training_data.df.index) * item.pinfo["r"]
+            )
         else:
             item = self._leaf(y, y_hat)
 
@@ -234,7 +256,9 @@ class CART(Model):
 
         leaf.pinfo["N"] = y.size
         leaf.pinfo["r"] = self.dmgr.metrics.loss_prune(y, y_hat)
-        leaf.pinfo["R"] = leaf.pinfo["N"] / len(self.df.index) * leaf.pinfo["r"]
+        leaf.pinfo["R"] = (
+            leaf.pinfo["N"] / len(self.training_data.df.index) * leaf.pinfo["r"]
+        )
         return leaf
 
     def _loss_best(self, df):
@@ -339,8 +363,9 @@ class CART(Model):
 class GradientBoostedTree(Model):
     def __init__(
         self,
-        df,
-        y_name,
+        training_data=None,
+        df=None,
+        y_name=None,
         X_names=None,
         sample_frac=1,
         n_attributes=None,
@@ -352,9 +377,15 @@ class GradientBoostedTree(Model):
         attribute_handlers=None,
     ):
         super().__init__(
-            df, y_name, X_names, attribute_handlers, init_metrics_type, handle_missings
+            training_data,
+            df,
+            y_name,
+            X_names,
+            attribute_handlers,
+            init_metrics_type,
+            handle_missings,
         )
-        self.df = self.df.copy()
+        self.df = self.training_data.df.copy()
         self.N = len(self.df.index)
 
         self.init_tree = None
@@ -371,8 +402,8 @@ class GradientBoostedTree(Model):
 
     def _initial_tree(self):
         c = CART(
-            self.df,
-            self.y_name,
+            df=self.df,
+            y_name=self.y_name,
             X_names=self.X_names,
             max_depth=0,
             metrics_type=self.init_metrics_type,
@@ -423,8 +454,8 @@ class GradientBoostedTree(Model):
             )
             kwargs = {**kwargs, **self.cart_settings}
             c = CART(
-                df.sample(frac=self.sample_frac, replace=True),
-                "pseudo_residuals",
+                df=df.sample(frac=self.sample_frac, replace=True),
+                y_name="pseudo_residuals",
                 X_names=X_names,
                 **kwargs,
             )
@@ -466,8 +497,9 @@ class GradientBoostedTree(Model):
 class RandomForest(Model):
     def __init__(
         self,
-        df,
-        y_name,
+        training_data=None,
+        df=None,
+        y_name=None,
         X_names=None,
         verbose=False,
         sample_frac=1,
@@ -478,9 +510,15 @@ class RandomForest(Model):
         attribute_handlers=None,
     ):
         super().__init__(
-            df, y_name, X_names, attribute_handlers, metrics_type, handle_missings
+            training_data,
+            df,
+            y_name,
+            X_names,
+            attribute_handlers,
+            metrics_type,
+            handle_missings,
         )
-        self.df = self.df.copy()
+        self.df = self.training_data.df.copy()
         self.N = len(self.df.index)
 
         self.trees = []
@@ -509,7 +547,7 @@ class RandomForest(Model):
                 attribute_handlers=self.dmgr,
             )
             kwargs = {**kwargs, **self.cart_settings}
-            c = CART(df, self.y_name, X_names=X_names, **kwargs)
+            c = CART(df=df, y_name=self.y_name, X_names=X_names, **kwargs)
             c.create_tree()
             self.trees.append(c.tree)
             self.oob_indices.append(self.df.index.difference(df.index))

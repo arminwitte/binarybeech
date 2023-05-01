@@ -43,6 +43,7 @@ class DropMissingsHandler(MissingsHandlerBase):
 
 # =========================
 
+
 class MissingsHandlerFactory:
     def __init__(self):
         self.missings_handlers = {"default": {}}
@@ -50,7 +51,9 @@ class MissingsHandlerFactory:
     def register_group(self, group_name):
         self.missings_handlers[group_name] = {}
 
-    def register_handler(self, data_level, missings_handler_class, group_names=["default"]):
+    def register_handler(
+        self, data_level, missings_handler_class, group_names=["default"]
+    ):
         for name in group_names:
             self.missings_handlers[name][data_level] = missings_handler_class
 
@@ -60,6 +63,7 @@ class MissingsHandlerFactory:
                 return missings_handler_class
 
         raise ValueError("no missings handler class for this type of data")
+
 
 missings_handler_factory = MissingsHandlerFactory()
 missings_handler_factory.register_handler("drop", DropMissingsHandler)
