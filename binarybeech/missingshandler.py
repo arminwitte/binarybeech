@@ -12,26 +12,11 @@ import binarybeech.math as math
 
 
 class MissingsHandlerBase(ABC):
-    def __init__(self, y_name, attribute, metrics):
-        self.y_name = y_name
-        self.attribute = attribute
-        self.metrics = metrics
-
-        self.loss = None
-        self.split_df = []
-        self.threshold = None
+    def __init__(self, df):
+        self.df = df
 
     @abstractmethod
-    def split(self, df):
-        pass
-
-    @abstractmethod
-    def handle_missings(self, df):
-        pass
-
-    @staticmethod
-    @abstractmethod
-    def decide(x, threshold):
+    def handle_missings(self, df=None):
         pass
 
     @staticmethod
@@ -39,9 +24,22 @@ class MissingsHandlerBase(ABC):
     def check(x):
         pass
 
-
 # =========================
 
+class DropMissingsHandler(MissingsHandlerBase):
+    
+    def __init__(self,df):
+        super().__init__(df)
+        
+    def handle_missings(self,df=None):
+        if df is None:
+            df = self.df
+        df = df.dropna()
+        return df
+        
+    @staticmethod
+    def check(arr):
+        pass
 
 # =========================
 
@@ -68,15 +66,4 @@ class MissingsHandlerFactory:
 
 
 missings_handler_factory = MissingsHandlerFactory()
-# missings_handler_factory.register("nominal", NominalAttributeHandler)
-# missings_handler_factory.register("dichotomous", DichotomousAttributeHandler)
-# missings_handler_factory.register("interval", IntervalAttributeHandler)
-# missings_handler_factory.register("null", NullAttributeHandler)
-# missings_handler_factory.register_group("unsupervised")
-# missings_handler_factory.register(
-#     "interval", UnsupervisedIntervalAttributeHandler, group_name="unsupervised"
-# )
-# missings_handler_factory.register(
-#     "nominal", UnsupervisedNominalAttributeHandler, group_name="unsupervised"
-# )
-# missings_handler_factory.register("null", NullAttributeHandler, group_name="unsupervised")
+missings_handler_factory.register_handler("drop", DropMissingsHandler)
