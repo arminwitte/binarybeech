@@ -236,7 +236,7 @@ class CART(Model):
 
         leaf.pinfo["N"] = y.size
         leaf.pinfo["r"] = self.dmgr.metrics.loss_prune(y, y_hat)
-        leaf.pinfo["R"] = leaf.pinfo["N"] / len(self.df.training_data.index) * leaf.pinfo["r"]
+        leaf.pinfo["R"] = leaf.pinfo["N"] / len(self.training_data.df.index) * leaf.pinfo["r"]
         return leaf
 
     def _loss_best(self, df):
