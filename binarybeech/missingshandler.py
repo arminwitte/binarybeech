@@ -24,22 +24,24 @@ class MissingsHandlerBase(ABC):
     def check(x):
         pass
 
+
 # =========================
 
+
 class DropMissingsHandler(MissingsHandlerBase):
-    
-    def __init__(self,df):
+    def __init__(self, df):
         super().__init__(df)
-        
-    def handle_missings(self,df=None):
+
+    def handle_missings(self, df=None):
         if df is None:
             df = self.df
         df = df.dropna()
         return df
-        
+
     @staticmethod
     def check(arr):
         pass
+
 
 # =========================
 
