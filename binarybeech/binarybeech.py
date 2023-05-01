@@ -125,11 +125,12 @@ class CART(Model):
         beta = self._beta(pres["alpha"])
         qual_cv = np.zeros((len(beta), k))
         # split df for k-fold cross-validation
-        sets = k_fold_split(df, k)
+        self.training_data.split(k=k)
+        sets = self.training_data.data_sets
         for i, data in enumerate(sets):
             c = CART(
-                data[0],
-                self.y_name,
+                df=data[0],
+                y_name=self.y_name,
                 X_names=self.X_names,
                 min_leaf_samples=self.min_leaf_samples,
                 min_split_samples=self.min_split_samples,
@@ -374,8 +375,8 @@ class GradientBoostedTree(Model):
 
     def _initial_tree(self):
         c = CART(
-            self.df,
-            self.y_name,
+            df=self.df,
+            y_name=self.y_name,
             X_names=self.X_names,
             max_depth=0,
             metrics_type=self.init_metrics_type,
@@ -426,8 +427,8 @@ class GradientBoostedTree(Model):
             )
             kwargs = {**kwargs, **self.cart_settings}
             c = CART(
-                df.sample(frac=self.sample_frac, replace=True),
-                "pseudo_residuals",
+                df=df.sample(frac=self.sample_frac, replace=True),
+                y_name="pseudo_residuals",
                 X_names=X_names,
                 **kwargs,
             )
@@ -513,7 +514,7 @@ class RandomForest(Model):
                 attribute_handlers=self.dmgr,
             )
             kwargs = {**kwargs, **self.cart_settings}
-            c = CART(df, self.y_name, X_names=X_names, **kwargs)
+            c = CART(df=df, y_name=self.y_name, X_names=X_names, **kwargs)
             c.create_tree()
             self.trees.append(c.tree)
             self.oob_indices.append(self.df.index.difference(df.index))
