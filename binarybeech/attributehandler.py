@@ -362,7 +362,10 @@ class AttributeHandlerFactory:
 
         raise ValueError("no data handler class for this type of data")
 
-    def create_attribute_handlers(self, df, y_name, X_names, metrics):
+    def create_attribute_handlers(self, training_data, metrics):
+        df=training_data.df
+        y_name = training_data.y_name
+        X_names=training_data.X_names
         dhc = self.get_attribute_handler_class(
             df[y_name], group_name=metrics.attribute_handler_group()
         )

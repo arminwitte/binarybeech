@@ -30,7 +30,7 @@ class Model(ABC):
         self.y_name=self.training_data.y_name
         self.X_names = self.training_data.X_names
 
-        self.dmgr = DataManager(df, y_name, X_names, metrics_type, attribute_handlers)
+        self.dmgr = DataManager(self.training_data, metrics_type, attribute_handlers)
 
         self.training_data.df = self._handle_missings(df, handle_missings)
 

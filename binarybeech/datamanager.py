@@ -4,12 +4,12 @@ from binarybeech.attributehandler import attribute_handler_factory
 from binarybeech.metrics import metrics_factory
 
 class DataManager:
-    def __init__(self, df, y_name, X_names, method, attribute_handlers):
+    def __init__(self, training_data, method, attribute_handlers):
         self.method = method
         self.attribute_handlers = {}
         
         if method is None:
-            metrics_type, metrics = metrics_factory.from_data(df[self.y_name])
+            metrics_type, metrics = metrics_factory.from_data(training_data.df[training_data.y_name])
         else:
             metrics = metrics_factory.create_metrics(method)
             metrics_type = method
@@ -18,7 +18,7 @@ class DataManager:
         
         if attribute_handlers is None:
             attribute_handlers = attribute_handler_factory.create_attribute_handlers(
-                df, y_name, X_names, self.metrics
+                training_data, self.metrics
             )
         self.attribute_handlers = attribute_handlers
         self.items = self.attribute_handlers.items
