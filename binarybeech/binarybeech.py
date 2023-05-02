@@ -26,6 +26,7 @@ class Model(ABC):
         attribute_handlers,
         metrics_type,
         handle_missings,
+        algorithm_kwargs,
     ):
         if isinstance(training_data, TrainingData):
             self.training_data = training_data
@@ -41,7 +42,7 @@ class Model(ABC):
         self.y_name = self.training_data.y_name
         self.X_names = self.training_data.X_names
 
-        self.dmgr = DataManager(self.training_data, metrics_type, attribute_handlers)
+        self.dmgr = DataManager(self.training_data, metrics_type, attribute_handlers, algorithm_kwargs)
 
         self.training_data.df = self._handle_missings(df, handle_missings)
 
@@ -96,7 +97,8 @@ class CART(Model):
         metrics_type="regression",
         handle_missings="simple",
         attribute_handlers=None,
-        seed=None
+        seed=None,
+        algorithm_kwargs={}
     ):
         super().__init__(
             training_data,
@@ -106,6 +108,7 @@ class CART(Model):
             attribute_handlers,
             metrics_type,
             handle_missings,
+            algorithm_kwargs,
         )
         self.tree = None
         self.leaf_loss_threshold = 1e-12
@@ -378,6 +381,7 @@ class GradientBoostedTree(Model):
         handle_missings="simple",
         attribute_handlers=None,
         seed=None,
+        algorithm_kwargs={},
     ):
         super().__init__(
             training_data,
@@ -387,6 +391,7 @@ class GradientBoostedTree(Model):
             attribute_handlers,
             init_metrics_type,
             handle_missings,
+            algorithm_kwargs,
         )
         self.df = self.training_data.df.copy()
         self.N = len(self.df.index)
@@ -516,6 +521,7 @@ class RandomForest(Model):
         handle_missings="simple",
         attribute_handlers=None,
         seed=None,
+        algorithm_kwargs={},
     ):
         super().__init__(
             training_data,
@@ -525,6 +531,7 @@ class RandomForest(Model):
             attribute_handlers,
             metrics_type,
             handle_missings,
+            algorithm_kwargs,
         )
         self.df = self.training_data.df.copy()
         self.N = len(self.df.index)

@@ -5,9 +5,10 @@ from binarybeech.metrics import metrics_factory
 
 
 class DataManager:
-    def __init__(self, training_data, method, attribute_handlers):
+    def __init__(self, training_data, method, attribute_handlers, algorithm_kwargs):
         self.method = method
         self.attribute_handlers = {}
+        self.algorithm_kwargs = algorithm_kwargs
 
         if method is None:
             metrics_type, metrics = metrics_factory.from_data(
