@@ -77,7 +77,7 @@ def test_housing_gradientboostedtree():
             7642070,
             8127825,
         ],
-        rtol=0.3,
+        #rtol=0.3,
     )
     assert acc < 1.0 and acc > 0.7
 
@@ -103,6 +103,6 @@ def test_housing_randomforest():
             4775413.793103,
             6399243.421053,
         ],
-        rtol=0.7,
+        #rtol=0.7,
     )
     assert acc < 1.0 and acc > 0.2
