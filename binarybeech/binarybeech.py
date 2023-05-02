@@ -96,6 +96,7 @@ class CART(Model):
         metrics_type="regression",
         handle_missings="simple",
         attribute_handlers=None,
+        seed=None
     ):
         super().__init__(
             training_data,
@@ -115,6 +116,7 @@ class CART(Model):
         self.max_depth = max_depth
 
         self.depth = 0
+        self.seed = seed
 
         self.logger = logging.getLogger(__name__)
 
@@ -134,7 +136,7 @@ class CART(Model):
         train decision tree by k-fold cross-validation
         """
         # shuffle dataframe
-        df = self.training_data.df.sample(frac=1.0)
+        #df = self.training_data.df.sample(frac=1.0)
 
         # train tree with full dataset
         self.create_tree()
@@ -142,7 +144,7 @@ class CART(Model):
         beta = self._beta(pres["alpha"])
         qual_cv = np.zeros((len(beta), k))
         # split df for k-fold cross-validation
-        self.training_data.split(k=k)
+        self.training_data.split(k=k,seed=self.seed)
         sets = self.training_data.data_sets
         for i, data in enumerate(sets):
             c = CART(
@@ -375,6 +377,7 @@ class GradientBoostedTree(Model):
         gamma=None,
         handle_missings="simple",
         attribute_handlers=None,
+        seed=None,
     ):
         super().__init__(
             training_data,
@@ -397,6 +400,7 @@ class GradientBoostedTree(Model):
         self.sample_frac = sample_frac
         self.n_attributes = n_attributes
         self.gamma_setting = gamma
+        self.seed=seed
 
         self.logger = logging.getLogger(__name__)
 
@@ -454,7 +458,8 @@ class GradientBoostedTree(Model):
             )
             kwargs = {**kwargs, **self.cart_settings}
             c = CART(
-                df=df.sample(frac=self.sample_frac, replace=True),
+                df=df.sample(frac=self.sample_frac, replace=True,
+                random_state=self.seed),
                 y_name="pseudo_residuals",
                 X_names=X_names,
                 **kwargs,
@@ -466,6 +471,8 @@ class GradientBoostedTree(Model):
                 gamma = self.gamma_setting
             self.trees.append(c.tree)
             self.gamma.append(gamma)
+            if self.seed is not None:
+                self.seed += 1
 
     def _gamma(self, tree):
         res = opt.minimize_scalar(self._opt_fun(tree), bounds=[0.0, 10.0])
@@ -508,6 +515,7 @@ class RandomForest(Model):
         metrics_type="regression",
         handle_missings="simple",
         attribute_handlers=None,
+        seed=None,
     ):
         super().__init__(
             training_data,
@@ -526,6 +534,7 @@ class RandomForest(Model):
         self.cart_settings = cart_settings
         self.sample_frac = sample_frac
         self.n_attributes = n_attributes
+        self.seed = seed
 
         self.verbose = verbose
         self.logger = logging.getLogger(__name__)
@@ -533,7 +542,8 @@ class RandomForest(Model):
     def train(self, M):
         self.trees = []
         for i in range(M):
-            df = self.df.sample(frac=self.sample_frac, replace=True)
+            df = self.df.sample(frac=self.sample_frac, replace=True,
+            random_state=self.seed)
             if self.n_attributes is None:
                 X_names = self.X_names
             else:
@@ -553,6 +563,8 @@ class RandomForest(Model):
             self.oob_indices.append(self.df.index.difference(df.index))
             if self.verbose:
                 print(f"{i:4d}: Tree with {c.tree.leaf_count()} leaves created.")
+            if self.seed is not None:
+                self.seed += 1
 
     def _predict1(self, x):
         y = []
