@@ -42,7 +42,9 @@ class Model(ABC):
         self.y_name = self.training_data.y_name
         self.X_names = self.training_data.X_names
 
-        self.dmgr = DataManager(self.training_data, metrics_type, attribute_handlers, algorithm_kwargs)
+        self.dmgr = DataManager(
+            self.training_data, metrics_type, attribute_handlers, algorithm_kwargs
+        )
 
         self.training_data.df = self._handle_missings(df, handle_missings)
 
@@ -98,7 +100,7 @@ class CART(Model):
         handle_missings="simple",
         attribute_handlers=None,
         seed=None,
-        algorithm_kwargs={}
+        algorithm_kwargs={},
     ):
         super().__init__(
             training_data,
@@ -139,7 +141,7 @@ class CART(Model):
         train decision tree by k-fold cross-validation
         """
         # shuffle dataframe
-        #df = self.training_data.df.sample(frac=1.0)
+        # df = self.training_data.df.sample(frac=1.0)
 
         # train tree with full dataset
         self.create_tree()
@@ -147,7 +149,7 @@ class CART(Model):
         beta = self._beta(pres["alpha"])
         qual_cv = np.zeros((len(beta), k))
         # split df for k-fold cross-validation
-        self.training_data.split(k=k,seed=self.seed)
+        self.training_data.split(k=k, seed=self.seed)
         sets = self.training_data.data_sets
         for i, data in enumerate(sets):
             c = CART(
@@ -405,7 +407,7 @@ class GradientBoostedTree(Model):
         self.sample_frac = sample_frac
         self.n_attributes = n_attributes
         self.gamma_setting = gamma
-        self.seed=seed
+        self.seed = seed
 
         self.logger = logging.getLogger(__name__)
 
@@ -416,7 +418,8 @@ class GradientBoostedTree(Model):
             X_names=self.X_names,
             max_depth=0,
             metrics_type=self.init_metrics_type,
-            attribute_handlers=self.dmgr,seed=self.seed,
+            attribute_handlers=self.dmgr,
+            seed=self.seed,
         )
         c.create_tree()
         self.init_tree = c.tree
@@ -446,11 +449,11 @@ class GradientBoostedTree(Model):
         df = self.df
         self.trees = []
         self.gamma = []
-        
+
         for i in range(M):
             if self.seed is not None:
                 self.seed += 2
-        
+
             res = self._pseudo_residuals()
             print(f"Norm of pseudo-residuals: {np.linalg.norm(res)}")
             df["pseudo_residuals"] = res
@@ -467,8 +470,9 @@ class GradientBoostedTree(Model):
             )
             kwargs = {**kwargs, **self.cart_settings}
             c = CART(
-                df=df.sample(frac=self.sample_frac, replace=True,
-                random_state=self.seed+1),
+                df=df.sample(
+                    frac=self.sample_frac, replace=True, random_state=self.seed + 1
+                ),
                 y_name="pseudo_residuals",
                 X_names=X_names,
                 **kwargs,
@@ -480,7 +484,7 @@ class GradientBoostedTree(Model):
                 gamma = self.gamma_setting
             self.trees.append(c.tree)
             self.gamma.append(gamma)
-            
+
     def _gamma(self, tree):
         res = opt.minimize_scalar(self._opt_fun(tree), bounds=[0.0, 10.0])
         print(f"{res.x:.2f}\t {res.fun/self.N:.4f}")
@@ -551,12 +555,13 @@ class RandomForest(Model):
     def train(self, M):
         self.trees = []
         for i in range(M):
-            df = self.df.sample(frac=self.sample_frac, replace=True,
-            random_state=self.seed)
+            df = self.df.sample(
+                frac=self.sample_frac, replace=True, random_state=self.seed
+            )
             if self.n_attributes is None:
                 X_names = self.X_names
             else:
-                rng = np.random.default_rng(seed=self.seed+1)
+                rng = np.random.default_rng(seed=self.seed + 1)
                 X_names = rng.choice(self.X_names, self.n_attributes, replace=False)
             kwargs = dict(
                 max_depth=3,
@@ -572,10 +577,10 @@ class RandomForest(Model):
             self.oob_indices.append(self.df.index.difference(df.index))
             if self.verbose:
                 print(f"{i:4d}: Tree with {c.tree.leaf_count()} leaves created.")
-                
+
             if self.seed is not None:
                 self.seed += 1
-            
+
     def _predict1(self, x):
         y = []
         for t in self.trees:

@@ -17,7 +17,7 @@ def test_titanic_cart_create():
 
 def test_titanic_cart_train():
     df_titanic = pd.read_csv("data/titanic.csv")
-    c = CART(df=df_titanic, y_name="Survived", metrics_type="classification",seed=42)
+    c = CART(df=df_titanic, y_name="Survived", metrics_type="classification", seed=42)
     c.train()
     p = c.predict(df_titanic)
     val = c.validate()
@@ -32,7 +32,8 @@ def test_titanic_gradientboostedtree():
         df=df_titanic,
         y_name="Survived",
         learning_rate=0.5,
-        init_metrics_type="logistic", seed=42
+        init_metrics_type="logistic",
+        seed=42,
     )
     gbt.train(20)
     p = gbt.predict(df_titanic)
@@ -46,7 +47,9 @@ def test_titanic_gradientboostedtree():
 
 def test_titanic_randomforest():
     df_titanic = pd.read_csv("data/titanic.csv")
-    rf = RandomForest(df=df_titanic, y_name="Survived", metrics_type="classification",seed=42)
+    rf = RandomForest(
+        df=df_titanic, y_name="Survived", metrics_type="classification", seed=42
+    )
     rf.train(20)
     p = rf.predict(df_titanic)
     val = rf.validate_oob()
