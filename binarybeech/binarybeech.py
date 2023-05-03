@@ -416,7 +416,7 @@ class GradientBoostedTree(Model):
             X_names=self.X_names,
             max_depth=0,
             metrics_type=self.init_metrics_type,
-            attribute_handlers=self.dmgr,
+            attribute_handlers=self.dmgr,seed=self.seed,
         )
         c.create_tree()
         self.init_tree = c.tree
@@ -446,14 +446,18 @@ class GradientBoostedTree(Model):
         df = self.df
         self.trees = []
         self.gamma = []
+        
         for i in range(M):
+            if self.seed is not None:
+                self.seed += 2
+        
             res = self._pseudo_residuals()
             print(f"Norm of pseudo-residuals: {np.linalg.norm(res)}")
             df["pseudo_residuals"] = res
             if self.n_attributes is None:
                 X_names = self.X_names
             else:
-                rng = np.random.default_rng()
+                rng = np.random.default_rng(seed=self.seed)
                 X_names = rng.choice(self.X_names, self.n_attributes, replace=False)
             kwargs = dict(
                 max_depth=3,
@@ -464,7 +468,7 @@ class GradientBoostedTree(Model):
             kwargs = {**kwargs, **self.cart_settings}
             c = CART(
                 df=df.sample(frac=self.sample_frac, replace=True,
-                random_state=self.seed),
+                random_state=self.seed+1),
                 y_name="pseudo_residuals",
                 X_names=X_names,
                 **kwargs,
@@ -476,9 +480,7 @@ class GradientBoostedTree(Model):
                 gamma = self.gamma_setting
             self.trees.append(c.tree)
             self.gamma.append(gamma)
-            if self.seed is not None:
-                self.seed += 1
-
+            
     def _gamma(self, tree):
         res = opt.minimize_scalar(self._opt_fun(tree), bounds=[0.0, 10.0])
         print(f"{res.x:.2f}\t {res.fun/self.N:.4f}")
@@ -554,7 +556,7 @@ class RandomForest(Model):
             if self.n_attributes is None:
                 X_names = self.X_names
             else:
-                rng = np.random.default_rng()
+                rng = np.random.default_rng(seed=self.seed+1)
                 X_names = rng.choice(self.X_names, self.n_attributes, replace=False)
             kwargs = dict(
                 max_depth=3,
@@ -570,9 +572,10 @@ class RandomForest(Model):
             self.oob_indices.append(self.df.index.difference(df.index))
             if self.verbose:
                 print(f"{i:4d}: Tree with {c.tree.leaf_count()} leaves created.")
+                
             if self.seed is not None:
                 self.seed += 1
-
+            
     def _predict1(self, x):
         y = []
         for t in self.trees:
