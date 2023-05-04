@@ -287,13 +287,13 @@ class MetricsFactory:
     def register(self, metrics_type, metrics_class):
         self.metrics[metrics_type] = metrics_class
 
-    def create_metrics(self, metrics_type):
+    def create_metrics(self, metrics_type, algorithm_kwargs):
         if metrics_type in self.metrics:
             return self.metrics[metrics_type]()
         else:
             raise ValueError("Invalid metrics type")
 
-    def from_data(self, y):
+    def from_data(self, y, algorithm_kwargs):
         for name, cls in self.metrics.items():
             if cls.check_data_type(y):
                 return cls(), name
