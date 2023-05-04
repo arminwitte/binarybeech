@@ -12,17 +12,17 @@ class DataManager:
 
         if method is None:
             metrics_type, metrics = metrics_factory.from_data(
-                training_data.df[training_data.y_name]
+                training_data.df[training_data.y_name], self.algorithm_kwargs
             )
         else:
-            metrics = metrics_factory.create_metrics(method)
+            metrics = metrics_factory.create_metrics(method,self.algorithm_kwargs)
             metrics_type = method
         self.metrics = metrics
         self.metrics_type = metrics_type
 
         if attribute_handlers is None:
             attribute_handlers = attribute_handler_factory.create_attribute_handlers(
-                training_data, self.metrics
+                training_data, self.metrics, self.algorithm_kwargs
             )
         self.attribute_handlers = attribute_handlers
         self.items = self.attribute_handlers.items

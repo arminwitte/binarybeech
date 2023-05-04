@@ -12,10 +12,11 @@ import binarybeech.math as math
 
 
 class AttributeHandlerBase(ABC):
-    def __init__(self, y_name, attribute, metrics):
+    def __init__(self, y_name, attribute, metrics, algorithm_kwargs):
         self.y_name = y_name
         self.attribute = attribute
         self.metrics = metrics
+        self.algorithm_kwargs = algorithm_kwargs
 
         self.loss = None
         self.split_df = []
@@ -44,8 +45,8 @@ class AttributeHandlerBase(ABC):
 
 
 class NominalAttributeHandler(AttributeHandlerBase):
-    def __init__(self, y_name, attribute, metrics):
-        super().__init__(y_name, attribute, metrics)
+    def __init__(self, y_name, attribute, metrics, algorithm_kwargs):
+        super().__init__(y_name, attribute, metrics, algorithm_kwargs)
 
     def split(self, df):
         self.loss = np.Inf
@@ -105,8 +106,8 @@ class NominalAttributeHandler(AttributeHandlerBase):
 
 
 class DichotomousAttributeHandler(AttributeHandlerBase):
-    def __init__(self, y_name, attribute, metrics):
-        super().__init__(y_name, attribute, metrics)
+    def __init__(self, y_name, attribute, metrics, algorithm_kwargs):
+        super().__init__(y_name, attribute, metrics, algorithm_kwargs)
 
     def split(self, df):
         self.loss = np.Inf
@@ -155,8 +156,8 @@ class DichotomousAttributeHandler(AttributeHandlerBase):
 
 
 class IntervalAttributeHandler(AttributeHandlerBase):
-    def __init__(self, y_name, attribute, metrics):
-        super().__init__(y_name, attribute, metrics)
+    def __init__(self, y_name, attribute, metrics, algorithm_kwargs):
+        super().__init__(y_name, attribute, metrics, algorithm_kwargs)
 
     def split(self, df):
         self.loss = np.Inf
@@ -212,8 +213,8 @@ class IntervalAttributeHandler(AttributeHandlerBase):
 
 
 class NullAttributeHandler(AttributeHandlerBase):
-    def __init__(self, y_name, attribute, metrics):
-        super().__init__(y_name, attribute, metrics)
+    def __init__(self, y_name, attribute, metrics, algorithm_kwargs):
+        super().__init__(y_name, attribute, metrics, algorithm_kwargs)
 
     def split(self, df):
         self.loss = np.Inf
@@ -240,8 +241,8 @@ class NullAttributeHandler(AttributeHandlerBase):
 
 
 class UnsupervisedIntervalAttributeHandler(AttributeHandlerBase):
-    def __init__(self, y_name, attribute, metrics):
-        super().__init__(y_name, attribute, metrics)
+    def __init__(self, y_name, attribute, metrics, algorithm_kwargs):
+        super().__init__(y_name, attribute, metrics, algorithm_kwargs)
 
     def split(self, df):
         self.loss = np.Inf
@@ -258,15 +259,20 @@ class UnsupervisedIntervalAttributeHandler(AttributeHandlerBase):
         valleys = math.valley(df[name])
         if not valleys:
             return success
-        else:
-            success = True
+            
+        loss = math.shannon_entropy_histogram(df[name])
+        tol = self.algorithm_kwargs.get("unsupervised_entropy_tolerance",0.1)
+        if loss < tol:
+            return success
+
+        success = True
 
         self.threshold = valleys[0]
         self.split_df = [
             df[df[self.attribute] < self.threshold],
             df[df[self.attribute] >= self.threshold],
         ]
-        self.loss = math.shannon_entropy_histogram(df[name])
+        self.loss = loss
         return success
 
     def handle_missings(self, df):
@@ -284,8 +290,8 @@ class UnsupervisedIntervalAttributeHandler(AttributeHandlerBase):
 
 
 class UnsupervisedNominalAttributeHandler(AttributeHandlerBase):
-    def __init__(self, y_name, attribute, metrics):
-        super().__init__(y_name, attribute, metrics)
+    def __init__(self, y_name, attribute, metrics, algorithm_kwargs):
+        super().__init__(y_name, attribute, metrics, algorithm_kwargs)
 
     def split(self, df):
         self.loss = np.Inf
@@ -362,21 +368,21 @@ class AttributeHandlerFactory:
 
         raise ValueError("no data handler class for this type of data")
 
-    def create_attribute_handlers(self, training_data, metrics):
+    def create_attribute_handlers(self, training_data, metrics, algorithm_kwargs):
         df = training_data.df
         y_name = training_data.y_name
         X_names = training_data.X_names
-        dhc = self.get_attribute_handler_class(
-            df[y_name], group_name=metrics.attribute_handler_group()
+        ahc = self.get_attribute_handler_class(
+            df[y_name],algorithm_kwargs, group_name=metrics.attribute_handler_group()
         )
 
-        d = {y_name: dhc(y_name, y_name, metrics)}
+        d = {y_name: ahc(y_name, y_name, metrics,algorithm_kwargs)}
 
         for name in X_names:
-            dhc = self.get_attribute_handler_class(
+            ahc = self.get_attribute_handler_class(
                 df[name], group_name=metrics.attribute_handler_group()
             )
-            d[name] = dhc(y_name, name, metrics)
+            d[name] = ahc(y_name, name, metrics,algorithm_kwargs)
 
         return d
 
