@@ -374,7 +374,7 @@ class AttributeHandlerFactory:
         y_name = training_data.y_name
         X_names = training_data.X_names
         ahc = self.get_attribute_handler_class(
-            df[y_name],algorithm_kwargs, group_name=metrics.attribute_handler_group()
+            df[y_name], group_name=metrics.attribute_handler_group()
         )
 
         d = {y_name: ahc(y_name, y_name, metrics,algorithm_kwargs)}
