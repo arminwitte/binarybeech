@@ -262,6 +262,8 @@ class UnsupervisedIntervalAttributeHandler(AttributeHandlerBase):
             
         loss = math.shannon_entropy_histogram(df[name], normalized=True)
         
+        print(f"{self.attribute} loss:  {loss}")
+        
         tol = self.algorithm_kwargs.get("unsupervised_entropy_tolerance")
         
         if tol is not None and loss > tol:
