@@ -266,7 +266,7 @@ class UnsupervisedIntervalAttributeHandler(AttributeHandlerBase):
             
         loss = math.shannon_entropy_histogram(df[name])
         if self.loss_reference is None:
-            self.loss_reference = loss_reference
+            self.loss_reference = loss
             print(f"set reference loss to {self.loss_reference}")
         loss_rel = (loss - self.loss_reference)/self.loss_reference
         print(self.attribute, " - loss_rel: ",loss_rel)
