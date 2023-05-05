@@ -241,12 +241,8 @@ class NullAttributeHandler(AttributeHandlerBase):
 
 
 class UnsupervisedIntervalAttributeHandler(AttributeHandlerBase):
-    
-    loss_reference = None
-    
     def __init__(self, y_name, attribute, metrics, algorithm_kwargs):
         super().__init__(y_name, attribute, metrics, algorithm_kwargs)
-        self.loss_reference = None
 
     def split(self, df):
         self.loss = np.Inf
@@ -264,14 +260,11 @@ class UnsupervisedIntervalAttributeHandler(AttributeHandlerBase):
         if not valleys:
             return success
             
-        loss = math.shannon_entropy_histogram(df[name])
-        if self.loss_reference is None:
-            self.loss_reference = loss
-            print(f"set reference loss to {self.loss_reference}")
-        loss_rel = (loss - self.loss_reference)/self.loss_reference
-        print(self.attribute, " - loss_rel: ",loss_rel)
-        tol = self.algorithm_kwargs.get("unsupervised_entropy_tolerance",0.1)
-        if loss_rel > tol:
+        loss = math.shannon_entropy_histogram(df[name], normalized=True)
+        
+        tol = self.algorithm_kwargs.get("unsupervised_entropy_tolerance")
+        
+        if tol is not None and loss_rel > tol:
             return success
 
         success = True

@@ -128,10 +128,18 @@ def valley(x):
     return v
 
 
-def shannon_entropy_histogram(x):
+def shannon_entropy_histogram(x, normalized=False):
     hist, bin_edges = np.histogram(x, bins="auto")
     hist = np.maximum(hist, 1e-12)
-    return -np.sum(hist * np.log2(hist))
+    s = -np.sum(hist * np.log2(hist))
+    
+    if normalized:
+        n_bins = bin_edges.size - 1
+        n_samples = x.size
+        s_ref = n_samples * np.log2(n_samples/n_bins)
+        s /= s_ref
+
+    return s
 
 
 # =====================================
