@@ -264,7 +264,7 @@ class UnsupervisedIntervalAttributeHandler(AttributeHandlerBase):
         
         tol = self.algorithm_kwargs.get("unsupervised_entropy_tolerance")
         
-        if tol is not None and loss_rel > tol:
+        if tol is not None and loss > tol:
             return success
 
         success = True
