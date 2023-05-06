@@ -15,7 +15,7 @@ class DataManager:
                 training_data.df[training_data.y_name], self.algorithm_kwargs
             )
         else:
-            metrics = metrics_factory.create_metrics(method,self.algorithm_kwargs)
+            metrics = metrics_factory.create_metrics(method, self.algorithm_kwargs)
             metrics_type = method
         self.metrics = metrics
         self.metrics_type = metrics_type

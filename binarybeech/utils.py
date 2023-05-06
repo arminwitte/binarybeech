@@ -83,6 +83,7 @@ def model_missings(df, y_name, X_names=None, cart_settings={}):
 
     return df_
 
+
 # def plot_areas(df):
 #     x, y = np.meshgrid(np.linspace(1,7,101),np.linspace(0,2.5,101))
 #     col = []

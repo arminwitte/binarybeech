@@ -124,23 +124,23 @@ def ambiguity(X):
 def valley(x):
     hist, bin_edges = np.histogram(x, bins="sturges", density=False)
     valley_ind, _ = scipy.signal.find_peaks(-hist)
-    #if len(valley_ind) < 1:
+    # if len(valley_ind) < 1:
     #    return []
-    #prom = scipy.signal.peak_prominences(-hist,valley_ind)[0]
-    #ind_max = np.argmax(prom)
+    # prom = scipy.signal.peak_prominences(-hist,valley_ind)[0]
+    # ind_max = np.argmax(prom)
     v = [(bin_edges[i] + bin_edges[i + 1]) * 0.5 for i in valley_ind]
-    return v#[ind_max]
+    return v  # [ind_max]
 
 
-def shannon_entropy_histogram(x:np.ndarray, normalized=False):
+def shannon_entropy_histogram(x: np.ndarray, normalized=False):
     hist, bin_edges = np.histogram(x, bins="sturges", density=False)
     hist = np.maximum(hist, 1e-12)
     s = -np.sum(hist * np.log2(hist))
-    
+
     if normalized:
         n_bins = bin_edges.size - 1
         n_samples = x.size
-        s_ref = n_samples * np.log2(n_samples/n_bins)
+        s_ref = n_samples * np.log2(n_samples / n_bins)
         s /= s_ref
 
     return s

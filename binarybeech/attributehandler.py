@@ -259,7 +259,7 @@ class UnsupervisedIntervalAttributeHandler(AttributeHandlerBase):
         valleys = math.valley(df[name])
         if not valleys:
             return success
-        
+
         loss = np.Inf
         for v in valleys:
             threshold_candidate = v
@@ -268,20 +268,24 @@ class UnsupervisedIntervalAttributeHandler(AttributeHandlerBase):
                 df[df[self.attribute] >= threshold_candidate],
             ]
             H = math.shannon_entropy_histogram(df[name], normalized=False)
-            H_ = [math.shannon_entropy_histogram(df_[name], normalized=False) for df_ in split_df_candidate]
-            loss_candidate = (-np.sum(H_) + H)/np.abs(H)
+            H_ = [
+                math.shannon_entropy_histogram(df_[name], normalized=False)
+                for df_ in split_df_candidate
+            ]
+            loss_candidate = (-np.sum(H_) + H) / np.abs(H)
             if loss_candidate < loss:
                 loss = loss_candidate
                 split_df = split_df_candidate
                 threshold = threshold_candidate
 
-            
         # loss = math.shannon_entropy_histogram(df[name], normalized=True)
-        
+
         print(f"{self.attribute} loss: {loss}")
-        
-        tol = self.algorithm_kwargs.get("unsupervised_minimum_relative_entropy_improvement")
-        
+
+        tol = self.algorithm_kwargs.get(
+            "unsupervised_minimum_relative_entropy_improvement"
+        )
+
         if tol is not None and loss > tol:
             return success
 
@@ -393,13 +397,13 @@ class AttributeHandlerFactory:
             df[y_name], group_name=metrics.attribute_handler_group()
         )
 
-        d = {y_name: ahc(y_name, y_name, metrics,algorithm_kwargs)}
+        d = {y_name: ahc(y_name, y_name, metrics, algorithm_kwargs)}
 
         for name in X_names:
             ahc = self.get_attribute_handler_class(
                 df[name], group_name=metrics.attribute_handler_group()
             )
-            d[name] = ahc(y_name, name, metrics,algorithm_kwargs)
+            d[name] = ahc(y_name, name, metrics, algorithm_kwargs)
 
         return d
 
