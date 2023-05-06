@@ -82,3 +82,16 @@ def model_missings(df, y_name, X_names=None, cart_settings={}):
         df_.loc[df[x_name].isnull(), x_name] = mod.predict(df[df[x_name].isnull()])
 
     return df_
+
+# def plot_areas(df):
+#     x, y = np.meshgrid(np.linspace(1,7,101),np.linspace(0,2.5,101))
+#     col = []
+#     for i in range(len(x.ravel())):
+#         d = df_iris.iloc[120].copy()
+#         d["petal_length"] = x.ravel()[i]
+#         d["petal_width"] = y.ravel()[i]
+#         col.append(c_iris.tree.traverse(d).value)
+#     unique = [u for u in np.unique(col)]
+#     for i, c in enumerate(col):
+#         col[i] = unique.index(c)
+#     z = np.array(col).reshape(x.shape)

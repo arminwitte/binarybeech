@@ -259,23 +259,36 @@ class UnsupervisedIntervalAttributeHandler(AttributeHandlerBase):
         valleys = math.valley(df[name])
         if not valleys:
             return success
+        
+        loss = np.Inf
+        for v in valleys:
+            threshold_candidate = v
+            split_df_candidate = [
+                df[df[self.attribute] < threshold_candidate],
+                df[df[self.attribute] >= threshold_candidate],
+            ]
+            H = math.shannon_entropy_histogram(df[name], normalized=False)
+            H_ = [math.shannon_entropy_histogram(df_[name], normalized=False) for df_ in split_df_candidate]
+            loss_candidate = (-np.sum(H_) + H)/np.abs(H)
+            if loss_candidate < loss:
+                loss = loss_candidate
+                split_df = split_df_candidate
+                threshold = threshold_candidate
+
             
-        loss = math.shannon_entropy_histogram(df[name], normalized=True)
+        # loss = math.shannon_entropy_histogram(df[name], normalized=True)
         
-        print(f"{self.attribute} loss:  {loss}")
+        print(f"{self.attribute} loss: {loss}")
         
-        tol = self.algorithm_kwargs.get("unsupervised_entropy_tolerance")
+        tol = self.algorithm_kwargs.get("unsupervised_minimum_relative_entropy_improvement")
         
         if tol is not None and loss > tol:
             return success
 
         success = True
 
-        self.threshold = valleys[0]
-        self.split_df = [
-            df[df[self.attribute] < self.threshold],
-            df[df[self.attribute] >= self.threshold],
-        ]
+        self.threshold = threshold
+        self.split_df = split_df
         self.loss = loss
         return success
 
