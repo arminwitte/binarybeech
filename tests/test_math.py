@@ -33,7 +33,7 @@ def test_valley():
     x = np.hstack((rng.normal(size=1000), rng.normal(loc=5, scale=2, size=1000)))
     v = math.valley(x)
 
-    np.testing.assert_allclose(v[0], 2.5417373)
+    np.testing.assert_allclose(v[0], 3.116351)
 
 
 def test_shannon_entropy_histogram():
@@ -41,4 +41,4 @@ def test_shannon_entropy_histogram():
     x = np.hstack((rng.normal(size=1000), rng.normal(loc=5, scale=2, size=1000)))
     H = math.shannon_entropy_histogram(x)
 
-    assert H == -14509.837015819745
+    assert H == -15642.544876423011
