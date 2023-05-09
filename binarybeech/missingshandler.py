@@ -121,7 +121,7 @@ class NullMissingsHandler(MissingsHandlerBase):
 
     @staticmethod
     def check(x):
-        return np.isnan(x).any()
+        return np.issubdtype(x.dtype, np.number) and np.sum(0)
 
 
 # =========================
