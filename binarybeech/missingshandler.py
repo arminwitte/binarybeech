@@ -30,8 +30,8 @@ class MissingsHandlerBase(ABC):
 
 
 class DropMissingsHandler(MissingsHandlerBase):
-    def __init__(self, df):
-        super().__init__(df)
+    def __init__(self, df, attribute):
+        super().__init__(df, attribute)
 
     def handle_missings(self, df=None):
         if df is None:
@@ -45,8 +45,8 @@ class DropMissingsHandler(MissingsHandlerBase):
 
 
 class NaiveFillNominalMissingsHandler(MissingsHandlerBase):
-    def __init__(self, df):
-        super().__init__(df)
+    def __init__(self, df, attribute):
+        super().__init__(df, attribute)
 
     def handle_missings(self, df=None):
         if df is None:
@@ -61,8 +61,8 @@ class NaiveFillNominalMissingsHandler(MissingsHandlerBase):
 
 
 class HighestProbabilityNominalMissingsHandler(MissingsHandlerBase):
-    def __init__(self, df):
-        super().__init__(df)
+    def __init__(self, df, attribute):
+        super().__init__(df, attribute)
 
     def handle_missings(self, df=None):
         if df is None:
@@ -80,8 +80,8 @@ class HighestProbabilityNominalMissingsHandler(MissingsHandlerBase):
 
 
 class MedianIntervalMissingsHandler(MissingsHandlerBase):
-    def __init__(self, df):
-        super().__init__(df)
+    def __init__(self, df, attribute):
+        super().__init__(df, attribute)
 
     def handle_missings(self, df=None):
         name = self.attribute
