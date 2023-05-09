@@ -145,7 +145,6 @@ def shannon_entropy_histogram(x: np.ndarray, normalized=False):
 
     return s
 
-
 # =====================================
 
 

@@ -10,7 +10,6 @@ import pandas as pd
 import scipy.optimize as opt
 
 from binarybeech.datamanager import DataManager
-from binarybeech.extra import k_fold_split
 from binarybeech.reporter import Reporter
 from binarybeech.trainingdata import TrainingData
 from binarybeech.tree import Node, Tree
@@ -46,22 +45,22 @@ class Model(ABC):
             self.training_data, metrics_type, attribute_handlers, algorithm_kwargs
         )
 
-        self.training_data.df = self._handle_missings(df, handle_missings)
+        # self.training_data.df = self._handle_missings(df, handle_missings)
 
-    def _handle_missings(self, df, mode):
-        df = df.dropna(subset=[self.y_name])
+    # def _handle_missings(self, df, mode):
+    #     df = df.dropna(subset=[self.y_name])
 
-        if mode is None:
-            return df
-        elif mode == "simple":
-            # use nan as category
-            # use mean if numerical
-            for name, dh in self.dmgr.items():
-                df = dh.handle_missings(df)
-        elif mode == "model":
-            raise ValueError("Not implemented")
+    #     if mode is None:
+    #         return df
+    #     elif mode == "simple":
+    #         # use nan as category
+    #         # use mean if numerical
+    #         for name, dh in self.dmgr.items():
+    #             df = dh.handle_missings(df)
+    #     elif mode == "model":
+    #         raise ValueError("Not implemented")
 
-        return df
+    #     return df
 
     @abstractmethod
     def train(self):

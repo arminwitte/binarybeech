@@ -4,7 +4,6 @@ import numpy as np
 import treelib
 
 from binarybeech.binarybeech import CART
-from binarybeech.extra import k_fold_split
 
 
 def print_bars(d, max_width=70):
@@ -36,10 +35,11 @@ def print_tree(tree):
     _show(tree.root, tree_view)
     tree_view.show()
 
-
-def k_fold_split(df, k=1, frac=None, random=False, shuffle=True, replace=True):
+def k_fold_split(
+    df, k=1, frac=None, random=False, shuffle=True, replace=True, seed=None
+):
     if shuffle:
-        df = df.sample(frac=1.0, replace=False)
+        df = df.sample(frac=1.0, replace=False, random_state=seed)
 
     if frac is None:
         frac = 1.0 - 1.0 / (k + 1.0)
@@ -49,13 +49,14 @@ def k_fold_split(df, k=1, frac=None, random=False, shuffle=True, replace=True):
     sets = []
     for i in reversed(range(k)):
         if random:
-            test = df.sample(frac=1.0 - frac, replace=replace)
+            if seed is not None:
+                seed += 1
+            test = df.sample(frac=1.0 - frac, replace=replace, random_state=seed)
         else:
             test = df.iloc[i * n : min(N, (i + 1) * n), :]
         training = df.loc[df.index.difference(test.index), :]
         sets.append((training, test))
     return sets
-
 
 def model_missings(df, y_name, X_names=None, cart_settings={}):
     if X_names is None:
