@@ -112,16 +112,29 @@ class MedianIntervalMissingsHandler(MissingsHandlerBase):
         return math.check_interval(x)
 
 
-class NullMissingsHandler(MissingsHandlerBase):
+class ConstantMissingsHandler(MissingsHandlerBase):
     def __init__(self, df, attribute):
         super().__init__(df, attribute)
 
     def handle_missings(self, df=None):
+        if df is None:
+            df = self.df
+        name = self.attribute
+        unique = np.unique(df[name].dropna())
+        val = unique[0]
+        df.loc[:, name] = df[name].fillna(val)
         return df
 
     @staticmethod
     def check(x):
-        return np.issubdtype(x.dtype, np.number) and np.sum() < np.finfo(float).tiny
+        x = x[~pd.isna(x)]
+        unique = np.unique(x)
+        l = len(unique)
+
+        if l == 1:
+            return True
+
+        return False
 
 
 # =========================
@@ -172,5 +185,5 @@ missings_handler_factory.register_handler(
     "medianInterval", MedianIntervalMissingsHandler, group_names=["simple"]
 )
 missings_handler_factory.register_handler(
-    "null", NullMissingsHandler, group_names=["simple"]
+    "constant", ConstantMissingsHandler, group_names=["simple"]
 )
