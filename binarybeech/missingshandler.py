@@ -12,8 +12,9 @@ import binarybeech.math as math
 
 
 class MissingsHandlerBase(ABC):
-    def __init__(self, df):
+    def __init__(self, df, attribute):
         self.df = df
+        self.attribute = attribute
 
     @abstractmethod
     def handle_missings(self, df=None):
@@ -35,12 +36,61 @@ class DropMissingsHandler(MissingsHandlerBase):
     def handle_missings(self, df=None):
         if df is None:
             df = self.df
-        df = df.dropna()
+        df = df.dropna(subset=[self.attribute])
         return df
 
     @staticmethod
     def check(arr):
-        pass
+        return True
+
+
+class NaiveFillNominalMissingsHandler(MissingsHandlerBase):
+    def __init__(self, df):
+        super().__init__(df)
+
+    def handle_missings(self, df=None):
+        if df is None:
+            df = self.df
+        name = self.attribute
+        df.loc[:, name] = df[name].fillna("missing")
+        return df
+
+    @staticmethod
+    def check(x):
+        return math.check_nominal(x, max_unique_fraction=0.2, exclude_dichotomous=True)
+
+
+class HighestProbabilityNominalMissingsHandler(MissingsHandlerBase):
+    def __init__(self, df):
+        super().__init__(df)
+
+    def handle_missings(self, df=None):
+        if df is None:
+            df = self.df
+        name = self.attribute
+        unique, counts = np.unique(df[name].dropna(), return_counts=True)
+        ind_max = np.argmax(counts)
+        val = unique[ind_max]
+        df.loc[:, name] = df[name].fillna(val)
+        return df
+
+    @staticmethod
+    def check(x):
+        return math.check_nominal(x, max_unique_fraction=0.2, exclude_dichotomous=True)
+
+
+class MedianIntervalMissingsHandler(MissingsHandlerBase):
+    def __init__(self, df):
+        super().__init__(df)
+
+    def handle_missings(self, df=None):
+        name = self.attribute
+        df.loc[:, name] = df[name].fillna(np.nanmedian(df[name].values))
+        return df
+
+    @staticmethod
+    def check(x):
+        return math.check_interval(x)
 
 
 # =========================
