@@ -117,12 +117,12 @@ class MissingsHandlerFactory:
         raise ValueError("no missings handler class for this type of data")
 
     def create_missings_handlers(self, df, y_name, X_names, handle_missings):
-        mhc = self.get_attribute_handler_class(df[y_name], group_name=handle_missings)
+        mhc = self.get_missings_handler_class(df[y_name], group_name=handle_missings)
 
         d = {y_name: mhc(df, y_name)}
 
         for name in X_names:
-            ahc = self.get_attribute_handler_class(df[name], group_name=handle_missings)
+            ahc = self.get_missings_handler_class(df[name], group_name=handle_missings)
             d[name] = ahc(df, name)
 
         return d
