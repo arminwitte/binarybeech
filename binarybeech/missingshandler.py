@@ -57,7 +57,7 @@ class NaiveFillNominalMissingsHandler(MissingsHandlerBase):
 
     @staticmethod
     def check(x):
-        return math.check_nominal(x, max_unique_fraction=0.2, exclude_dichotomous=True)
+        return math.check_nominal(x, max_unique_fraction=0.2, exclude_dichotomous=False)
 
 
 class HighestProbabilityNominalMissingsHandler(MissingsHandlerBase):
@@ -76,7 +76,7 @@ class HighestProbabilityNominalMissingsHandler(MissingsHandlerBase):
 
     @staticmethod
     def check(x):
-        return math.check_nominal(x, max_unique_fraction=0.2, exclude_dichotomous=True)
+        return math.check_nominal(x, max_unique_fraction=0.2, exclude_dichotomous=False)
 
 
 class MedianIntervalMissingsHandler(MissingsHandlerBase):
