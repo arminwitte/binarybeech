@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 from binarybeech.missingshandler import missings_handler_factory
-from binarybeech.utils import k_fold_split
+from binarybeech.extra import k_fold_split
 
 
 class TrainingData:
