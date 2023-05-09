@@ -137,6 +137,20 @@ class ConstantMissingsHandler(MissingsHandlerBase):
         return False
 
 
+class NullMissingsHandler(MissingsHandlerBase):
+    def __init__(self, df, attribute):
+        super().__init__(df, attribute)
+
+    def handle_missings(self, df=None):
+        if df is None:
+            df = self.df
+        return df
+
+    @staticmethod
+    def check(x):
+        return True
+
+
 # =========================
 
 
@@ -186,4 +200,7 @@ missings_handler_factory.register_handler(
 )
 missings_handler_factory.register_handler(
     "constant", ConstantMissingsHandler, group_names=["simple"]
+)
+missings_handler_factory.register_handler(
+    "null", NullMissingsHandler, group_names=["simple"]
 )
