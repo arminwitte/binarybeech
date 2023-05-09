@@ -57,7 +57,7 @@ class NaiveFillNominalMissingsHandler(MissingsHandlerBase):
 
     @staticmethod
     def check(x):
-        return math.check_nominal(x, max_unique_fraction=0.2, exclude_dichotomous=False)
+        return math.check_nominal(x, max_unique_fraction=0.2, exclude_dichotomous=True)
 
 
 class HighestProbabilityNominalMissingsHandler(MissingsHandlerBase):
@@ -76,7 +76,26 @@ class HighestProbabilityNominalMissingsHandler(MissingsHandlerBase):
 
     @staticmethod
     def check(x):
-        return math.check_nominal(x, max_unique_fraction=0.2, exclude_dichotomous=False)
+        return math.check_nominal(x, max_unique_fraction=0.2, exclude_dichotomous=True)
+
+
+class HighestProbabilityDichotomousMissingsHandler(MissingsHandlerBase):
+    def __init__(self, df, attribute):
+        super().__init__(df, attribute)
+
+    def handle_missings(self, df=None):
+        if df is None:
+            df = self.df
+        name = self.attribute
+        unique, counts = np.unique(df[name].dropna(), return_counts=True)
+        ind_max = np.argmax(counts)
+        val = unique[ind_max]
+        df.loc[:, name] = df[name].fillna(val)
+        return df
+
+    @staticmethod
+    def check(x):
+        return math.check_dichotomous(x)
 
 
 class MedianIntervalMissingsHandler(MissingsHandlerBase):
@@ -131,6 +150,9 @@ class MissingsHandlerFactory:
 missings_handler_factory = MissingsHandlerFactory()
 missings_handler_factory.register_handler("drop", DropMissingsHandler)
 missings_handler_factory.register_group("simple")
+missings_handler_factory.register_handler(
+    "highestProbabilityDichotomous", HighestProbabilityDichotomousMissingsHandler, group_names=["simple"]
+)
 missings_handler_factory.register_handler(
     "naiveFillNominal", NaiveFillNominalMissingsHandler, group_names=["simple"]
 )
