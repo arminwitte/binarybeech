@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
-from binarybeech.utils import k_fold_split
 from binarybeech.missingshandler import missings_handler_factory
+from binarybeech.utils import k_fold_split
 
 
 class TrainingData:
@@ -27,9 +27,9 @@ class TrainingData:
         self.X_names = X_names
 
         self.df = df
-        
+
         if handle_missings is not None:
-        
+
             if missings_handlers is None:
                 missings_handlers = missings_handler_factory.create_missings_handlers(
                     self.df, self.y_name, self.X_names, handle_missings
@@ -44,12 +44,12 @@ class TrainingData:
     def handle_missings(self, df=None):
         if df is None:
             df = self.df
-            
+
         # --------------------
-        
+
         for name, missings_handler in self.missings_handlers.items():
             df = missings_handler.handle_missings(df=df)
-        
+
         # --------------------
 
         if df is None:

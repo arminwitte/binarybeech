@@ -454,7 +454,7 @@ class GradientBoostedTree(Model):
             res = self._pseudo_residuals()
             print(f"Norm of pseudo-residuals: {np.linalg.norm(res)}")
             df["pseudo_residuals"] = res
-            
+
             if self.n_attributes is None:
                 X_names = self.X_names
             else:
@@ -462,7 +462,7 @@ class GradientBoostedTree(Model):
                 if seed is not None:
                     seed += 1
                 X_names = rng.choice(self.X_names, self.n_attributes, replace=False)
-                
+
             kwargs = dict(
                 max_depth=3,
                 min_leaf_samples=5,
@@ -470,11 +470,9 @@ class GradientBoostedTree(Model):
                 metrics_type="regression",
             )
             kwargs = {**kwargs, **self.cart_settings}
-            
+
             c = CART(
-                df=df.sample(
-                    frac=self.sample_frac, replace=True, random_state=seed
-                ),
+                df=df.sample(frac=self.sample_frac, replace=True, random_state=seed),
                 y_name="pseudo_residuals",
                 X_names=X_names,
                 **kwargs,
@@ -482,8 +480,7 @@ class GradientBoostedTree(Model):
             c.create_tree()
             if seed is not None:
                 seed += 1
-                        
-            
+
             if self.gamma_setting is None:
                 gamma = self._gamma(c.tree)
             else:
@@ -562,12 +559,10 @@ class RandomForest(Model):
         self.trees = []
         seed = self.seed
         for i in range(M):
-            df = self.df.sample(
-                frac=self.sample_frac, replace=True, random_state=seed
-            )
+            df = self.df.sample(frac=self.sample_frac, replace=True, random_state=seed)
             if seed is not None:
                 seed += 1
-                        
+
             if self.n_attributes is None:
                 X_names = self.X_names
             else:

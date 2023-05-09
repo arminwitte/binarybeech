@@ -35,6 +35,7 @@ def print_tree(tree):
     _show(tree.root, tree_view)
     tree_view.show()
 
+
 def k_fold_split(
     df, k=1, frac=None, random=False, shuffle=True, replace=True, seed=None
 ):
@@ -57,6 +58,7 @@ def k_fold_split(
         training = df.loc[df.index.difference(test.index), :]
         sets.append((training, test))
     return sets
+
 
 def model_missings(df, y_name, X_names=None, cart_settings={}):
     if X_names is None:
