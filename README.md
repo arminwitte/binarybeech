@@ -13,7 +13,7 @@ Load the Classification And Regression Tree model class
 ```
 import pandas as pd
 from binarybeech.binarybeech import CART
-from binarybeech.utils import k_fold_split
+from binarybeech.extra import k_fold_split
 ```
 get the data from a csv file
 ```
@@ -22,7 +22,7 @@ df = pd.read_csv("data/titanic.csv")
 ```
 grow a decision tree
 ```
-c = CART(df_train,"Survived", metrics_type="classification")
+c = CART(df=df_train,y_name="Survived", metrics_type="classification")
 c.create_tree()
 ```
 predict
