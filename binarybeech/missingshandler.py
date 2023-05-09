@@ -190,7 +190,9 @@ missings_handler_factory = MissingsHandlerFactory()
 missings_handler_factory.register_handler("drop", DropMissingsHandler)
 missings_handler_factory.register_group("simple")
 missings_handler_factory.register_handler(
-    "highestProbabilityDichotomous", HighestProbabilityDichotomousMissingsHandler, group_names=["simple"]
+    "highestProbabilityDichotomous",
+    HighestProbabilityDichotomousMissingsHandler,
+    group_names=["simple"],
 )
 missings_handler_factory.register_handler(
     "naiveFillNominal", NaiveFillNominalMissingsHandler, group_names=["simple"]
