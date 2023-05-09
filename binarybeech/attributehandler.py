@@ -26,10 +26,6 @@ class AttributeHandlerBase(ABC):
     def split(self, df):
         pass
 
-    @abstractmethod
-    def handle_missings(self, df):
-        pass
-
     @staticmethod
     @abstractmethod
     def decide(x, threshold):
@@ -91,11 +87,6 @@ class NominalAttributeHandler(AttributeHandlerBase):
 
         return success
 
-    def handle_missings(self, df):
-        name = self.attribute
-        df.loc[:, name] = df[name].fillna("missing")
-        return df
-
     @staticmethod
     def decide(x, threshold):
         return True if x in threshold else False
@@ -137,14 +128,6 @@ class DichotomousAttributeHandler(AttributeHandlerBase):
         ) + n[1] / N * self.metrics.loss(self.split_df[1][self.y_name], val[1])
 
         return success
-
-    def handle_missings(self, df):
-        name = self.attribute
-        unique, counts = np.unique(df[name].dropna(), return_counts=True)
-        ind_max = np.argmax(counts)
-        val = unique[ind_max]
-        df.loc[:, name] = df[name].fillna(val)
-        return df
 
     @staticmethod
     def decide(x, threshold):
@@ -198,11 +181,6 @@ class IntervalAttributeHandler(AttributeHandlerBase):
 
         return fun
 
-    def handle_missings(self, df):
-        name = self.attribute
-        df.loc[:, name] = df[name].fillna(np.nanmedian(df[name].values))
-        return df
-
     @staticmethod
     def decide(x, threshold):
         return True if x < threshold else False
@@ -224,9 +202,6 @@ class NullAttributeHandler(AttributeHandlerBase):
         success = False
 
         return success
-
-    def handle_missings(self, df):
-        return df
 
     @staticmethod
     def decide(x, threshold):
@@ -296,11 +271,6 @@ class UnsupervisedIntervalAttributeHandler(AttributeHandlerBase):
         self.loss = loss
         return success
 
-    def handle_missings(self, df):
-        name = self.attribute
-        df.loc[:, name] = df[name].fillna(np.nanmedian(df[name].values))
-        return df
-
     @staticmethod
     def decide(x, threshold):
         return True if x < threshold else False
@@ -354,11 +324,6 @@ class UnsupervisedNominalAttributeHandler(AttributeHandlerBase):
                 self.split_df = split_df
 
         return success
-
-    def handle_missings(self, df):
-        name = self.attribute
-        df.loc[:, name] = df[name].fillna("missing")
-        return df
 
     @staticmethod
     def decide(x, threshold):

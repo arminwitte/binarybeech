@@ -10,7 +10,6 @@ import pandas as pd
 import scipy.optimize as opt
 
 from binarybeech.datamanager import DataManager
-from binarybeech.extra import k_fold_split
 from binarybeech.reporter import Reporter
 from binarybeech.trainingdata import TrainingData
 from binarybeech.tree import Node, Tree
@@ -46,22 +45,22 @@ class Model(ABC):
             self.training_data, metrics_type, attribute_handlers, algorithm_kwargs
         )
 
-        self.training_data.df = self._handle_missings(df, handle_missings)
+        # self.training_data.df = self._handle_missings(df, handle_missings)
 
-    def _handle_missings(self, df, mode):
-        df = df.dropna(subset=[self.y_name])
+    # def _handle_missings(self, df, mode):
+    #     df = df.dropna(subset=[self.y_name])
 
-        if mode is None:
-            return df
-        elif mode == "simple":
-            # use nan as category
-            # use mean if numerical
-            for name, dh in self.dmgr.items():
-                df = dh.handle_missings(df)
-        elif mode == "model":
-            raise ValueError("Not implemented")
+    #     if mode is None:
+    #         return df
+    #     elif mode == "simple":
+    #         # use nan as category
+    #         # use mean if numerical
+    #         for name, dh in self.dmgr.items():
+    #             df = dh.handle_missings(df)
+    #     elif mode == "model":
+    #         raise ValueError("Not implemented")
 
-        return df
+    #     return df
 
     @abstractmethod
     def train(self):
@@ -455,7 +454,7 @@ class GradientBoostedTree(Model):
             res = self._pseudo_residuals()
             print(f"Norm of pseudo-residuals: {np.linalg.norm(res)}")
             df["pseudo_residuals"] = res
-            
+
             if self.n_attributes is None:
                 X_names = self.X_names
             else:
@@ -463,7 +462,7 @@ class GradientBoostedTree(Model):
                 if seed is not None:
                     seed += 1
                 X_names = rng.choice(self.X_names, self.n_attributes, replace=False)
-                
+
             kwargs = dict(
                 max_depth=3,
                 min_leaf_samples=5,
@@ -471,11 +470,9 @@ class GradientBoostedTree(Model):
                 metrics_type="regression",
             )
             kwargs = {**kwargs, **self.cart_settings}
-            
+
             c = CART(
-                df=df.sample(
-                    frac=self.sample_frac, replace=True, random_state=seed
-                ),
+                df=df.sample(frac=self.sample_frac, replace=True, random_state=seed),
                 y_name="pseudo_residuals",
                 X_names=X_names,
                 **kwargs,
@@ -483,8 +480,7 @@ class GradientBoostedTree(Model):
             c.create_tree()
             if seed is not None:
                 seed += 1
-                        
-            
+
             if self.gamma_setting is None:
                 gamma = self._gamma(c.tree)
             else:
@@ -563,12 +559,10 @@ class RandomForest(Model):
         self.trees = []
         seed = self.seed
         for i in range(M):
-            df = self.df.sample(
-                frac=self.sample_frac, replace=True, random_state=seed
-            )
+            df = self.df.sample(frac=self.sample_frac, replace=True, random_state=seed)
             if seed is not None:
                 seed += 1
-                        
+
             if self.n_attributes is None:
                 X_names = self.X_names
             else:
