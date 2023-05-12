@@ -9,6 +9,7 @@ import pandas as pd
 import scipy.optimize as opt
 
 import binarybeech.math as math
+from binarybeech.brentsscalarminimizer import BrentsScalarMinimizer
 
 
 class AttributeHandlerBase(ABC):
@@ -160,12 +161,19 @@ class IntervalAttributeHandler(AttributeHandlerBase):
             method="bounded",
         )
         self.threshold = res.x
+        
+        # mini =BrentsScalarMinimizer()
+        # x, y = mini.minimize(self._opt_fun(df),df[self.attribute].min()*(1.+1e-12), df[self.attribute].max()*(1.-1e-12))
+        # self.threshold = x
+        
         self.split_df = [
             df[df[self.attribute] < self.threshold],
             df[df[self.attribute] >= self.threshold],
         ]
         self.loss = res.fun
         return res.success
+        # self.loss = y
+        # return True
 
     def _opt_fun(self, df):
         split_name = self.attribute
