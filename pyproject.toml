@@ -13,7 +13,7 @@ readme = "README.md"
 license = { file="LICENSE" }
 requires-python = ">=3.7"
 keywords = [
-    "machine learning",
+    "machine learning", "supervised learning", "unsupervised learning", "decision tree"
 ]
 classifiers = [
     "Programming Language :: Python :: 3",

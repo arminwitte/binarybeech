@@ -352,7 +352,7 @@ class AttributeHandlerFactory:
     def register_group(self, group_name):
         self.attribute_handlers[group_name] = {}
 
-    def register(self, data_level, attribute_handler_class, group_name="default"):
+    def register_handler(self, data_level, attribute_handler_class, group_name="default"):
         self.attribute_handlers[group_name][data_level] = attribute_handler_class
 
     def get_attribute_handler_class(self, arr, group_name="default"):
@@ -382,17 +382,17 @@ class AttributeHandlerFactory:
 
 
 attribute_handler_factory = AttributeHandlerFactory()
-attribute_handler_factory.register("nominal", NominalAttributeHandler)
-attribute_handler_factory.register("dichotomous", DichotomousAttributeHandler)
-attribute_handler_factory.register("interval", IntervalAttributeHandler)
-attribute_handler_factory.register("null", NullAttributeHandler)
+attribute_handler_factory.register_handler("nominal", NominalAttributeHandler)
+attribute_handler_factory.register_handler("dichotomous", DichotomousAttributeHandler)
+attribute_handler_factory.register_handler("interval", IntervalAttributeHandler)
+attribute_handler_factory.register_handler("null", NullAttributeHandler)
 attribute_handler_factory.register_group("unsupervised")
-attribute_handler_factory.register(
+attribute_handler_factory.register_handler(
     "interval", UnsupervisedIntervalAttributeHandler, group_name="unsupervised"
 )
-attribute_handler_factory.register(
+attribute_handler_factory.register_handler(
     "nominal", UnsupervisedNominalAttributeHandler, group_name="unsupervised"
 )
-attribute_handler_factory.register(
+attribute_handler_factory.register_handler(
     "null", NullAttributeHandler, group_name="unsupervised"
 )
