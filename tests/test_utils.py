@@ -9,4 +9,4 @@ def test_model_missings():
     df_new = model_missings(df_titanic, "Survived", X_names=["Age"])
 
     has_missings = df_new.isnull().any()
-    assert has_missings["Age"] is False
+    assert has_missings["Age"] == False
