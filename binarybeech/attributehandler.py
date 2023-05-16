@@ -5,8 +5,8 @@ import itertools
 from abc import ABC, abstractmethod
 
 import numpy as np
-import pandas as pd
-import scipy.optimize as opt
+#import pandas as pd
+#import scipy.optimize as opt
 
 import binarybeech.math as math
 from binarybeech.brentsscalarminimizer import BrentsScalarMinimizer
@@ -153,14 +153,14 @@ class IntervalAttributeHandler(AttributeHandlerBase):
         if -df[self.attribute].min() + df[self.attribute].max() < np.finfo(float).tiny:
             return success
 
-        name = self.attribute
+        #name = self.attribute
 
         # res = opt.minimize_scalar(
-        #    self._opt_fun(df),
-        #    bounds=(df[self.attribute].min(), df[self.attribute].max()),
+        #     self._opt_fun(df),
+        #     bounds=(df[self.attribute].min(), df[self.attribute].max()),
         #    method="bounded",
         # )
-        #self.threshold = res.x
+        # self.threshold = res.x
         
         mini =BrentsScalarMinimizer(rtol=0.5/len(df.index))
         x, y = mini.minimize(self._opt_fun(df),df[self.attribute].min(), df[self.attribute].max())
@@ -321,9 +321,9 @@ class UnsupervisedNominalAttributeHandler(AttributeHandlerBase):
                 df[df[name].isin(threshold)],
                 df[~df[name].isin(threshold)],
             ]
-            N = len(df.index)
-            n = [len(df_.index) for df_ in split_df]
-            val = [self.metrics.node_value(None) for df_ in split_df]
+            # N = len(df.index)
+            # n = [len(df_.index) for df_ in split_df]
+            # val = [self.metrics.node_value(None) for df_ in split_df]
             loss = math.shannon_entropy(df[c])
             if loss < self.loss:
                 success = True

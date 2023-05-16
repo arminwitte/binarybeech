@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-import itertools
+# import itertools
 from abc import ABC, abstractmethod
 
 import numpy as np
 import pandas as pd
-import scipy.optimize as opt
+# import scipy.optimize as opt
 
 import binarybeech.math as math
 

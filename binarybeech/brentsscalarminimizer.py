@@ -35,6 +35,7 @@ class BrentsScalarMinimizer():
             self.tol2 = 2 * self.tol1
             if abs(self.x - self.m) <= self.tol2 - 0.5 * (self.b - self.a):
                 break
+            
             d = self._spi()
             if not d:
                 d = self._gss()
@@ -46,41 +47,44 @@ class BrentsScalarMinimizer():
             else:
                 u = self.x - self.tol1
             
-            #updating
-            self.e = d
-            self.u = u
-            self.fu = f(self.u)
+            self._update(d, u)
             
-            if self.fu <= self.fx:
+        return self.x, self.fx
+            
+    def _update(self, d, u):
+        self.e = d
+        self.u = u
+        self.fu = f(self.u)
+            
+        if self.fu <= self.fx:
                 
-                if self.u < self.x:
-                    self.b = self.x
-                else:
-                    self.a = self.x
+            if self.u < self.x:
+                self.b = self.x
+            else:
+                self.a = self.x
                     
+            self.v = self.w
+            self.fv = self.fw
+            self.w = self.x
+            self.fw = self.fx
+            self.x = self.u
+            self.fx = self.fu
+                
+        else:
+                
+            if self.u < self.x:
+                self.a = self.u
+            else:
+                self.b = self.u
+                    
+            if self.fu <= self.fw or self.w == self.x:
                 self.v = self.w
                 self.fv = self.fw
-                self.w = self.x
-                self.fw = self.fx
-                self.x = self.u
-                self.fx = self.fu
-                
-            else:
-                
-                if self.u < self.x:
-                    self.a = self.u
-                else:
-                    self.b = self.u
-                    
-                if self.fu <= self.fw or self.w == self.x:
-                    self.v = self.w
-                    self.fv = self.fw
-                    self.w = self.u
-                    self.fw = self.fu
-                elif self.fu <= self.fv or self.v == self.x or self.v == self.w:
-                    self.v = self.u
-                    self.fv = self.fu
-        return self.x, self.fx
+                self.w = self.u
+                self.fw = self.fu
+            elif self.fu <= self.fv or self.v == self.x or self.v == self.w:
+                self.v = self.u
+                self.fv = self.fu
                 
     def _initialize(self, f, a, b,):
         self.a = min(a, b)
