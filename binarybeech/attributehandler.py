@@ -159,11 +159,11 @@ class IntervalAttributeHandler(AttributeHandlerBase):
         #    self._opt_fun(df),
         #    bounds=(df[self.attribute].min(), df[self.attribute].max()),
         #    method="bounded",
-        )
+        # )
         #self.threshold = res.x
         
         mini =BrentsScalarMinimizer()
-        x, y = mini.minimize(self._opt_fun(df),df[self.attribute].min()*(1.+1e-12), df[self.attribute].max()*(1.-1e-12))
+        x, y = mini.minimize(self._opt_fun(df),df[self.attribute].min(), df[self.attribute].max())
         self.threshold = x
         
         self.split_df = [
