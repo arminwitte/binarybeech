@@ -5,9 +5,9 @@ import numpy as np
 class BrentsScalarMinimizer():
     
     invphisqr = (3 - np.sqrt(5)) * 0.5
-    rtol = np.sqrt(np.finfo(float).eps)
+    epssqrt = np.sqrt(np.finfo(float).eps)
     
-    def __init__(self, atol = 0):
+    def __init__(self, atol = 0, rtol = 0, max_iter = 100):
         self.a = None
         self.b = None
         self.e = None
@@ -20,11 +20,12 @@ class BrentsScalarMinimizer():
         self.fw = None
         self.x = None
         self.fx = None
-        self.max_iter = 100
+        self.max_iter = max_iter
         self.n_iter = None
-        self.tol1 = self.rtol
-        self.tol2 = 2 * self.tol1
+        self.rtol = max(self.epssqrt, rtol)
         self.atol = atol
+        self.tol1 = None
+        self.tol2 = None
         
     def minimize(self, f, a, b):
         self._initialize(f, a, b)

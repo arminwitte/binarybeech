@@ -162,7 +162,7 @@ class IntervalAttributeHandler(AttributeHandlerBase):
         # )
         #self.threshold = res.x
         
-        mini =BrentsScalarMinimizer()
+        mini =BrentsScalarMinimizer(rtol=0.5/len(df.index))
         x, y = mini.minimize(self._opt_fun(df),df[self.attribute].min(), df[self.attribute].max())
         self.threshold = x
         
