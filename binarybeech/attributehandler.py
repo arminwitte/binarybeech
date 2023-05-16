@@ -155,25 +155,25 @@ class IntervalAttributeHandler(AttributeHandlerBase):
 
         name = self.attribute
 
-        res = opt.minimize_scalar(
-            self._opt_fun(df),
-            bounds=(df[self.attribute].min(), df[self.attribute].max()),
-            method="bounded",
+        # res = opt.minimize_scalar(
+        #    self._opt_fun(df),
+        #    bounds=(df[self.attribute].min(), df[self.attribute].max()),
+        #    method="bounded",
         )
-        self.threshold = res.x
+        #self.threshold = res.x
         
-        # mini =BrentsScalarMinimizer()
-        # x, y = mini.minimize(self._opt_fun(df),df[self.attribute].min()*(1.+1e-12), df[self.attribute].max()*(1.-1e-12))
-        # self.threshold = x
+        mini =BrentsScalarMinimizer()
+        x, y = mini.minimize(self._opt_fun(df),df[self.attribute].min()*(1.+1e-12), df[self.attribute].max()*(1.-1e-12))
+        self.threshold = x
         
         self.split_df = [
             df[df[self.attribute] < self.threshold],
             df[df[self.attribute] >= self.threshold],
         ]
-        self.loss = res.fun
-        return res.success
-        # self.loss = y
-        # return True
+        # self.loss = res.fun
+        # return res.success
+        self.loss = y
+        return True
 
     def _opt_fun(self, df):
         split_name = self.attribute
