@@ -5,11 +5,12 @@ import itertools
 from abc import ABC, abstractmethod
 
 import numpy as np
-#import pandas as pd
-#import scipy.optimize as opt
 
 import binarybeech.math as math
 from binarybeech.brentsscalarminimizer import BrentsScalarMinimizer
+
+# import pandas as pd
+# import scipy.optimize as opt
 
 
 class AttributeHandlerBase(ABC):
@@ -153,7 +154,7 @@ class IntervalAttributeHandler(AttributeHandlerBase):
         if -df[self.attribute].min() + df[self.attribute].max() < np.finfo(float).tiny:
             return success
 
-        #name = self.attribute
+        # name = self.attribute
 
         # res = opt.minimize_scalar(
         #     self._opt_fun(df),
@@ -161,11 +162,13 @@ class IntervalAttributeHandler(AttributeHandlerBase):
         #    method="bounded",
         # )
         # self.threshold = res.x
-        
-        mini =BrentsScalarMinimizer(rtol=0.5/len(df.index))
-        x, y = mini.minimize(self._opt_fun(df),df[self.attribute].min(), df[self.attribute].max())
+
+        mini = BrentsScalarMinimizer(rtol=0.5 / len(df.index))
+        x, y = mini.minimize(
+            self._opt_fun(df), df[self.attribute].min(), df[self.attribute].max()
+        )
         self.threshold = x
-        
+
         self.split_df = [
             df[df[self.attribute] < self.threshold],
             df[df[self.attribute] >= self.threshold],
@@ -352,7 +355,9 @@ class AttributeHandlerFactory:
     def register_group(self, group_name):
         self.attribute_handlers[group_name] = {}
 
-    def register_handler(self, data_level, attribute_handler_class, group_name="default"):
+    def register_handler(
+        self, data_level, attribute_handler_class, group_name="default"
+    ):
         self.attribute_handlers[group_name][data_level] = attribute_handler_class
 
     def get_attribute_handler_class(self, arr, group_name="default"):

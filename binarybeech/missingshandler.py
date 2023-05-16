@@ -6,9 +6,10 @@ from abc import ABC, abstractmethod
 
 import numpy as np
 import pandas as pd
-# import scipy.optimize as opt
 
 import binarybeech.math as math
+
+# import scipy.optimize as opt
 
 
 class MissingsHandlerBase(ABC):
