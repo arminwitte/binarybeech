@@ -1,5 +1,3 @@
-import pandas as pd
-
 from binarybeech.tree import Node, Tree
 
 

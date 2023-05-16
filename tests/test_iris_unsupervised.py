@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-from binarybeech.binarybeech import CART, GradientBoostedTree, RandomForest
+from binarybeech.binarybeech import CART
 
 
 def test_iris_cart_create():
@@ -27,5 +27,5 @@ def test_iris_cart_tolerance():
         algorithm_kwargs={"unsupervised_minimum_relative_entropy_improvement": -0.15},
     )
     c.create_tree()
-    p = c.predict(df_iris)
+    # p = c.predict(df_iris)
     assert c.tree.leaf_count() == 16

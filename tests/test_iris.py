@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-from binarybeech.binarybeech import CART, GradientBoostedTree, RandomForest
+from binarybeech.binarybeech import CART, RandomForest
 
 
 def test_iris_cart_create():

@@ -168,7 +168,7 @@ class LogisticMetrics(Metrics):
         x = arr[~pd.isna(arr)]
         unique = np.unique(x)
         l = len(unique)
-        r = l / x.size
+        # r = l / x.size
         dtype = x.values.dtype
 
         if (

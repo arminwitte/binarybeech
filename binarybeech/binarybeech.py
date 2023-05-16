@@ -229,7 +229,11 @@ class CART(Model):
         if not split_df:
             return self._leaf(y, y_hat)
         # print(
-        #    f"Computed split:\nloss: {loss_best:.2f} (parent: {loss_parent:.2f})\nattribute: {split_name}\nthreshold: {split_threshold}\ncount: {[len(df_.index) for df_ in split_df]}"
+        #    f"Computed split:
+        # \nloss: {loss_best:.2f} (parent: {loss_parent:.2f})
+        # \nattribute: {split_name}
+        # \nthreshold: {split_threshold}
+        # \ncount: {[len(df_.index) for df_ in split_df]}"
         # )
         if loss_best < loss_parent:
             # print(f"=> Node({split_name}, {split_threshold})")
