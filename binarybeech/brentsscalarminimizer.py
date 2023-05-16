@@ -47,15 +47,16 @@ class BrentsScalarMinimizer():
             else:
                 u = self.x - self.tol1
             
-            self._update(d, u)
+            # update  
+            self.e = d
+            self.u = u
+            self.fu = f(self.u)
+            
+            self._update()
             
         return self.x, self.fx
             
-    def _update(self, d, u):
-        self.e = d
-        self.u = u
-        self.fu = f(self.u)
-            
+    def _update(self):
         if self.fu <= self.fx:
                 
             if self.u < self.x:
