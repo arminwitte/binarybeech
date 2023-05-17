@@ -37,5 +37,5 @@ def plot_areas(mod, x_name, y_name, df=None, rng=None, slice_definition=None, N=
         if df is not None:
             ax.scatter(df[x_name],df[y_name])
 
-def plot_pruning_quality(beta=None, qual_mean=None, qual_sd=None)
+def plot_pruning_quality(beta=None, qual_mean=None, qual_sd=None): 
     plt.errorbar(beta, qual_mean, yerr=qual_sd)
