@@ -22,7 +22,7 @@ def plot_areas(mod, x_name, y_name, df=None, rng=None, slice_definition=None, N=
         d = slice_definition.copy()
         d[x_name] = x.ravel()[i]
         d[y_name] = y.ravel()[i]
-        col.append(mod.predict(d))
+        col.append(mod.predict(d)[0])
     unique = [u for u in np.unique(col)]
     for i, c in enumerate(col):
         col[i] = unique.index(c)
