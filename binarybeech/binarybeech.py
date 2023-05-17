@@ -168,9 +168,11 @@ class CART(Model):
         qual_mean = np.mean(qual_cv, axis=1)
         qual_sd = np.std(qual_cv, axis=1)
         # qual_sd_mean = np.mean(qual_sd)
-        import matplotlib.pyplot as plt
+        # import matplotlib.pyplot as plt
 
-        plt.errorbar(beta, qual_mean, yerr=qual_sd)
+        # plt.errorbar(beta, qual_mean, yerr=qual_sd)
+        
+        self.pruning_quality = {"beta":beta, "qual_mean": qual_mean, "qual_sd": qual_sd}
 
         qual_max = np.nanmax(qual_mean)
         ind_max = np.argmax(qual_mean)
