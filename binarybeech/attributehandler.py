@@ -350,18 +350,21 @@ class UnsupervisedNominalAttributeHandler(AttributeHandlerBase):
 
 class AttributeHandlerFactory:
     def __init__(self):
-        self.attribute_handlers = {"default": {}}
+        self.attribute_handlers = {"default": []}
 
     def register_group(self, group_name):
-        self.attribute_handlers[group_name] = {}
+        self.attribute_handlers[group_name] = []
 
     def register_handler(
-        self, data_level, attribute_handler_class, group_name="default"
+        self, attribute_handler_class, group_name="default"
     ):
-        self.attribute_handlers[group_name][data_level] = attribute_handler_class
+        self.attribute_handlers[group_name].append(attribute_handler_class)
 
     def get_attribute_handler_class(self, arr, group_name="default"):
-        for attribute_handler_class in self.attribute_handlers[group_name].values():
+        """
+        This function returns the first match in the attribute_handlers list. Therefore, you have to be mindful of the order of the list.
+        """
+        for attribute_handler_class in self.attribute_handlers[group_name]:
             if attribute_handler_class.check(arr):
                 return attribute_handler_class
 
@@ -387,17 +390,14 @@ class AttributeHandlerFactory:
 
 
 attribute_handler_factory = AttributeHandlerFactory()
-attribute_handler_factory.register_handler("nominal", NominalAttributeHandler)
-attribute_handler_factory.register_handler("dichotomous", DichotomousAttributeHandler)
-attribute_handler_factory.register_handler("interval", IntervalAttributeHandler)
-attribute_handler_factory.register_handler("null", NullAttributeHandler)
+attribute_handler_factory.register_handler( NominalAttributeHandler)
+attribute_handler_factory.register_handler( DichotomousAttributeHandler)
+attribute_handler_factory.register_handler( IntervalAttributeHandler)
+attribute_handler_factory.register_handler( NullAttributeHandler)
 attribute_handler_factory.register_group("unsupervised")
-attribute_handler_factory.register_handler(
-    "interval", UnsupervisedIntervalAttributeHandler, group_name="unsupervised"
+attribute_handler_factory.register_handler( UnsupervisedIntervalAttributeHandler, group_name="unsupervised"
 )
-attribute_handler_factory.register_handler(
-    "nominal", UnsupervisedNominalAttributeHandler, group_name="unsupervised"
+attribute_handler_factory.register_handler( UnsupervisedNominalAttributeHandler, group_name="unsupervised"
 )
-attribute_handler_factory.register_handler(
-    "null", NullAttributeHandler, group_name="unsupervised"
+attribute_handler_factory.register_handler( NullAttributeHandler, group_name="unsupervised"
 )
