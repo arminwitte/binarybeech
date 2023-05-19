@@ -172,8 +172,12 @@ class CART(Model):
         # import matplotlib.pyplot as plt
 
         # plt.errorbar(beta, qual_mean, yerr=qual_sd)
-        
-        self.pruning_quality = {"beta":beta, "qual_mean": qual_mean, "qual_sd": qual_sd}
+
+        self.pruning_quality = {
+            "beta": beta,
+            "qual_mean": qual_mean,
+            "qual_sd": qual_sd,
+        }
 
         qual_max = np.nanmax(qual_mean)
         ind_max = np.argmax(qual_mean)
@@ -460,7 +464,7 @@ class GradientBoostedTree(Model):
 
         for i in range(M):
             res = self._pseudo_residuals()
-            #print(f"Norm of pseudo-residuals: {np.linalg.norm(res)}")
+            # print(f"Norm of pseudo-residuals: {np.linalg.norm(res)}")
             self.reporter["res_norm"] = np.linalg.norm(res)
             df["pseudo_residuals"] = res
 
@@ -500,9 +504,9 @@ class GradientBoostedTree(Model):
 
     def _gamma(self, tree):
         res = opt.minimize_scalar(self._opt_fun(tree), bounds=[0.0, 10.0])
-        #print(f"{res.x:.2f}\t {res.fun/self.N:.4f}")
+        # print(f"{res.x:.2f}\t {res.fun/self.N:.4f}")
         self.reporter["gamma"] = res.x
-        self.reporter["sse"] = res.fun/self.N
+        self.reporter["sse"] = res.fun / self.N
         return res.x
 
     def _opt_fun(self, tree):
@@ -596,8 +600,8 @@ class RandomForest(Model):
             self.trees.append(c.tree)
             self.oob_indices.append(self.df.index.difference(df.index))
             if self.verbose:
-                self.reporter["no"]=i
-                self.reporter["n_leafs"]=c.tree.leaf_count()
+                self.reporter["no"] = i
+                self.reporter["n_leafs"] = c.tree.leaf_count()
                 self.reporter.print()
 
     def _predict1(self, x):

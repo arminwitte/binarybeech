@@ -355,9 +355,7 @@ class AttributeHandlerFactory:
     def register_group(self, group_name):
         self.attribute_handlers[group_name] = []
 
-    def register_handler(
-        self, attribute_handler_class, group_name="default"
-    ):
+    def register_handler(self, attribute_handler_class, group_name="default"):
         self.attribute_handlers[group_name].append(attribute_handler_class)
 
     def get_attribute_handler_class(self, arr, group_name="default"):
@@ -390,14 +388,17 @@ class AttributeHandlerFactory:
 
 
 attribute_handler_factory = AttributeHandlerFactory()
-attribute_handler_factory.register_handler( NominalAttributeHandler)
-attribute_handler_factory.register_handler( DichotomousAttributeHandler)
-attribute_handler_factory.register_handler( IntervalAttributeHandler)
-attribute_handler_factory.register_handler( NullAttributeHandler)
+attribute_handler_factory.register_handler(NominalAttributeHandler)
+attribute_handler_factory.register_handler(DichotomousAttributeHandler)
+attribute_handler_factory.register_handler(IntervalAttributeHandler)
+attribute_handler_factory.register_handler(NullAttributeHandler)
 attribute_handler_factory.register_group("unsupervised")
-attribute_handler_factory.register_handler( UnsupervisedIntervalAttributeHandler, group_name="unsupervised"
+attribute_handler_factory.register_handler(
+    UnsupervisedIntervalAttributeHandler, group_name="unsupervised"
 )
-attribute_handler_factory.register_handler( UnsupervisedNominalAttributeHandler, group_name="unsupervised"
+attribute_handler_factory.register_handler(
+    UnsupervisedNominalAttributeHandler, group_name="unsupervised"
 )
-attribute_handler_factory.register_handler( NullAttributeHandler, group_name="unsupervised"
+attribute_handler_factory.register_handler(
+    NullAttributeHandler, group_name="unsupervised"
 )
