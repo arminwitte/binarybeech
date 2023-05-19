@@ -186,6 +186,7 @@ def check_interval(x):
     if l <= 2:
         return False
 
+    # r = l / x.size
     dtype = x.values.dtype
 
     if np.issubdtype(dtype, np.number):

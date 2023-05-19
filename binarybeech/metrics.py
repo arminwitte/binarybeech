@@ -77,7 +77,7 @@ class Metrics(ABC):
 
     @staticmethod
     @abstractmethod
-    def check_data_type(arr):
+    def check(arr):
         pass
 
 
@@ -109,17 +109,8 @@ class RegressionMetrics(Metrics):
         return R2
 
     @staticmethod
-    def check_data_type(arr):
-        x = arr[~pd.isna(arr)]
-        unique = np.unique(x)
-        l = len(unique)
-        r = l / x.size
-        dtype = x.values.dtype
-
-        if np.issubdtype(dtype, np.number) and l > 2 and r > 0.01:
-            return True
-
-        return False
+    def check(x):
+        return math.check_interval(x)
 
 
 class LogisticMetrics(Metrics):
@@ -164,7 +155,7 @@ class LogisticMetrics(Metrics):
         return math.logit(arr)
 
     @staticmethod
-    def check_data_type(arr):
+    def check(arr):
         x = arr[~pd.isna(arr)]
         unique = np.unique(x)
         l = len(unique)
@@ -221,17 +212,8 @@ class ClassificationMetrics(Metrics):
         return A
 
     @staticmethod
-    def check_data_type(arr):
-        x = arr[~pd.isna(arr)]
-        unique = np.unique(x)
-        l = len(unique)
-        # r = l/x.size
-        dtype = x.values.dtype
-
-        if not np.issubdtype(dtype, np.number) and l > 1:
-            return True
-
-        return False
+    def check(x):
+        return math.check_nominal(x)
 
 
 class ClassificationMetricsEntropy(ClassificationMetrics):
@@ -270,7 +252,7 @@ class UnsupervisedMetrics(Metrics):
         return "unsupervised"
 
     @staticmethod
-    def check_data_type(arr):
+    def check(arr):
         if not arr:
             return True
 
@@ -295,7 +277,7 @@ class MetricsFactory:
 
     def from_data(self, y, algorithm_kwargs):
         for name, cls in self.metrics.items():
-            if cls.check_data_type(y):
+            if cls.check(y):
                 return cls(), name
 
 

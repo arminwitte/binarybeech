@@ -36,30 +36,6 @@ def print_tree(tree):
     tree_view.show()
 
 
-# def k_fold_split(
-#     df, k=1, frac=None, random=False, shuffle=True, replace=True, seed=None
-# ):
-#     if shuffle:
-#         df = df.sample(frac=1.0, replace=False, random_state=seed)
-
-#     if frac is None:
-#         frac = 1.0 - 1.0 / (k + 1.0)
-
-#     N = len(df.index)
-#     n = int(np.ceil(N / k))
-#     sets = []
-#     for i in reversed(range(k)):
-#         if random:
-#             if seed is not None:
-#                 seed += 1
-#             test = df.sample(frac=1.0 - frac, replace=replace, random_state=seed)
-#         else:
-#             test = df.iloc[i * n : min(N, (i + 1) * n), :]
-#         training = df.loc[df.index.difference(test.index), :]
-#         sets.append((training, test))
-#     return sets
-
-
 def model_missings(df, y_name, X_names=None, cart_settings={}):
     if X_names is None:
         X_names = [n for n in df.columns]
@@ -85,17 +61,3 @@ def model_missings(df, y_name, X_names=None, cart_settings={}):
         df_.loc[df[x_name].isnull(), x_name] = mod.predict(df[df[x_name].isnull()])
 
     return df_
-
-
-# def plot_areas(df):
-#     x, y = np.meshgrid(np.linspace(1,7,101),np.linspace(0,2.5,101))
-#     col = []
-#     for i in range(len(x.ravel())):
-#         d = df_iris.iloc[120].copy()
-#         d["petal_length"] = x.ravel()[i]
-#         d["petal_width"] = y.ravel()[i]
-#         col.append(c_iris.tree.traverse(d).value)
-#     unique = [u for u in np.unique(col)]
-#     for i, c in enumerate(col):
-#         col[i] = unique.index(c)
-#     z = np.array(col).reshape(x.shape)
