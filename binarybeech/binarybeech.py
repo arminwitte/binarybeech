@@ -465,6 +465,7 @@ class GradientBoostedTree(Model):
         for i in range(M):
             res = self._pseudo_residuals()
             # print(f"Norm of pseudo-residuals: {np.linalg.norm(res)}")
+            self.reporter["iter"] = i
             self.reporter["res_norm"] = np.linalg.norm(res)
             df["pseudo_residuals"] = res
 
