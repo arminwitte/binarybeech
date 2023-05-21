@@ -6,6 +6,13 @@ Simplistic algorithms to train decision trees for regression and classification
 ## Principle
 Decision trees are, by design, data type agnostic. With only a few methods like _spliter_ for input variables and meaningful quantification for the _loss_, any data type can be perused. In this code, this is implemented using a factory pattern for _data handling_ and _metrics_ making decision tree learing simple and versatile.
 
+## Install
+
+```
+pip install binarybeech[visualize]
+```
+The dependencies installed using the visualize option enable support for plotting and formatting trees.
+
 ## Example
 
 Load the Classification And Regression Tree model class

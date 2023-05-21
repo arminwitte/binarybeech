@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 import matplotlib.pyplot as plt
+import treelib
 import numpy as np
 import pandas as pd
 
@@ -43,3 +44,34 @@ def plot_areas(
 
 def plot_pruning_quality(beta=None, qual_mean=None, qual_sd=None):
     plt.errorbar(beta, qual_mean, yerr=qual_sd)
+    
+def print_bars(d, max_width=70):
+    max_val = max(d.values())
+    usable_width = max_width - 19
+    for key, val in d.items():
+        l = int(round(usable_width * val / max_val))
+        print(f"{key:10}|{'#'*l}{' '*(usable_width-l)}{val:4.2}")
+
+
+def print_tree(tree):
+    def _show(node, tree_view, parent=None, prefix=""):
+        name = str(hash(node))
+        if node.is_leaf:
+            text = f"{prefix}{node.value}"
+        else:
+            if isinstance(node.threshold, (int, float, np.number)):
+                text = f"{prefix}{node.attribute}<{node.threshold:.2f}"
+            else:
+                text = f"{prefix}{node.attribute} in {node.threshold}"
+        tree_view.create_node(text, name, parent=parent)
+
+        if not node.is_leaf:
+            for i, b in enumerate(node.branches):
+                p = "True: " if i == 0 else "False:"
+                _show(b, tree_view, parent=name, prefix=p)
+
+    tree_view = treelib.Tree()
+    _show(tree.root, tree_view)
+    tree_view.show()
+
+
