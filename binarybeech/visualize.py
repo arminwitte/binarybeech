@@ -33,11 +33,11 @@ def plot_areas(
     z = np.array(col).reshape(x.shape)
 
     if ax is None:
-        plt.pcolormesh(x, y, z)
+        plt.pcolormesh(x, y, z,shading='auto')
         if df is not None:
             plt.scatter(df[x_name], df[y_name])
     else:
-        ax.pcolormesh(x, y, z)
+        ax.pcolormesh(x, y, z,shading='auto')
         if df is not None:
             ax.scatter(df[x_name], df[y_name])
 
