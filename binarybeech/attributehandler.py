@@ -378,10 +378,10 @@ class AttributeHandlerFactory:
 
         if method_group not in self.attribute_handlers.keys():
             # raise ValueError(f"{method} is not a registered method_group")
-            method_group = "default"
             print(
-                "WARNING: {method} is not a registered method group. Chosing 'default'."
+                f"WARNING: '{method_group}' is not a registered method group. Chosing 'default'."
             )
+            method_group = "default"
 
         ahc = self.get_attribute_handler_class(df[y_name], method_group=method_group)
 
