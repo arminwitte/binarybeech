@@ -20,15 +20,15 @@ class Reporter:
     def print(self):
         self.n += 1
         if self.n == 0:
-            for l in self.labels:
-                print(l, end=" ")
+            for L in self.labels:
+                print(L, end=" ")
 
         if self.n > 20:
             self.n = -1
 
         s = ""
-        for l in self.labels:
-            v = self.buffer.get(l)
+        for L in self.labels:
+            v = self.buffer.get(L)
             if v is None:
                 s += " - \t"
             elif isinstance(v, float):

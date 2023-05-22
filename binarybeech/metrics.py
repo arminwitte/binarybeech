@@ -51,10 +51,6 @@ class Metrics(ABC):
     def inverse_transform(arr):
         return arr
 
-    @staticmethod
-    def attribute_handler_group():
-        return "default"
-
     @abstractmethod
     def loss(self, y, y_hat):
         pass
@@ -158,13 +154,13 @@ class LogisticMetrics(Metrics):
     def check(arr):
         x = arr[~pd.isna(arr)]
         unique = np.unique(x)
-        l = len(unique)
+        L = len(unique)
         # r = l / x.size
         dtype = x.values.dtype
 
         if (
             np.issubdtype(dtype, np.number)
-            and l == 2
+            and L == 2
             and np.min(x) == 0
             and np.max(x) == 1
         ):
@@ -246,10 +242,6 @@ class UnsupervisedMetrics(Metrics):
 
     def goodness_of_fit(self, y, y_hat):
         return 0.0
-
-    @staticmethod
-    def attribute_handler_group():
-        return "unsupervised"
 
     @staticmethod
     def check(arr):

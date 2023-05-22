@@ -1,9 +1,8 @@
 #!/usr/bin/env python
 # coding: utf-8
-import numpy as np
+# import numpy as np
 
 from binarybeech.binarybeech import CART
-
 
 
 def model_missings(df, y_name, X_names=None, cart_settings={}):

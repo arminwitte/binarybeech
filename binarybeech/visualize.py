@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 # coding: utf-8
 import matplotlib.pyplot as plt
-import treelib
 import numpy as np
 import pandas as pd
+import treelib
 
 
 def plot_areas(
@@ -33,24 +33,25 @@ def plot_areas(
     z = np.array(col).reshape(x.shape)
 
     if ax is None:
-        plt.pcolormesh(x, y, z)
+        plt.pcolormesh(x, y, z, shading="auto")
         if df is not None:
             plt.scatter(df[x_name], df[y_name])
     else:
-        ax.pcolormesh(x, y, z)
+        ax.pcolormesh(x, y, z, shading="auto")
         if df is not None:
             ax.scatter(df[x_name], df[y_name])
 
 
 def plot_pruning_quality(beta=None, qual_mean=None, qual_sd=None):
     plt.errorbar(beta, qual_mean, yerr=qual_sd)
-    
+
+
 def print_bars(d, max_width=70):
     max_val = max(d.values())
     usable_width = max_width - 19
     for key, val in d.items():
-        l = int(round(usable_width * val / max_val))
-        print(f"{key:10}|{'#'*l}{' '*(usable_width-l)}{val:4.2}")
+        L = int(round(usable_width * val / max_val))
+        print(f"{key:10}|{'#'*L}{' '*(usable_width-L)}{val:4.2}")
 
 
 def print_tree(tree):
@@ -73,5 +74,3 @@ def print_tree(tree):
     tree_view = treelib.Tree()
     _show(tree.root, tree_view)
     tree_view.show()
-
-

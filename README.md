@@ -29,7 +29,7 @@ df = pd.read_csv("data/titanic.csv")
 ```
 grow a decision tree
 ```
-c = CART(df=df_train,y_name="Survived", metrics_type="classification")
+c = CART(df=df_train,y_name="Survived", method="classification")
 c.create_tree()
 ```
 predict
@@ -45,7 +45,7 @@ Please have a look at the jupyter notebooks in this repository for more examples
 
 ## Usage
 ### binarybeech.binarybeech.CART
-**CART(df, y_name, X_names=None, min_leaf_samples=1, min_split_samples=1, max_depth=10, metrics_type="regression", handle_missings="simple", attribute_handlers=None)**
+**CART(df, y_name, X_names=None, min_leaf_samples=1, min_split_samples=1, max_depth=10, method="regression", handle_missings="simple", attribute_handlers=None)**
 
 Class for a Classification and Regression Tree (CART) model.
 
@@ -56,7 +56,7 @@ Class for a Classification and Regression Tree (CART) model.
     - **min_leaf_samples**: If the number of training samples is lower than this, a terminal node (leaf) is created. Default is 1.
     - **min_split_samples**: If a split of the training data is proposed with at least one branch containing less samples than this, the split is rejected. Default is 1.
     - **max_depth**: Maximum number of sequential splits. This corresponds to the number of vertical layers of the tree. Default is 10, which corresponds to a maximum number of 1024 terminal nodes.
-    - **metrics_type**: Metrics to use for the evaluation of split loss, etc. Can be either "classification", "logistic", "regression", or _None_. Default is "regression". If _None_ is chosen, the `metrics_type` is deduced from the training _dataframe_.
+    - **method**: Metrics to use for the evaluation of split loss, etc. Can be either "classification", "logistic", "regression", or _None_. Default is "regression". If _None_ is chosen, the `method` is deduced from the training _dataframe_.
     - **handle_missings**: Specify the way how missing data is handeled. Can be eiter _None_ or "simple".
     - **attribute_handlers**: _dict_ with attribute handler instances for each variable. The data handler determins, e.g., how splits of the dataset are made.
 * Methods
@@ -88,7 +88,7 @@ Class for a Classification and Regression Tree (CART) model.
 
 ### binarybeech.binarybeech.GradientBoostedTree
 
-**GradientBoostedTree(df, y_name, X_names=None, sample_frac=1, n_attributes=None, learning_rate=0.1, cart_settings={}, init_metrics_type="logistic", gamma=None, handle_missings="simple", s=None)**
+**GradientBoostedTree(df, y_name, X_names=None, sample_frac=1, n_attributes=None, learning_rate=0.1, cart_settings={}, init_method="logistic", gamma=None, handle_missings="simple", s=None)**
 
 Class for a Gradient Boosted Tree model.
 
@@ -100,8 +100,8 @@ Class for a Gradient Boosted Tree model.
     - **n_attributes**: number of attributes (elements of the X_names list) to use for the training of an individual tree of the ensemble. Default is _None_ which corresponds to all available attributes.
     - **learning_rate**: the shinkage parameter used to "downweight" individual trees of the ensemble. Default is 0.1.
     - **cart_settings**: _dict_ that is passed on to the constuctor of the individual tree (binarybeech.binarybeech.CART). For details cf. above.
-    - **init_metrics_type**: Metrics to use for the evaluation of split loss, etc if the initial tree (stump). Can be either "classification", "logistic", "regression", or _None_. Default is "regression". If _None_ is chosen, the `metrics_type` is deduced from the training _dataframe_.
-    - **gamma**: weight for individual trees of the ensemble. If _None_, the weight for each tree is chosen by line search minimizing the loss given by _init_metrics_type_.
+    - **init_method**: Metrics to use for the evaluation of split loss, etc if the initial tree (stump). Can be either "classification", "logistic", "regression", or _None_. Default is "regression". If _None_ is chosen, the `method` is deduced from the training _dataframe_.
+    - **gamma**: weight for individual trees of the ensemble. If _None_, the weight for each tree is chosen by line search minimizing the loss given by _init_method_.
     - **handle_missings**: Specify the way how missing data is handeled. Can be eiter _None_ or "simple".
     - **attribute_handlers**: _dict_ with data handler instances for each variable. The data handler determins, e.g., how splits of the dataset are made.
 * Methods
@@ -124,7 +124,7 @@ Class for a Gradient Boosted Tree model.
 
 ### binarybeech.binarybeech.RandomForest
 
-**RandomForest(df, y_name, X_names=None, verbose=False, sample_frac=1, n_attributes=None, cart_settings={}, metrics_type="regression", handle_missings="simple", attribute_handlers=None)**
+**RandomForest(df, y_name, X_names=None, verbose=False, sample_frac=1, n_attributes=None, cart_settings={}, method="regression", handle_missings="simple", attribute_handlers=None)**
 
 Class for a Random Forest model.
 
@@ -136,7 +136,7 @@ Class for a Random Forest model.
     - **sample_frac**: fraction (0, 1] of the training data to use for the training of an individual tree of the ensemble. Default is 1.
     - **n_attributes**: number of attributes (elements of the X_names list) to use for the training of an individual tree of the ensemble. Default is _None_ which corresponds to all available attributes.
     - **cart_settings**: _dict_ that is passed on to the constuctor of the individual tree (binarybeech.binarybeech.CART). For details cf. above.
-    - **metrics_type**: Metrics to use for the evaluation of split loss, etc. Can be either "classification", "logistic", "regression", or _None_. Default is "regression". If _None_ is chosen, the `metrics_type` is deduced from the training _dataframe_.
+    - **method**: Metrics to use for the evaluation of split loss, etc. Can be either "classification", "logistic", "regression", or _None_. Default is "regression". If _None_ is chosen, the `method` is deduced from the training _dataframe_.
     - **handle_missings**: Specify the way how missing data is handeled. Can be eiter _None_ or "simple".
     - **attribute_handlers**: _dict_ with attribute handler instances for each variable. The data handler determins, e.g., how splits of the dataset are made.
 * Methods

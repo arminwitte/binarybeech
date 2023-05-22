@@ -226,7 +226,7 @@ class NullAttributeHandler(AttributeHandlerBase):
 # =========================
 
 
-class UnsupervisedIntervalAttributeHandler(AttributeHandlerBase):
+class ClusteringIntervalAttributeHandler(AttributeHandlerBase):
     def __init__(self, y_name, attribute, metrics, algorithm_kwargs):
         super().__init__(y_name, attribute, metrics, algorithm_kwargs)
 
@@ -291,7 +291,7 @@ class UnsupervisedIntervalAttributeHandler(AttributeHandlerBase):
         return math.check_interval(x)
 
 
-class UnsupervisedNominalAttributeHandler(AttributeHandlerBase):
+class ClusteringNominalAttributeHandler(AttributeHandlerBase):
     def __init__(self, y_name, attribute, metrics, algorithm_kwargs):
         super().__init__(y_name, attribute, metrics, algorithm_kwargs)
 
@@ -352,36 +352,43 @@ class AttributeHandlerFactory:
     def __init__(self):
         self.attribute_handlers = {"default": []}
 
-    def register_group(self, group_name):
-        self.attribute_handlers[group_name] = []
+    def register_method_group(self, method_group):
+        self.attribute_handlers[method_group] = []
 
-    def register_handler(self, attribute_handler_class, group_name="default"):
-        self.attribute_handlers[group_name].append(attribute_handler_class)
+    def register_handler(self, attribute_handler_class, method_group="default"):
+        self.attribute_handlers[method_group].append(attribute_handler_class)
 
-    def get_attribute_handler_class(self, arr, group_name="default"):
+    def get_attribute_handler_class(self, arr, method_group="default"):
         """
-        This function returns the first match in the attribute_handlers list. Therefore, you have to be mindful of the order of the list.
+        This function returns the first match in the attribute_handlers list.
+        Therefore, you have to be mindful of the order of the list.
         """
-        for attribute_handler_class in self.attribute_handlers[group_name]:
+        for attribute_handler_class in self.attribute_handlers[method_group]:
             if attribute_handler_class.check(arr):
                 return attribute_handler_class
 
         raise ValueError("no data handler class for this type of data")
 
-    def create_attribute_handlers(self, training_data, metrics, algorithm_kwargs):
+    def create_attribute_handlers(
+        self, training_data, metrics, method_group, algorithm_kwargs
+    ):
         df = training_data.df
         y_name = training_data.y_name
         X_names = training_data.X_names
-        ahc = self.get_attribute_handler_class(
-            df[y_name], group_name=metrics.attribute_handler_group()
-        )
+
+        if method_group not in self.attribute_handlers.keys():
+            # raise ValueError(f"{method} is not a registered method_group")
+            print(
+                f"WARNING: '{method_group}' is not a registered method group. Chosing 'default'."
+            )
+            method_group = "default"
+
+        ahc = self.get_attribute_handler_class(df[y_name], method_group=method_group)
 
         d = {y_name: ahc(y_name, y_name, metrics, algorithm_kwargs)}
 
         for name in X_names:
-            ahc = self.get_attribute_handler_class(
-                df[name], group_name=metrics.attribute_handler_group()
-            )
+            ahc = self.get_attribute_handler_class(df[name], method_group=method_group)
             d[name] = ahc(y_name, name, metrics, algorithm_kwargs)
 
         return d
@@ -392,13 +399,13 @@ attribute_handler_factory.register_handler(NominalAttributeHandler)
 attribute_handler_factory.register_handler(DichotomousAttributeHandler)
 attribute_handler_factory.register_handler(IntervalAttributeHandler)
 attribute_handler_factory.register_handler(NullAttributeHandler)
-attribute_handler_factory.register_group("unsupervised")
+attribute_handler_factory.register_method_group("clustering")
 attribute_handler_factory.register_handler(
-    UnsupervisedIntervalAttributeHandler, group_name="unsupervised"
+    ClusteringIntervalAttributeHandler, method_group="clustering"
 )
 attribute_handler_factory.register_handler(
-    UnsupervisedNominalAttributeHandler, group_name="unsupervised"
+    ClusteringNominalAttributeHandler, method_group="clustering"
 )
 attribute_handler_factory.register_handler(
-    NullAttributeHandler, group_name="unsupervised"
+    NullAttributeHandler, method_group="clustering"
 )

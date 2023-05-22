@@ -23,7 +23,7 @@ class Model(ABC):
         y_name,
         X_names,
         attribute_handlers,
-        metrics_type,
+        method,
         handle_missings,
         algorithm_kwargs,
     ):
@@ -42,7 +42,7 @@ class Model(ABC):
         self.X_names = self.training_data.X_names
 
         self.dmgr = DataManager(
-            self.training_data, metrics_type, attribute_handlers, algorithm_kwargs
+            self.training_data, method, attribute_handlers, algorithm_kwargs
         )
 
         # self.training_data.df = self._handle_missings(df, handle_missings)
@@ -95,7 +95,7 @@ class CART(Model):
         min_leaf_samples=1,
         min_split_samples=1,
         max_depth=10,
-        metrics_type="regression",
+        method="regression",
         handle_missings="simple",
         attribute_handlers=None,
         seed=None,
@@ -107,7 +107,7 @@ class CART(Model):
             y_name,
             X_names,
             attribute_handlers,
-            metrics_type,
+            method,
             handle_missings,
             algorithm_kwargs,
         )
@@ -159,7 +159,7 @@ class CART(Model):
                 min_leaf_samples=self.min_leaf_samples,
                 min_split_samples=self.min_split_samples,
                 max_depth=self.max_depth,
-                metrics_type=self.dmgr.metrics_type,
+                method=self.dmgr.method,
                 attribute_handlers=self.dmgr,
             )
             c.create_tree()
@@ -388,7 +388,7 @@ class GradientBoostedTree(Model):
         n_attributes=None,
         learning_rate=0.1,
         cart_settings={},
-        init_metrics_type="logistic",
+        init_method="logistic",
         gamma=None,
         handle_missings="simple",
         attribute_handlers=None,
@@ -401,7 +401,7 @@ class GradientBoostedTree(Model):
             y_name,
             X_names,
             attribute_handlers,
-            init_metrics_type,
+            init_method,
             handle_missings,
             algorithm_kwargs,
         )
@@ -413,7 +413,7 @@ class GradientBoostedTree(Model):
         self.gamma = []
         self.learning_rate = learning_rate
         self.cart_settings = cart_settings
-        self.init_metrics_type = init_metrics_type
+        self.init_method = init_method
         self.sample_frac = sample_frac
         self.n_attributes = n_attributes
         self.gamma_setting = gamma
@@ -428,7 +428,7 @@ class GradientBoostedTree(Model):
             y_name=self.y_name,
             X_names=self.X_names,
             max_depth=0,
-            metrics_type=self.init_metrics_type,
+            method=self.init_method,
             attribute_handlers=self.dmgr,
             seed=None,
         )
@@ -481,7 +481,7 @@ class GradientBoostedTree(Model):
                 max_depth=3,
                 min_leaf_samples=5,
                 min_split_samples=4,
-                metrics_type="regression",
+                method="regression",
             )
             kwargs = {**kwargs, **self.cart_settings}
 
@@ -543,7 +543,7 @@ class RandomForest(Model):
         sample_frac=1,
         n_attributes=None,
         cart_settings={},
-        metrics_type="regression",
+        method="regression",
         handle_missings="simple",
         attribute_handlers=None,
         seed=None,
@@ -555,7 +555,7 @@ class RandomForest(Model):
             y_name,
             X_names,
             attribute_handlers,
-            metrics_type,
+            method,
             handle_missings,
             algorithm_kwargs,
         )
@@ -592,7 +592,7 @@ class RandomForest(Model):
                 max_depth=3,
                 min_leaf_samples=5,
                 min_split_samples=4,
-                metrics_type=self.dmgr.metrics_type,
+                method=self.dmgr.method,
                 attribute_handlers=self.dmgr,
             )
             kwargs = {**kwargs, **self.cart_settings}
