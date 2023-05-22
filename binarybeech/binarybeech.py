@@ -7,12 +7,13 @@ from abc import ABC, abstractmethod
 
 import numpy as np
 import pandas as pd
-import scipy.optimize as opt
+#import scipy.optimize as opt
 
 from binarybeech.datamanager import DataManager
 from binarybeech.reporter import Reporter
 from binarybeech.trainingdata import TrainingData
 from binarybeech.tree import Node, Tree
+from binarybeech.brentsscalarminimizer import BrentsScalarMinimizer
 
 
 class Model(ABC):
@@ -503,12 +504,19 @@ class GradientBoostedTree(Model):
             self.gamma.append(gamma)
             self.reporter.print()
 
+    # def _gamma(self, tree):
+    #     res = opt.minimize_scalar(self._opt_fun(tree), bounds=[0.0, 10.0])
+    #     # print(f"{res.x:.2f}\t {res.fun/self.N:.4f}")
+    #     self.reporter["gamma"] = res.x
+    #     self.reporter["sse"] = res.fun / self.N
+    #     return res.x
+    
     def _gamma(self, tree):
-        res = opt.minimize_scalar(self._opt_fun(tree), bounds=[0.0, 10.0])
-        # print(f"{res.x:.2f}\t {res.fun/self.N:.4f}")
-        self.reporter["gamma"] = res.x
-        self.reporter["sse"] = res.fun / self.N
-        return res.x
+        minimizer = BrentsScalarMinimizer()
+        x, y = minimizer.minimize(self._opt_fun(tree), 0.0, 10.0)
+        self.reporter["gamma"] = x
+        self.reporter["sse"] = y / self.N
+        return x
 
     def _opt_fun(self, tree):
         y_hat = self._predict_raw(self.df)
