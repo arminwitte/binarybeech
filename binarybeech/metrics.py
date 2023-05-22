@@ -154,13 +154,13 @@ class LogisticMetrics(Metrics):
     def check(arr):
         x = arr[~pd.isna(arr)]
         unique = np.unique(x)
-        l = len(unique)
+        L = len(unique)
         # r = l / x.size
         dtype = x.values.dtype
 
         if (
             np.issubdtype(dtype, np.number)
-            and l == 2
+            and L == 2
             and np.min(x) == 0
             and np.max(x) == 1
         ):

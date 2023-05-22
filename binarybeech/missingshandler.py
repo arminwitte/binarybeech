@@ -130,9 +130,9 @@ class ConstantMissingsHandler(MissingsHandlerBase):
     def check(x):
         x = x[~pd.isna(x)]
         unique = np.unique(x)
-        l = len(unique)
+        L = len(unique)
 
-        if l == 1:
+        if L == 1:
             return True
 
         return False

@@ -360,7 +360,8 @@ class AttributeHandlerFactory:
 
     def get_attribute_handler_class(self, arr, method_group="default"):
         """
-        This function returns the first match in the attribute_handlers list. Therefore, you have to be mindful of the order of the list.
+        This function returns the first match in the attribute_handlers list.
+        Therefore, you have to be mindful of the order of the list.
         """
         for attribute_handler_class in self.attribute_handlers[method_group]:
             if attribute_handler_class.check(arr):

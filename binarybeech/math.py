@@ -152,12 +152,12 @@ def shannon_entropy_histogram(x: np.ndarray, normalized=False):
 def check_nominal(x, max_unique_fraction=0.2, exclude_dichotomous=True):
     x = x[~pd.isna(x)]
     unique = np.unique(x)
-    l = len(unique)
+    L = len(unique)
 
-    if exclude_dichotomous and l <= 2:
+    if exclude_dichotomous and L <= 2:
         return False
 
-    if l / len(x) > max_unique_fraction:
+    if L / len(x) > max_unique_fraction:
         return False
 
     dtype = x.values.dtype
@@ -170,9 +170,9 @@ def check_nominal(x, max_unique_fraction=0.2, exclude_dichotomous=True):
 def check_dichotomous(x):
     x = x[~pd.isna(x)]
     unique = np.unique(x)
-    l = len(unique)
+    L = len(unique)
 
-    if l == 2:
+    if L == 2:
         return True
 
     return False
@@ -181,12 +181,12 @@ def check_dichotomous(x):
 def check_interval(x):
     x = x[~pd.isna(x)]
     unique = np.unique(x)
-    l = len(unique)
+    L = len(unique)
 
-    if l <= 2:
+    if L <= 2:
         return False
 
-    # r = l / x.size
+    # r = L / x.size
     dtype = x.values.dtype
 
     if np.issubdtype(dtype, np.number):

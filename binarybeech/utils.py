@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
-import numpy as np
+#import numpy as np
 
 from binarybeech.binarybeech import CART
 
