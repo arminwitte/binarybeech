@@ -5,7 +5,6 @@ import numpy as np
 from binarybeech.binarybeech import CART
 
 
-
 def model_missings(df, y_name, X_names=None, cart_settings={}):
     if X_names is None:
         X_names = [n for n in df.columns]

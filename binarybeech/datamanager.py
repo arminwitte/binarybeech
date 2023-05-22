@@ -19,14 +19,17 @@ class DataManager:
 
         if attribute_handlers is None:
             attribute_handlers = attribute_handler_factory.create_attribute_handlers(
-                training_data, self.metrics, self.method, self.algorithm_kwargs,
+                training_data,
+                self.metrics,
+                self.method,
+                self.algorithm_kwargs,
             )
         self.attribute_handlers = attribute_handlers
         self.items = self.attribute_handlers.items
 
     def __getitem__(self, key):
         return self.attribute_handlers[key]
-    
+
     @staticmethod
     def info():
         ah = [k for k in attribute_handler_factory.attribute_handlers.keys()]

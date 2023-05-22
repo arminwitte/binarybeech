@@ -2,12 +2,18 @@
 # coding: utf-8
 from binarybeech.datamanager import DataManager
 
-
 # def test_datamanager_init():
 #     pass
 
 
 def test_datamanager_info():
     ah, m = DataManager.info()
-    assert ah == ['default', 'clustering']
-    assert m == ['regression', 'classification:gini', 'classification:entropy', 'logistic', 'classification', 'clustering']
+    assert ah == ["default", "clustering"]
+    assert m == [
+        "regression",
+        "classification:gini",
+        "classification:entropy",
+        "logistic",
+        "classification",
+        "clustering",
+    ]

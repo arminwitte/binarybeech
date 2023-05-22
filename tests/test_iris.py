@@ -28,9 +28,7 @@ def test_iris_cart_train():
 
 def test_iris_randomforest():
     df_iris = pd.read_csv("data/iris.csv")
-    rf = RandomForest(
-        df=df_iris, y_name="species", method="classification", seed=42
-    )
+    rf = RandomForest(df=df_iris, y_name="species", method="classification", seed=42)
     rf.train(20)
     p = rf.predict(df_iris)
     val = rf.validate_oob()

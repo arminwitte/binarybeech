@@ -368,26 +368,26 @@ class AttributeHandlerFactory:
 
         raise ValueError("no data handler class for this type of data")
 
-    def create_attribute_handlers(self, training_data, metrics, method_group, algorithm_kwargs):
+    def create_attribute_handlers(
+        self, training_data, metrics, method_group, algorithm_kwargs
+    ):
         df = training_data.df
         y_name = training_data.y_name
         X_names = training_data.X_names
 
         if method_group not in self.attribute_handlers.keys():
-            #raise ValueError(f"{method} is not a registered method_group")
+            # raise ValueError(f"{method} is not a registered method_group")
             method_group = "default"
-            print("WARNING: {method} is not a registered method group. Chosing 'default'.")
+            print(
+                "WARNING: {method} is not a registered method group. Chosing 'default'."
+            )
 
-        ahc = self.get_attribute_handler_class(
-            df[y_name], method_group=method_group
-        )
+        ahc = self.get_attribute_handler_class(df[y_name], method_group=method_group)
 
         d = {y_name: ahc(y_name, y_name, metrics, algorithm_kwargs)}
 
         for name in X_names:
-            ahc = self.get_attribute_handler_class(
-                df[name], method_group=method_group
-            )
+            ahc = self.get_attribute_handler_class(df[name], method_group=method_group)
             d[name] = ahc(y_name, name, metrics, algorithm_kwargs)
 
         return d
