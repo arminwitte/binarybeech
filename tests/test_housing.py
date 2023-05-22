@@ -6,7 +6,7 @@ from binarybeech.binarybeech import CART, GradientBoostedTree, RandomForest
 
 def test_housing_cart_create():
     df_housing = pd.read_csv("data/Housing.csv")
-    c = CART(df=df_housing, y_name="price", metrics_type="regression", seed=42)
+    c = CART(df=df_housing, y_name="price", method="regression", seed=42)
     c.create_tree()
     p = c.predict(df_housing)
     val = c.validate()
@@ -31,7 +31,7 @@ def test_housing_cart_create():
 
 def test_housing_cart_train():
     df_housing = pd.read_csv("data/Housing.csv")
-    c = CART(df=df_housing, y_name="price", metrics_type="regression", seed=42)
+    c = CART(df=df_housing, y_name="price", method="regression", seed=42)
     c.train()
     p = c.predict(df_housing)
     val = c.validate()
@@ -60,7 +60,7 @@ def test_housing_gradientboostedtree():
         df=df_housing,
         y_name="price",
         learning_rate=0.5,
-        init_metrics_type="regression",
+        init_method="regression",
         seed=42,
     )
     gbt.train(20)
@@ -88,7 +88,7 @@ def test_housing_gradientboostedtree():
 
 def test_housing_randomforest():
     df_housing = pd.read_csv("data/Housing.csv")
-    rf = RandomForest(df=df_housing, y_name="price", metrics_type="regression", seed=42)
+    rf = RandomForest(df=df_housing, y_name="price", method="regression", seed=42)
     rf.train(20)
     p = rf.predict(df_housing)
     val = rf.validate_oob()

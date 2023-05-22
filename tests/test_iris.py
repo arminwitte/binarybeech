@@ -6,7 +6,7 @@ from binarybeech.binarybeech import CART, RandomForest
 
 def test_iris_cart_create():
     df_iris = pd.read_csv("data/iris.csv")
-    c = CART(df=df_iris, y_name="species", metrics_type="classification")
+    c = CART(df=df_iris, y_name="species", method="classification")
     c.create_tree()
     p = c.predict(df_iris)
     val = c.validate()
@@ -17,7 +17,7 @@ def test_iris_cart_create():
 
 def test_iris_cart_train():
     df_iris = pd.read_csv("data/iris.csv")
-    c = CART(df=df_iris, y_name="species", metrics_type="classification", seed=42)
+    c = CART(df=df_iris, y_name="species", method="classification", seed=42)
     c.train()
     p = c.predict(df_iris)
     val = c.validate()
@@ -29,7 +29,7 @@ def test_iris_cart_train():
 def test_iris_randomforest():
     df_iris = pd.read_csv("data/iris.csv")
     rf = RandomForest(
-        df=df_iris, y_name="species", metrics_type="classification", seed=42
+        df=df_iris, y_name="species", method="classification", seed=42
     )
     rf.train(20)
     p = rf.predict(df_iris)
