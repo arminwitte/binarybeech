@@ -1,13 +1,15 @@
 #!/usr/bin/env python
 # coding: utf-8
+import math
 import numpy as np
+from typing import Tuple
+
+INVPHISQR = (3 - math.sqrt(5)) * 0.5
+EPSSQRT = math.sqrt(np.finfo(float).eps)
+TINY = np.finfo(float).tiny
 
 
 class BrentsScalarMinimizer:
-
-    invphisqr = (3 - np.sqrt(5)) * 0.5
-    epssqrt = np.sqrt(np.finfo(float).eps)
-
     def __init__(self, atol=0, rtol=0, max_iter=100):
         self.a = None
         self.b = None
@@ -23,12 +25,12 @@ class BrentsScalarMinimizer:
         self.fx = None
         self.max_iter = max_iter
         self.n_iter = None
-        self.rtol = max(self.epssqrt, rtol)
+        self.rtol = max(EPSSQRT, rtol)
         self.atol = atol
         self.tol1 = None
         self.tol2 = None
 
-    def minimize(self, f, a, b):
+    def minimize(self, f: callable, a: float, b: float) -> Tuple[float, float]:
         self._initialize(f, a, b)
         while self._iterate():
             self.m = 0.5 * (self.a + self.b)
@@ -79,24 +81,23 @@ class BrentsScalarMinimizer:
             else:
                 self.b = self.u
 
-            if self.fu <= self.fw or self.w == self.x:
+            if self.fu <= self.fw or math.isclose(self.w, self.x):
                 self.v = self.w
                 self.fv = self.fw
                 self.w = self.u
                 self.fw = self.fu
-            elif self.fu <= self.fv or self.v == self.x or self.v == self.w:
+            elif (
+                self.fu <= self.fv
+                or math.isclose(self.v, self.x)
+                or math.isclose(self.v, self.w)
+            ):
                 self.v = self.u
                 self.fv = self.fu
 
-    def _initialize(
-        self,
-        f,
-        a,
-        b,
-    ):
+    def _initialize(self, f: callable, a: float, b: float):
         self.a = min(a, b)
         self.b = max(a, b)
-        self.x = self.a + self.invphisqr * (self.b - self.a)
+        self.x = self.a + INVPHISQR * (self.b - self.a)
         self.w = self.x
         self.v = self.x
         self.e = 0
@@ -112,7 +113,7 @@ class BrentsScalarMinimizer:
         else:
             e = self.a - self.x
 
-        d = self.invphisqr * e
+        d = INVPHISQR * e
         return d
 
     def _spi(self):
@@ -125,7 +126,7 @@ class BrentsScalarMinimizer:
 
         if abs(p) >= (0.5 * q * self.e):
             return None
-        if abs(q) < np.finfo(float).tiny:
+        if abs(q) < TINY:
             return None
 
         d = p / q
