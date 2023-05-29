@@ -174,42 +174,74 @@ class BrentsScalarMinimizer(Minimizer):
 
 class ScalarSimulatedAnnealing(Minimizer):
     def __init__(self):
-        self.init_temp = 10
+        #self.init_temp = 10
         self.max_iter = 30
 
     def minimize(self, f, a, b):
         a, b = min(a, b), max(a, b)
-        delta = b - a
         m = (a + b) / 2
         ym = f(m)
         best = m
         ybest = ym
         current = m
         ycurrent = ym
+        n_accept = 0
         for i in range(self.max_iter):
             T = 1 - (i + 1) / self.max_iter
             # print(T)
-            new = random.normalvariate(mu=current, sigma=delta)
-            if new < a:
-                new = a + (a - new)
-            if new > b:
-                new = b + (b - new)
+            new = self._new(current, a, b)
             ynew = f(new)
             if ynew < ybest:
                 best = new
                 ybest = ynew
-            if ynew < ycurrent or self._accept(ycurrent, ynew, T):
+            if self._accept(ycurrent, ynew, T):
+                n_accept += 1
                 current = new
                 ycurrent = ynew
+        print(f"acceptance rate: {n_accept/self.max_iter}")
         return (best, ybest)
 
     @staticmethod
+    def _new(current, a, b):
+        delta = b - a
+        new = random.normalvariate(mu=current, sigma=0.25*delta)
+        if new < a:
+            new = a * (1 + EPSSQRT)
+        if new > b:
+            new = b * (1 - EPSSQRT)
+        return new
+
+    @staticmethod
     def _accept(ycurrent, ynew, T):
+        if ynew < ycurrent:
+            return True
         if T < 1e-12:
             return False
-        p = math.exp((ycurrent - ynew) / T)
+        p = self._acceptance_probability(ycurrent, ynew, T)
         return random.random() > p
     
     @staticmethod
     def _acceptance_probability(ycurrent, ynew, T):
-        return math.exp((ycurrent - ynew)/ycurrent / T)
+        if T < TINY:
+            T = TINY
+        return math.exp(((ycurrent - ynew)/ycurrent) / T)
+        
+        
+class MinimizerFactory:
+    def __init__(self):
+        self.minimizer = {}
+        
+    def register_minimizer(self, name,minimizer_class):
+        self.minimizer[name] = minimizer_class
+        
+    def get_minimizer_class(self, name):
+        return self.minimizer[name]
+        
+minimizer_factory = MinimizerFactory()
+minimizer_factory.register_minimizer("brent",BrentsScalarMinimizer)
+minimizer_factory.register_minimizer("simulated_annealing", ScalarSimulatedAnnealing)
+
+def minimize(f, a, b, method="brent"):
+    M = minimizer_factory.get_minimizer_class(method)
+    m = M()
+    return m.minimize(f, a, b)
