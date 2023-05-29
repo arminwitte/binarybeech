@@ -7,7 +7,7 @@ from abc import ABC, abstractmethod
 import numpy as np
 
 import binarybeech.math as math
-from binarybeech.brentsscalarminimizer import BrentsScalarMinimizer
+from binarybeech.minimizer import BrentsScalarMinimizer
 
 # import pandas as pd
 # import scipy.optimize as opt

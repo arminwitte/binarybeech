@@ -8,13 +8,13 @@ from abc import ABC, abstractmethod
 import numpy as np
 import pandas as pd
 
-# import scipy.optimize as opt
-
 from binarybeech.datamanager import DataManager
+from binarybeech.minimizer import BrentsScalarMinimizer
 from binarybeech.reporter import Reporter
 from binarybeech.trainingdata import TrainingData
 from binarybeech.tree import Node, Tree
-from binarybeech.brentsscalarminimizer import BrentsScalarMinimizer
+
+# import scipy.optimize as opt
 
 
 class Model(ABC):

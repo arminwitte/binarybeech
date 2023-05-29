@@ -1,15 +1,30 @@
 #!/usr/bin/env python
 # coding: utf-8
 import math
-import numpy as np
+import random
+from abc import ABC, abstractmethod
 from typing import Tuple
+
+import numpy as np
 
 INVPHISQR = (3 - math.sqrt(5)) * 0.5
 EPSSQRT = math.sqrt(np.finfo(float).eps)
 TINY = np.finfo(float).tiny
 
 
-class BrentsScalarMinimizer:
+class Minimizer(ABC):
+    def __init__(self):
+        pass
+
+    @abstractmethod
+    def minimize(self, f: callable, a: float, b: float) -> Tuple[float, float]:
+        pass
+
+
+# ====================================================================================
+
+
+class BrentsScalarMinimizer(Minimizer):
     def __init__(self, atol=0, rtol=0, max_iter=100):
         self.a = None
         self.b = None
@@ -152,3 +167,49 @@ class BrentsScalarMinimizer:
         if self.n_iter > self.max_iter:
             return False
         return True
+
+
+# ====================================================================================
+
+
+class ScalarSimulatedAnnealing(Minimizer):
+    def __init__(self):
+        self.init_temp = 10
+        self.max_iter = 30
+
+    def minimize(self, f, a, b):
+        a, b = min(a, b), max(a, b)
+        delta = b - a
+        m = (a + b) / 2
+        ym = f(m)
+        best = m
+        ybest = ym
+        current = m
+        ycurrent = ym
+        for i in range(self.max_iter):
+            T = 1 - (i + 1) / self.max_iter
+            # print(T)
+            new = random.normalvariate(mu=current, sigma=delta)
+            if new < a:
+                new = a + (a - new)
+            if new > b:
+                new = b + (b - new)
+            ynew = f(new)
+            if ynew < ybest:
+                best = new
+                ybest = ynew
+            if ynew < ycurrent or self._accept(ycurrent, ynew, T):
+                current = new
+                ycurrent = ynew
+        return (best, ybest)
+
+    @staticmethod
+    def _accept(ycurrent, ynew, T):
+        if T < 1e-12:
+            return False
+        p = math.exp((ycurrent - ynew) / T)
+        return random.random() > p
+    
+    @staticmethod
+    def _acceptance_probability(ycurrent, ynew, T):
+        return math.exp((ycurrent - ynew)/ycurrent / T)
