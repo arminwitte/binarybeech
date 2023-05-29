@@ -174,7 +174,7 @@ class BrentsScalarMinimizer(Minimizer):
 
 class ScalarSimulatedAnnealing(Minimizer):
     def __init__(self):
-        #self.init_temp = 10
+        self.init_temp = 10
         self.max_iter = 30
 
     def minimize(self, f, a, b):
@@ -187,7 +187,7 @@ class ScalarSimulatedAnnealing(Minimizer):
         ycurrent = ym
         n_accept = 0
         for i in range(self.max_iter):
-            T = 1 - (i + 1) / self.max_iter
+            T = self.init_temp * ( 1 - (i + 1) / self.max_iter)
             # print(T)
             new = self._new(current, a, b)
             ynew = f(new)
