@@ -224,7 +224,7 @@ class ScalarSimulatedAnnealing(Minimizer):
     def _acceptance_probability(ycurrent, ynew, T):
         if T < TINY:
             T = TINY
-        return math.exp(((ycurrent - ynew)/ycurrent) / T)
+        return math.exp(-((ycurrent - ynew)/ycurrent) / T)
         
         
 class MinimizerFactory:
