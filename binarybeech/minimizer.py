@@ -186,9 +186,9 @@ class ScalarSimulatedAnnealing(Minimizer):
         current = m
         ycurrent = ym
         n_accept = 0
+        print("Temperature\tx\tnew\tcurrent\tbest")
         for i in range(self.max_iter):
             T = self.init_temp * ( 1 - (i) / self.max_iter)
-            # print(T)
             new = self._new(current, a, b)
             ynew = f(new)
             if ynew < ybest:
@@ -198,18 +198,18 @@ class ScalarSimulatedAnnealing(Minimizer):
                 n_accept += 1
                 current = new
                 ycurrent = ynew
+            print(f"{T}\t{new}\t{ynew}\t{ycurrent}\t{ybest}")
         print(f"acceptance rate: {n_accept/self.max_iter}")
+        print("")
         return (best, ybest)
 
     @staticmethod
     def _new(current, a, b):
         delta = b - a
-        #new = random.normalvariate(mu=current, sigma=delta/6)
-        new = a + random.random() * delta
-        if new < a:
-            new = a * (1 + EPSSQRT)
-        if new > b:
-            new = b * (1 - EPSSQRT)
+        new = a - 1
+        while new < a or new > b:
+            # new = random.normalvariate(mu=current, sigma=delta/6)
+            new = a + random.random() * delta
         return new
 
     @staticmethod
