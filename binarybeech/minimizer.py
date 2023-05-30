@@ -176,17 +176,21 @@ class ScalarSimulatedAnnealing(Minimizer):
     def __init__(self):
         self.init_temp = 1
         self.max_iter = 30
+        self._new = self._rand
 
     def minimize(self, f, a, b):
-        a, b = min(a, b), max(a, b)
-        m = (a + b) / 2
+        if b is None:
+            m = a[:int(np.ceil(len(a)/2))]
+        else:
+            a, b = min(a, b), max(a, b)
+            m = (a + b) / 2
         ym = f(m)
         best = m
         ybest = ym
         current = m
         ycurrent = ym
         n_accept = 0
-        print("Temperature\tx\tnew\tcurrent\tbest")
+        print("\tTemperature\tx\t\tnew\t\tcurrent\t\tbest")
         for i in range(self.max_iter):
             T = self.init_temp * ( 1 - (i) / self.max_iter)
             new = self._new(current, a, b)
@@ -198,26 +202,44 @@ class ScalarSimulatedAnnealing(Minimizer):
                 n_accept += 1
                 current = new
                 ycurrent = ynew
-            print(f"{T:7.2e}\t{new:7.2e}\t{ynew:7.2e}\t{ycurrent:7.2e}\t{ybest:7.2e}")
+            if b is None:
+                print(f"{T:15.2e}\t{new}\t{ynew:15.2e}\t{ycurrent:15.2e}\t{ybest:15.2e}")
+            else:    
+                print(f"{T:15.2e}\t{new:15.2e}\t{ynew:15.2e}\t{ycurrent:15.2e}\t{ybest:15.2e}")
         print(f"acceptance rate: {n_accept/self.max_iter}")
         print("")
         return (best, ybest)
 
     @staticmethod
-    def _new(current, a, b):
+    def _rand(current, a, b):
         delta = b - a
         new = a - 1
         while new < a or new > b:
-            # new = random.normalvariate(mu=current, sigma=delta/6)
-            new = a + random.random() * delta
+            new = random.normalvariate(mu=current, sigma=delta/6)
+            # new = a + random.random() * delta
         return new
+
+    @staticmethod
+    def _choice(current, a, b):
+        unique = a
+        Lu = len(unique)
+        r = random.random()
+        L = len(current)
+        size_change_probability = 0.1
+        if r < size_change_probability and L > 1:
+            L -= 1
+        if r > 1 - size_change_probability and L < (Lu - 1):
+            L += 1
+        rng = np.random.default_rng()
+        new = rng.choice(unique, L, replace=False)
+        return [s for s in new]
 
     @staticmethod
     def _accept(ycurrent, ynew, T):
         if ynew < ycurrent:
             return True
-        if T < 1e-12:
-            return False
+        # if T < 1e-12:
+        #     return False
         p = ScalarSimulatedAnnealing._acceptance_probability(ycurrent, ynew, T)
         print(f"acceptance probability: {p}")
         return random.random() < p
