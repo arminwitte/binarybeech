@@ -198,7 +198,7 @@ class ScalarSimulatedAnnealing(Minimizer):
                 n_accept += 1
                 current = new
                 ycurrent = ynew
-            print(f"{T}\t{new}\t{ynew}\t{ycurrent}\t{ybest}")
+            print(f"{T:7.2e}\t{new:7.2e}\t{ynew:7.2e}\t{ycurrent:7.2e}\t{ybest:7.2e}")
         print(f"acceptance rate: {n_accept/self.max_iter}")
         print("")
         return (best, ybest)
