@@ -219,6 +219,7 @@ class ScalarSimulatedAnnealing(Minimizer):
         if T < 1e-12:
             return False
         p = ScalarSimulatedAnnealing._acceptance_probability(ycurrent, ynew, T)
+        print(f"acceptance probability: {p}")
         return random.random() > p
     
     @staticmethod
