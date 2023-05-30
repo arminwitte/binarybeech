@@ -220,7 +220,7 @@ class ScalarSimulatedAnnealing(Minimizer):
             return False
         p = ScalarSimulatedAnnealing._acceptance_probability(ycurrent, ynew, T)
         print(f"acceptance probability: {p}")
-        return random.random() > p
+        return random.random() < p
     
     @staticmethod
     def _acceptance_probability(ycurrent, ynew, T):
