@@ -237,7 +237,7 @@ class ScalarSimulatedAnnealing(Minimizer):
         Lu = len(unique)
         r = random.random()
         L = len(current)
-        size_change_probability = 0.1
+        size_change_probability = 0.2
         new = current.copy()
         if r < size_change_probability and L > 1:
             del new[0]
@@ -248,7 +248,7 @@ class ScalarSimulatedAnnealing(Minimizer):
         
         pool = [s for s in unique if s not in current]
         
-        flip_probability = 0.5
+        flip_probability = 0.4
         for i, x in enumerate(new):
             r = random.random()
             if r < flip_probability or x is None:
