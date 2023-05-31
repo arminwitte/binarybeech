@@ -191,10 +191,22 @@ class ScalarSimulatedAnnealing(Minimizer):
         ycurrent = ym
         n_accept = 0
         print("\tTemperature\tx\t\tnew\t\tcurrent\t\tbest")
+        init_iter = max(int(math.ceil(self.max_iter*0.1)),5)
+        main_iter = self.max_iter - init_iter
+        T = 1e12
+        dE = []
         for i in range(self.max_iter):
-            T = self.init_temp * ( 1 - (i) / self.max_iter)
             new = self._new(current, a, b)
             ynew = f(new)
+            if i < init_iter:
+                dE.append(abs(ycurrent-ynew))
+            elif i == init_iter:
+                dE.append(abs(ycurrent-ynew))
+                self.init_temp = np.mean(dE)/0.2
+                print(f"setting initial temperature to {self.init_temp}")
+            else:
+                T = self.init_temp * ( 1 - (i - init_iter) / main_iter)
+
             if ynew < ybest:
                 best = new
                 ybest = ynew
