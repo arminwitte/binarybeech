@@ -202,7 +202,7 @@ class ScalarSimulatedAnnealing(Minimizer):
                 dE.append(abs(ycurrent-ynew))
             elif i == init_iter:
                 dE.append(abs(ycurrent-ynew))
-                self.init_temp = np.mean(dE)/0.2
+                self.init_temp = np.mean(dE)*3 # dE/ln(0.8)
                 print(f"setting initial temperature to {self.init_temp}")
             else:
                 T = self.init_temp * ( 1 - (i - init_iter) / main_iter)
@@ -238,12 +238,24 @@ class ScalarSimulatedAnnealing(Minimizer):
         r = random.random()
         L = len(current)
         size_change_probability = 0.1
+        new = current.copy()
         if r < size_change_probability and L > 1:
-            L -= 1
+            del new[0]
         if r > 1 - size_change_probability and L < (Lu - 1):
-            L += 1
-        rng = np.random.default_rng()
-        new = rng.choice(unique, L, replace=False)
+            new.append(None)
+        # rng = np.random.default_rng()
+        # new = rng.choice(unique, L, replace=False)
+        
+        pool = [s for s in unique if not in current]
+        
+        flip_probability = 0.5
+        for i, x in enumerate(new):
+            r = random.random()
+            if r < flip_probability or x is None:
+                u = random.choice(pool)
+                new[i] = u 
+                pool.remove(u)
+        
         return [s for s in new]
 
     @staticmethod
