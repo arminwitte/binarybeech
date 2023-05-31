@@ -246,7 +246,7 @@ class ScalarSimulatedAnnealing(Minimizer):
         # rng = np.random.default_rng()
         # new = rng.choice(unique, L, replace=False)
         
-        pool = [s for s in unique if not in current]
+        pool = [s for s in unique if s not in current]
         
         flip_probability = 0.5
         for i, x in enumerate(new):
