@@ -252,9 +252,11 @@ class ScalarSimulatedAnnealing(Minimizer):
         for i, x in enumerate(new):
             r = random.random()
             if r < flip_probability or x is None:
+                v = new[i]
                 u = random.choice(pool)
                 new[i] = u 
                 pool.remove(u)
+                pool.append(v)
         
         return [s for s in new]
 
