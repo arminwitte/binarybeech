@@ -202,7 +202,7 @@ class ScalarSimulatedAnnealing(Minimizer):
                 dE.append(abs(ycurrent-ynew))
             elif i == init_iter:
                 dE.append(abs(ycurrent-ynew))
-                self.init_temp = np.mean(dE)*3 # dE/ln(0.8)
+                self.init_temp = np.mean(dE)# dE/ln(0.8)
                 print(f"setting initial temperature to {self.init_temp}")
             else:
                 T = self.init_temp * ( 1 - (i - init_iter) / main_iter)

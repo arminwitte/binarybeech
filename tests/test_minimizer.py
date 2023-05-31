@@ -25,6 +25,7 @@ def test_scalarsimulatedannealing_choice():
             else:
                 n += L
         return n
+    m.max_iter = 100
     x, y = m.minimize(f,["1","22","333","44","5","6","77","888","9999"],None)
     assert np.isclose(y, -6)
     assert np.assert_array_equal(sorted(x),["22","44","77"])
