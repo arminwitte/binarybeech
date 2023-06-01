@@ -190,7 +190,7 @@ class ScalarSimulatedAnnealing(Minimizer):
         current = m
         ycurrent = ym
         n_accept = 0
-        print("\tTemperature\tx\t\tnew\t\tcurrent\t\tbest")
+        #print("\tTemperature\tx\t\tnew\t\tcurrent\t\tbest")
         init_iter = max(int(math.ceil(self.max_iter*0.1)),5)
         main_iter = self.max_iter - init_iter
         T = 1e12
@@ -203,7 +203,7 @@ class ScalarSimulatedAnnealing(Minimizer):
             elif i == init_iter:
                 dE.append(abs(ycurrent-ynew))
                 self.init_temp = np.mean(dE)# dE/ln(0.8)
-                print(f"setting initial temperature to {self.init_temp}")
+                # print(f"setting initial temperature to {self.init_temp}")
             else:
                 T = self.init_temp * ( 1 - (i - init_iter) / main_iter)
 
@@ -214,12 +214,12 @@ class ScalarSimulatedAnnealing(Minimizer):
                 n_accept += 1
                 current = new
                 ycurrent = ynew
-            if b is None:
-                print(f"{T:15.2e}\t{new}\t{ynew:15.2e}\t{ycurrent:15.2e}\t{ybest:15.2e}")
-            else:    
-                print(f"{T:15.2e}\t{new:15.2e}\t{ynew:15.2e}\t{ycurrent:15.2e}\t{ybest:15.2e}")
-        print(f"acceptance rate: {n_accept/self.max_iter}")
-        print("")
+            # if b is None:
+            #     print(f"{T:15.2e}\t{new}\t{ynew:15.2e}\t{ycurrent:15.2e}\t{ybest:15.2e}")
+            # else:    
+            #     print(f"{T:15.2e}\t{new:15.2e}\t{ynew:15.2e}\t{ycurrent:15.2e}\t{ybest:15.2e}")
+        #print(f"acceptance rate: {n_accept/self.max_iter}")
+        #print("")
         return (best, ybest)
 
     @staticmethod
@@ -246,7 +246,7 @@ class ScalarSimulatedAnnealing(Minimizer):
         # rng = np.random.default_rng()
         # new = rng.choice(unique, L, replace=False)
         
-        pool = [s for s in unique if s not in current]
+        pool = [s for s in unique if s not in new]
         
         flip_probability = 0.4
         for i, x in enumerate(new):
@@ -267,7 +267,7 @@ class ScalarSimulatedAnnealing(Minimizer):
         # if T < 1e-12:
         #     return False
         p = ScalarSimulatedAnnealing._acceptance_probability(ycurrent, ynew, T)
-        print(f"acceptance probability: {p}")
+        # print(f"acceptance probability: {p}")
         return random.random() < p
     
     @staticmethod

@@ -110,6 +110,10 @@ class HighCardinalityNominalAttributeHandler(AttributeHandlerBase):
         success = False
 
         unique = np.unique(df[self.attribute])
+
+        if len(unique) < 2:
+            return success
+        
         m = ScalarSimulatedAnnealing()
         m._new = ScalarSimulatedAnnealing._choice
         m.max_iter = 100
@@ -135,6 +139,8 @@ class HighCardinalityNominalAttributeHandler(AttributeHandlerBase):
                 df[~df[split_name].isin(x)],
             ]
             n = [len(df_.index) for df_ in split_df]
+            if min(n) == 0:
+                return np.Inf
             val = [self.metrics.node_value(df_[self.y_name]) for df_ in split_df]
             return n[0] / N * self.metrics.loss(split_df[0][self.y_name], val[0]) + n[
                 1
