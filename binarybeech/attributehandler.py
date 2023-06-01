@@ -7,7 +7,7 @@ from abc import ABC, abstractmethod
 import numpy as np
 
 import binarybeech.math as math
-from binarybeech.minimizer import BrentsScalarMinimizer
+from binarybeech.minimizer import BrentsScalarMinimizer, ScalarSimulatedAnnealing
 
 # import pandas as pd
 # import scipy.optimize as opt
@@ -95,7 +95,62 @@ class NominalAttributeHandler(AttributeHandlerBase):
 
     @staticmethod
     def check(x):
-        return math.check_nominal(x, max_unique_fraction=0.2, exclude_dichotomous=True)
+        return math.check_nominal(x, max_unique_fraction=0.2, exclude_dichotomous=True, high = 5)
+    
+
+class HighCardinalityNominalAttributeHandler(AttributeHandlerBase):
+    def __init__(self, y_name, attribute, metrics, algorithm_kwargs):
+        super().__init__(y_name, attribute, metrics, algorithm_kwargs)
+
+    def split(self, df):
+        self.loss = np.Inf
+        self.split_df = []
+        self.threshold = None
+
+        success = False
+
+        unique = np.unique(df[self.attribute])
+        m = ScalarSimulatedAnnealing()
+        m._new = ScalarSimulatedAnnealing._choice
+        m.max_iter = 100
+        x, y = m.minimize(self._opt_fun(df),unique,None)
+        success = True
+        self.loss = y
+        self.threshold = x
+        self.split_df = [
+            df[df[self.attribute].isin(x)],
+            df[~df[self.attribute].isin(x)],
+        ]
+        
+
+        return success
+
+    def _opt_fun(self, df):
+        split_name = self.attribute
+        N = len(df.index)
+
+        def fun(x):
+            split_df = [
+                df[df[split_name].isin(x)],
+                df[~df[split_name].isin(x)],
+            ]
+            n = [len(df_.index) for df_ in split_df]
+            val = [self.metrics.node_value(df_[self.y_name]) for df_ in split_df]
+            return n[0] / N * self.metrics.loss(split_df[0][self.y_name], val[0]) + n[
+                1
+            ] / N * self.metrics.loss(split_df[1][self.y_name], val[1])
+
+        return fun
+
+    @staticmethod
+    def decide(x, threshold):
+        return True if x in threshold else False
+
+    @staticmethod
+    def check(x):
+        return math.check_nominal(x, max_unique_fraction=0.2, exclude_dichotomous=True, low=6)
+    
+   
 
 
 class DichotomousAttributeHandler(AttributeHandlerBase):
@@ -396,6 +451,7 @@ class AttributeHandlerFactory:
 
 attribute_handler_factory = AttributeHandlerFactory()
 attribute_handler_factory.register_handler(NominalAttributeHandler)
+attribute_handler_factory.register_handler(HighCardinalityNominalAttributeHandler)
 attribute_handler_factory.register_handler(DichotomousAttributeHandler)
 attribute_handler_factory.register_handler(IntervalAttributeHandler)
 attribute_handler_factory.register_handler(NullAttributeHandler)

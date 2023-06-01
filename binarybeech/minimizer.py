@@ -180,7 +180,7 @@ class ScalarSimulatedAnnealing(Minimizer):
 
     def minimize(self, f, a, b):
         if b is None:
-            m = a[:int(np.ceil(len(a)/2))]
+            m = [s for s in a[:int(np.ceil(len(a)/2))]]
         else:
             a, b = min(a, b), max(a, b)
             m = (a + b) / 2
