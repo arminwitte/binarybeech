@@ -95,8 +95,10 @@ class NominalAttributeHandler(AttributeHandlerBase):
 
     @staticmethod
     def check(x):
-        return math.check_nominal(x, max_unique_fraction=0.2, exclude_dichotomous=True, high = 5)
-    
+        return math.check_nominal(
+            x, max_unique_fraction=0.2, exclude_dichotomous=True, high=5
+        )
+
 
 class HighCardinalityNominalAttributeHandler(AttributeHandlerBase):
     def __init__(self, y_name, attribute, metrics, algorithm_kwargs):
@@ -113,11 +115,11 @@ class HighCardinalityNominalAttributeHandler(AttributeHandlerBase):
 
         if len(unique) < 2:
             return success
-        
+
         m = ScalarSimulatedAnnealing()
         m._new = ScalarSimulatedAnnealing._choice
         m.max_iter = 100
-        x, y = m.minimize(self._opt_fun(df),unique,None)
+        x, y = m.minimize(self._opt_fun(df), unique, None)
         success = True
         self.loss = y
         self.threshold = x
@@ -125,7 +127,6 @@ class HighCardinalityNominalAttributeHandler(AttributeHandlerBase):
             df[df[self.attribute].isin(x)],
             df[~df[self.attribute].isin(x)],
         ]
-        
 
         return success
 
@@ -154,9 +155,9 @@ class HighCardinalityNominalAttributeHandler(AttributeHandlerBase):
 
     @staticmethod
     def check(x):
-        return math.check_nominal(x, max_unique_fraction=0.2, exclude_dichotomous=True, low=6)
-    
-   
+        return math.check_nominal(
+            x, max_unique_fraction=0.2, exclude_dichotomous=True, low=6
+        )
 
 
 class DichotomousAttributeHandler(AttributeHandlerBase):

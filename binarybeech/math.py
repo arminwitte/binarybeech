@@ -149,14 +149,16 @@ def shannon_entropy_histogram(x: np.ndarray, normalized=False):
 # =====================================
 
 
-def check_nominal(x, max_unique_fraction=0.2, exclude_dichotomous=True, low=None, high=None):
+def check_nominal(
+    x, max_unique_fraction=0.2, exclude_dichotomous=True, low=None, high=None
+):
     x = x[~pd.isna(x)]
     unique = np.unique(x)
     L = len(unique)
-    
+
     if low is not None and L < low:
         return False
-    
+
     if high is not None and L > high:
         return False
 
