@@ -72,7 +72,7 @@ class Metrics(ABC):
         pass
     
     @abstractmethod
-    def bin(self, df, y_name, attribute):
+    def bins(self, df, y_name, attribute):
         pass
 
     @staticmethod
