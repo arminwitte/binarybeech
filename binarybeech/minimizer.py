@@ -244,7 +244,7 @@ class ScalarSimulatedAnnealing(Minimizer):
         L = len(current)
         size_change_probability = 0.2
         new = current.copy()
-        if r < size_change_probability and L > 1:
+        if (r < size_change_probability and L > 1) or L == Lu:
             del new[0]
         if r > 1 - size_change_probability and L < (Lu - 1):
             new.append(None)
