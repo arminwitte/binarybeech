@@ -22,7 +22,7 @@ def test_scalarsimulatedannealing():
 
 def test_scalarsimulatedannealing_choice():
     m = ScalarSimulatedAnnealing()
-    m._new = ScalarSimulatedAnnealing._choice
+    # m._new = ScalarSimulatedAnnealing._choice
 
     def f(tup):
         n = 0

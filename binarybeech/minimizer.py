@@ -176,12 +176,17 @@ class ScalarSimulatedAnnealing(Minimizer):
     def __init__(self):
         self.init_temp = 1
         self.max_iter = 30
-        self._new = self._rand
+        self._new = None
 
     def minimize(self, f, a, b):
-        if b is None:
-            m = [s for s in a[: int(np.ceil(len(a) / 2))]]
+        if isinstance(a,list):
+            self._new = self._choice
+            if b is None:
+                m = [s for s in a[: int(np.ceil(len(a) / 2))]]
+            else:
+                m = b
         else:
+            self._new = self._rand
             a, b = min(a, b), max(a, b)
             m = (a + b) / 2
         ym = f(m)

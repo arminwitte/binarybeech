@@ -115,11 +115,12 @@ class HighCardinalityNominalAttributeHandler(AttributeHandlerBase):
 
         if len(unique) < 2:
             return success
-
+            
+        b = self.metrics.bins(df,self.y_name,self.attribute)
         m = ScalarSimulatedAnnealing()
-        m._new = ScalarSimulatedAnnealing._choice
+        # m._new = ScalarSimulatedAnnealing._choice
         m.max_iter = 100
-        x, y = m.minimize(self._opt_fun(df), unique, None)
+        x, y = m.minimize(self._opt_fun(df), unique, b[0])
         success = True
         self.loss = y
         self.threshold = x
