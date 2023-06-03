@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 
 from binarybeech.binarybeech import CART
-from minarybeech.attributehandler import HighCardinalityNominalAttributeHandler
+from binarybeech.attributehandler import HighCardinalityNominalAttributeHandler
 
 def test_adult():
     adult_train = pd.read_csv("data/adult_data.csv", header=None)
