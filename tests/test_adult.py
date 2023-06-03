@@ -1,4 +1,3 @@
-import numpy as np
 import pandas as pd
 
 from binarybeech.binarybeech import CART
@@ -11,4 +10,4 @@ def test_adult():
     c.create_tree()
     val = c.validate(adult_test)
     assert val["accuracy"] > 0.82
-    assert isinstance(c.dmgr.data_handlers[1],HighCardinalityNominalAttributeHandler)
+    assert isinstance(c.dmgr.attribute_handlers[1],HighCardinalityNominalAttributeHandler)
