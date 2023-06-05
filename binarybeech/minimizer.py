@@ -311,7 +311,7 @@ class MinimizerFactory:
 minimizer_factory = MinimizerFactory()
 minimizer_factory.register_minimizer("brent", BrentsScalarMinimizer)
 minimizer_factory.register_minimizer("simulated_annealing", ScalarSimulatedAnnealing)
-minimizer_factory.register_minimizer("scipy_bounded", ScipyScalarMinimizer)
+minimizer_factory.register_minimizer("scipy_bounded", ScipyBoundedScalarMinimizer)
 
 
 def minimize(f, a, b, method="brent"):
