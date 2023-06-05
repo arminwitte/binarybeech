@@ -6,6 +6,7 @@ from abc import ABC, abstractmethod
 from typing import Tuple
 
 import numpy as np
+import scipy.optimize
 
 INVPHISQR = (3 - math.sqrt(5)) * 0.5
 EPSSQRT = math.sqrt(np.finfo(float).eps)
@@ -282,6 +283,20 @@ class ScalarSimulatedAnnealing(Minimizer):
         return math.exp((ycurrent - ynew) / T)
 
 
+class ScipyBoundedScalarMinimizer(Minimizer):
+    def __init__(self):
+        pass
+    
+    def minimize(f, a, b):
+        res = scipy.optimize.minimize_scalar(f,bounds=[a,b], method="bounded")
+        return res.x, res.fun
+
+
+
+
+
+
+
 class MinimizerFactory:
     def __init__(self):
         self.minimizer = {}
@@ -296,6 +311,7 @@ class MinimizerFactory:
 minimizer_factory = MinimizerFactory()
 minimizer_factory.register_minimizer("brent", BrentsScalarMinimizer)
 minimizer_factory.register_minimizer("simulated_annealing", ScalarSimulatedAnnealing)
+minimizer_factory.register_minimizer("scipy_bounded", ScipyScalarMinimizer)
 
 
 def minimize(f, a, b, method="brent"):
