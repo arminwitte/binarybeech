@@ -287,7 +287,7 @@ class ScipyBoundedScalarMinimizer(Minimizer):
     def __init__(self, atol=0, rtol=0, max_iter=100):
         super().__init__(atol=atol, rtol=rtol, max_iter=max_iter)
     
-    def minimize(f, a, b):
+    def minimize(self, f, a, b):
         res = scipy.optimize.minimize_scalar(f,bounds=[a,b], method="bounded", options={"xatol":self.atol, "maxiter":self.max_iter})
         return res.x, res.fun
 
