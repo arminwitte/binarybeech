@@ -234,7 +234,7 @@ class IntervalAttributeHandler(AttributeHandlerBase):
         # x, y = mini.minimize(
         #     self._opt_fun(df), df[self.attribute].min(), df[self.attribute].max()
         # )
-        method = algorithm_kwargs.get("minimizer_method","brent")
+        method = self.algorithm_kwargs.get("minimizer_method","brent")
         x, y = minimize(self._opt_fun(df), df[self.attribute].min(), df[self.attribute].max(), method=method, options=self.algorithm_kwargs)
         self.threshold = x
 
