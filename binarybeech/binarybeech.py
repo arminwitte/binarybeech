@@ -516,7 +516,7 @@ class GradientBoostedTree(Model):
         # minimizer = BrentsScalarMinimizer()
         # x, y = minimizer.minimize(self._opt_fun(tree), 0.0, 10.0)
         method = algorithm_kwargs.get("minimizer_method","brent")
-        x, y = minimize(self._opt_fun(tree), 0.0, 10.0, method=method, options=algorithm_kwargs
+        x, y = minimize(self._opt_fun(tree), 0.0, 10.0, method=method, options=algorithm_kwargs)
         self.reporter["gamma"] = x
         self.reporter["sse"] = y / self.N
         return x

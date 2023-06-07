@@ -235,7 +235,7 @@ class IntervalAttributeHandler(AttributeHandlerBase):
         #     self._opt_fun(df), df[self.attribute].min(), df[self.attribute].max()
         # )
         method = algorithm_kwargs.get("minimizer_method","brent")
-        x, y = minimize(self._opt_fun(df), df[self.attribute].min(), df[self.attribute].max(), method=method, options=algorithm_kwargs
+        x, y = minimize(self._opt_fun(df), df[self.attribute].min(), df[self.attribute].max(), method=method, options=algorithm_kwargs)
         self.threshold = x
 
         self.split_df = [
