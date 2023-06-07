@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 
 from binarybeech.datamanager import DataManager
-from binarybeech.minimizer import BrentsScalarMinimizer
+from binarybeech.minimizer import minimize
 from binarybeech.reporter import Reporter
 from binarybeech.trainingdata import TrainingData
 from binarybeech.tree import Node, Tree
@@ -513,8 +513,10 @@ class GradientBoostedTree(Model):
     #     return res.x
 
     def _gamma(self, tree):
-        minimizer = BrentsScalarMinimizer()
-        x, y = minimizer.minimize(self._opt_fun(tree), 0.0, 10.0)
+        # minimizer = BrentsScalarMinimizer()
+        # x, y = minimizer.minimize(self._opt_fun(tree), 0.0, 10.0)
+        method = algorithm_kwargs.get("minimizer_method","brent")
+        x, y = minimize(self._opt_fun(tree), 0.0, 10.0, method=method, options=algorithm_kwargs
         self.reporter["gamma"] = x
         self.reporter["sse"] = y / self.N
         return x

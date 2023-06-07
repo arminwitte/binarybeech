@@ -7,7 +7,7 @@ from abc import ABC, abstractmethod
 import numpy as np
 
 import binarybeech.math as math
-from binarybeech.minimizer import BrentsScalarMinimizer, ScalarSimulatedAnnealing
+from binarybeech.minimizer import minimize
 
 # import pandas as pd
 # import scipy.optimize as opt
@@ -119,11 +119,12 @@ class HighCardinalityNominalAttributeHandler(AttributeHandlerBase):
         bins = self.metrics.bins(df,self.y_name,self.attribute)
         b = bins[0] if len(bins[0]) > 0 else bins[1]
         # print(b)
-        m = ScalarSimulatedAnnealing()
+        # m = ScalarSimulatedAnnealing()
         # m._new = ScalarSimulatedAnnealing._choice
-        m.max_iter = 100
-        x, y = m.minimize(self._opt_fun(df), unique.tolist(), b)
+        # m.max_iter = 100
+        # x, y = m.minimize(self._opt_fun(df), unique.tolist(), b)
         # print("x:", x)
+        x, y = minimize(self._opt_fun(df), unique.tolist(), b, method="simulated_annealing", options=algorithm_kwargs)
         success = True
         self.loss = y
         self.threshold = x
@@ -229,10 +230,12 @@ class IntervalAttributeHandler(AttributeHandlerBase):
         # )
         # self.threshold = res.x
 
-        mini = BrentsScalarMinimizer(rtol=0.5 / len(df.index))
-        x, y = mini.minimize(
-            self._opt_fun(df), df[self.attribute].min(), df[self.attribute].max()
-        )
+        # mini = BrentsScalarMinimizer(rtol=0.5 / len(df.index))
+        # x, y = mini.minimize(
+        #     self._opt_fun(df), df[self.attribute].min(), df[self.attribute].max()
+        # )
+        method = algorithm_kwargs.get("minimizer_method","brent")
+        x, y = minimize(self._opt_fun(df), df[self.attribute].min(), df[self.attribute].max(), method=method, options=algorithm_kwargs
         self.threshold = x
 
         self.split_df = [

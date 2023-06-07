@@ -14,8 +14,10 @@ TINY = np.finfo(float).tiny
 
 
 class Minimizer(ABC):
-    def __init__(self):
-        pass
+    def __init__(self, atol=0, rtol=0, max_iter=100):
+        self.max_iter = 100
+        self.rtol = max(EPSSQRT, rtol)
+        self.atol = atol
 
     @abstractmethod
     def minimize(self, f: callable, a: float, b: float) -> Tuple[float, float]:
@@ -27,6 +29,7 @@ class Minimizer(ABC):
 
 class BrentsScalarMinimizer(Minimizer):
     def __init__(self, atol=0, rtol=0, max_iter=100):
+        super().__init__(atol=atol, rtol=rtol, max_iter=max_iter)
         self.a = None
         self.b = None
         self.e = None
@@ -39,10 +42,7 @@ class BrentsScalarMinimizer(Minimizer):
         self.fw = None
         self.x = None
         self.fx = None
-        self.max_iter = max_iter
         self.n_iter = None
-        self.rtol = max(EPSSQRT, rtol)
-        self.atol = atol
         self.tol1 = None
         self.tol2 = None
 
@@ -174,9 +174,9 @@ class BrentsScalarMinimizer(Minimizer):
 
 
 class ScalarSimulatedAnnealing(Minimizer):
-    def __init__(self):
+    def __init__(self, atol=0, rtol=0, max_iter=100):
+        super().__init__(atol=atol, rtol=rtol, max_iter=max_iter)
         self.init_temp = 1
-        self.max_iter = 30
         self._new = None
 
     def minimize(self, f, a, b):
@@ -283,12 +283,12 @@ class ScalarSimulatedAnnealing(Minimizer):
         return math.exp((ycurrent - ynew) / T)
 
 
-class ScipyBoundedScalarMinimizer(Minimizer):
-    def __init__(self):
-        pass
+class ScipyBoundedScalarMinimizer(Minimizer):    
+    def __init__(self, atol=0, rtol=0, max_iter=100):
+    super().__init__(atol=atol, rtol=rtol, max_iter=max_iter)
     
     def minimize(f, a, b):
-        res = scipy.optimize.minimize_scalar(f,bounds=[a,b], method="bounded")
+        res = scipy.optimize.minimize_scalar(f,bounds=[a,b], method="bounded", options={"xatol":self.atol, "maxiter":self.max_iter})
         return res.x, res.fun
 
 
@@ -314,7 +314,10 @@ minimizer_factory.register_minimizer("simulated_annealing", ScalarSimulatedAnnea
 minimizer_factory.register_minimizer("scipy_bounded", ScipyBoundedScalarMinimizer)
 
 
-def minimize(f, a, b, method="brent"):
+def minimize(f, a, b, method="brent", options={}):
     M = minimizer_factory.get_minimizer_class(method)
-    m = M()
+    max_iter = options.get("minimizer_max_iter",100)
+    rtol = options.get("minimizer_rtol",0)
+    atol = options.get("minimizer_atol",0)
+    m = M(max_iter=max_iter,rtol=rtol,atol=atol)
     return m.minimize(f, a, b)
