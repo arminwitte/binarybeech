@@ -7,7 +7,7 @@ from abc import ABC, abstractmethod
 import numpy as np
 
 import binarybeech.math as math
-from binarybeech.brentsscalarminimizer import BrentsScalarMinimizer
+from binarybeech.minimizer import minimize
 
 # import pandas as pd
 # import scipy.optimize as opt
@@ -95,7 +95,74 @@ class NominalAttributeHandler(AttributeHandlerBase):
 
     @staticmethod
     def check(x):
-        return math.check_nominal(x, max_unique_fraction=0.2, exclude_dichotomous=True)
+        return math.check_nominal(
+            x, max_unique_fraction=0.2, exclude_dichotomous=True, high=5
+        )
+
+
+class HighCardinalityNominalAttributeHandler(AttributeHandlerBase):
+    def __init__(self, y_name, attribute, metrics, algorithm_kwargs):
+        super().__init__(y_name, attribute, metrics, algorithm_kwargs)
+
+    def split(self, df):
+        self.loss = np.Inf
+        self.split_df = []
+        self.threshold = None
+
+        success = False
+
+        unique = np.unique(df[self.attribute])
+
+        if len(unique) < 2:
+            return success
+            
+        bins = self.metrics.bins(df,self.y_name,self.attribute)
+        b = bins[0] if len(bins[0]) > 0 else bins[1]
+        # print(b)
+        # m = ScalarSimulatedAnnealing()
+        # m._new = ScalarSimulatedAnnealing._choice
+        # m.max_iter = 100
+        # x, y = m.minimize(self._opt_fun(df), unique.tolist(), b)
+        # print("x:", x)
+        x, y = minimize(self._opt_fun(df), unique.tolist(), b, method="simulated_annealing", options=self.algorithm_kwargs)
+        success = True
+        self.loss = y
+        self.threshold = x
+        self.split_df = [
+            df[df[self.attribute].isin(x)],
+            df[~df[self.attribute].isin(x)],
+        ]
+
+        return success
+
+    def _opt_fun(self, df):
+        split_name = self.attribute
+        N = len(df.index)
+
+        def fun(x):
+            split_df = [
+                df[df[split_name].isin(x)],
+                df[~df[split_name].isin(x)],
+            ]
+            n = [len(df_.index) for df_ in split_df]
+            if min(n) == 0:
+                return np.Inf
+            val = [self.metrics.node_value(df_[self.y_name]) for df_ in split_df]
+            return n[0] / N * self.metrics.loss(split_df[0][self.y_name], val[0]) + n[
+                1
+            ] / N * self.metrics.loss(split_df[1][self.y_name], val[1])
+
+        return fun
+
+    @staticmethod
+    def decide(x, threshold):
+        return True if x in threshold else False
+
+    @staticmethod
+    def check(x):
+        return math.check_nominal(
+            x, max_unique_fraction=0.2, exclude_dichotomous=True, low=6
+        )
 
 
 class DichotomousAttributeHandler(AttributeHandlerBase):
@@ -163,10 +230,14 @@ class IntervalAttributeHandler(AttributeHandlerBase):
         # )
         # self.threshold = res.x
 
-        mini = BrentsScalarMinimizer(rtol=0.5 / len(df.index))
-        x, y = mini.minimize(
-            self._opt_fun(df), df[self.attribute].min(), df[self.attribute].max()
-        )
+        # mini = BrentsScalarMinimizer(rtol=0.5 / len(df.index))
+        # x, y = mini.minimize(
+        #     self._opt_fun(df), df[self.attribute].min(), df[self.attribute].max()
+        # )
+        method = self.algorithm_kwargs.get("minimizer_method","brent")
+        options = self.algorithm_kwargs
+        options["minimizer_rtol"] = self.algorithm_kwargs.get("minimizer_rtol",0.5 / len(df.index))
+        x, y = minimize(self._opt_fun(df), df[self.attribute].min(), df[self.attribute].max(), method=method, options=options)
         self.threshold = x
 
         self.split_df = [
@@ -396,6 +467,7 @@ class AttributeHandlerFactory:
 
 attribute_handler_factory = AttributeHandlerFactory()
 attribute_handler_factory.register_handler(NominalAttributeHandler)
+attribute_handler_factory.register_handler(HighCardinalityNominalAttributeHandler)
 attribute_handler_factory.register_handler(DichotomousAttributeHandler)
 attribute_handler_factory.register_handler(IntervalAttributeHandler)
 attribute_handler_factory.register_handler(NullAttributeHandler)

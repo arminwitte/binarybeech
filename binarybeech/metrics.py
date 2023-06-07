@@ -70,6 +70,10 @@ class Metrics(ABC):
     @abstractmethod
     def goodness_of_fit(self, y_hat, data):
         pass
+    
+    @abstractmethod
+    def bins(self, df, y_name, attribute):
+        pass
 
     @staticmethod
     @abstractmethod
@@ -103,6 +107,22 @@ class RegressionMetrics(Metrics):
     def goodness_of_fit(self, y, y_hat):
         R2 = math.r_squared(y, y_hat)
         return R2
+        
+    def bins(self, df, y_name, attribute):
+        y = df[y_name]
+        y_hat = self.node_value(y)
+        bins = [[],[]]
+        unique = np.unique(df[attribute])
+        for u in unique:
+            y_u = df[df[attribute] == u][y_name]
+            y_hat_u = self.node_value(y_u)
+            if y_hat_u > y_hat:
+                bins[0].append(u)
+            else:
+                bins[1].append(u)
+                
+        return bins
+            
 
     @staticmethod
     def check(x):
@@ -149,6 +169,21 @@ class LogisticMetrics(Metrics):
     @staticmethod
     def inverse_transform(arr):
         return math.logit(arr)
+        
+    def bins(self, df, y_name, attribute):
+        y = df[y_name]
+        y_hat = self.node_value(y)
+        bins = [[],[]]
+        unique = np.unique(df[attribute])
+        for u in unique:
+            y_u = df[df[attribute] == u][y_name]
+            y_hat_u = self.node_value(y_u)
+            if y_hat_u == y_hat:
+                bins[0].append(u)
+            else:
+                bins[1].append(u)
+                
+        return bins
 
     @staticmethod
     def check(arr):
@@ -206,6 +241,21 @@ class ClassificationMetrics(Metrics):
         confmat = self._confusion_matrix(y, y_hat)
         A = self._accuracy(confmat)
         return A
+        
+    def bins(self, df, y_name, attribute):
+        y = df[y_name]
+        y_hat = self.node_value(y)
+        bins = [[],[]]
+        unique = np.unique(df[attribute])
+        for u in unique:
+            y_u = df[df[attribute] == u][y_name]
+            y_hat_u = self.node_value(y_u)
+            if y_hat_u == y_hat:
+                bins[0].append(u)
+            else:
+                bins[1].append(u)
+                
+        return bins
 
     @staticmethod
     def check(x):
@@ -242,6 +292,18 @@ class UnsupervisedMetrics(Metrics):
 
     def goodness_of_fit(self, y, y_hat):
         return 0.0
+        
+    def bins(self, df, y_name, attribute):
+        bins = [[],[]]
+        unique = np.unique(df[attribute])
+        L = len(unique)
+        for i, u in enumerate(unique):
+            if i > L/2:
+                bins[0].append(u)
+            else:
+                bins[1].append(u)
+                
+        return bins
 
     @staticmethod
     def check(arr):

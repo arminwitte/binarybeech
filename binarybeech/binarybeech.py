@@ -8,13 +8,13 @@ from abc import ABC, abstractmethod
 import numpy as np
 import pandas as pd
 
-# import scipy.optimize as opt
-
 from binarybeech.datamanager import DataManager
+from binarybeech.minimizer import minimize
 from binarybeech.reporter import Reporter
 from binarybeech.trainingdata import TrainingData
 from binarybeech.tree import Node, Tree
-from binarybeech.brentsscalarminimizer import BrentsScalarMinimizer
+
+# import scipy.optimize as opt
 
 
 class Model(ABC):
@@ -46,6 +46,8 @@ class Model(ABC):
         self.dmgr = DataManager(
             self.training_data, method, attribute_handlers, algorithm_kwargs
         )
+        
+        self.algorithm_kwargs = algorithm_kwargs
 
         # self.training_data.df = self._handle_missings(df, handle_missings)
 
@@ -513,8 +515,10 @@ class GradientBoostedTree(Model):
     #     return res.x
 
     def _gamma(self, tree):
-        minimizer = BrentsScalarMinimizer()
-        x, y = minimizer.minimize(self._opt_fun(tree), 0.0, 10.0)
+        # minimizer = BrentsScalarMinimizer()
+        # x, y = minimizer.minimize(self._opt_fun(tree), 0.0, 10.0)
+        method = self.algorithm_kwargs.get("minimizer_method","brent")
+        x, y = minimize(self._opt_fun(tree), 0.0, 10.0, method=method, options=self.algorithm_kwargs)
         self.reporter["gamma"] = x
         self.reporter["sse"] = y / self.N
         return x
