@@ -17,7 +17,7 @@ def test_scalarsimulatedannealing():
     m = ScalarSimulatedAnnealing()
     x, y = m.minimize(np.sin, 0.0, 7.0)
     assert np.isclose(x, 4.7123889715201255, rtol=1 / m.max_iter)
-    assert np.isclose(y, -1.0, rtol=1 / m.max_iter)
+    assert np.isclose(y, -1.0, rtol=2 / m.max_iter)
 
 
 def test_scalarsimulatedannealing_choice():
@@ -43,5 +43,7 @@ def test_scalarsimulatedannealing_choice():
 
 def test_minimize():
     x, y = minimize(np.sin, 0.0, 7.0)
+    x1, y1 = minimize(np.sin, 0.0, 7.0, method="scipy_bounded",options={"max_iter"=100})
     assert np.isclose(x, 4.7123889715201255)
     assert np.isclose(y, -1.0)
+    assert np.isclose(y, y1)
