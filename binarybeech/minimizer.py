@@ -180,7 +180,7 @@ class ScalarSimulatedAnnealing(Minimizer):
         self._new = None
 
     def minimize(self, f, a, b):
-        if isinstance(a,list):
+        if isinstance(a, list):
             self._new = self._choice
             if b is None:
                 m = [s for s in a[: int(np.ceil(len(a) / 2))]]
@@ -283,18 +283,18 @@ class ScalarSimulatedAnnealing(Minimizer):
         return math.exp((ycurrent - ynew) / T)
 
 
-class ScipyBoundedScalarMinimizer(Minimizer):    
+class ScipyBoundedScalarMinimizer(Minimizer):
     def __init__(self, atol=0, rtol=0, max_iter=100):
         super().__init__(atol=atol, rtol=rtol, max_iter=max_iter)
-    
+
     def minimize(self, f, a, b):
-        res = scipy.optimize.minimize_scalar(f,bounds=[a,b], method="bounded", options={"xatol":self.atol, "maxiter":self.max_iter})
+        res = scipy.optimize.minimize_scalar(
+            f,
+            bounds=[a, b],
+            method="bounded",
+            options={"xatol": self.atol, "maxiter": self.max_iter},
+        )
         return res.x, res.fun
-
-
-
-
-
 
 
 class MinimizerFactory:
@@ -316,8 +316,8 @@ minimizer_factory.register_minimizer("scipy_bounded", ScipyBoundedScalarMinimize
 
 def minimize(f, a, b, method="brent", options={}):
     M = minimizer_factory.get_minimizer_class(method)
-    max_iter = options.get("minimizer_max_iter",100)
-    rtol = options.get("minimizer_rtol",0)
-    atol = options.get("minimizer_atol",0)
-    m = M(max_iter=max_iter,rtol=rtol,atol=atol)
+    max_iter = options.get("minimizer_max_iter", 100)
+    rtol = options.get("minimizer_rtol", 0)
+    atol = options.get("minimizer_atol", 0)
+    m = M(max_iter=max_iter, rtol=rtol, atol=atol)
     return m.minimize(f, a, b)

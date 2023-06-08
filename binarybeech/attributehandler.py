@@ -115,8 +115,8 @@ class HighCardinalityNominalAttributeHandler(AttributeHandlerBase):
 
         if len(unique) < 2:
             return success
-            
-        bins = self.metrics.bins(df,self.y_name,self.attribute)
+
+        bins = self.metrics.bins(df, self.y_name, self.attribute)
         b = bins[0] if len(bins[0]) > 0 else bins[1]
         # print(b)
         # m = ScalarSimulatedAnnealing()
@@ -124,7 +124,13 @@ class HighCardinalityNominalAttributeHandler(AttributeHandlerBase):
         # m.max_iter = 100
         # x, y = m.minimize(self._opt_fun(df), unique.tolist(), b)
         # print("x:", x)
-        x, y = minimize(self._opt_fun(df), unique.tolist(), b, method="simulated_annealing", options=self.algorithm_kwargs)
+        x, y = minimize(
+            self._opt_fun(df),
+            unique.tolist(),
+            b,
+            method="simulated_annealing",
+            options=self.algorithm_kwargs,
+        )
         success = True
         self.loss = y
         self.threshold = x
@@ -234,10 +240,18 @@ class IntervalAttributeHandler(AttributeHandlerBase):
         # x, y = mini.minimize(
         #     self._opt_fun(df), df[self.attribute].min(), df[self.attribute].max()
         # )
-        method = self.algorithm_kwargs.get("minimizer_method","brent")
+        method = self.algorithm_kwargs.get("minimizer_method", "brent")
         options = self.algorithm_kwargs
-        options["minimizer_rtol"] = self.algorithm_kwargs.get("minimizer_rtol",0.5 / len(df.index))
-        x, y = minimize(self._opt_fun(df), df[self.attribute].min(), df[self.attribute].max(), method=method, options=options)
+        options["minimizer_rtol"] = self.algorithm_kwargs.get(
+            "minimizer_rtol", 0.5 / len(df.index)
+        )
+        x, y = minimize(
+            self._opt_fun(df),
+            df[self.attribute].min(),
+            df[self.attribute].max(),
+            method=method,
+            options=options,
+        )
         self.threshold = x
 
         self.split_df = [

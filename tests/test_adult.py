@@ -1,7 +1,8 @@
 import pandas as pd
 
-from binarybeech.binarybeech import CART
 from binarybeech.attributehandler import HighCardinalityNominalAttributeHandler
+from binarybeech.binarybeech import CART
+
 
 def test_adult():
     adult_train = pd.read_csv("data/adult_data.csv", header=None)
@@ -10,4 +11,6 @@ def test_adult():
     c.create_tree()
     val = c.validate(adult_test)
     assert val["accuracy"] > 0.82
-    assert isinstance(c.dmgr.attribute_handlers[1],HighCardinalityNominalAttributeHandler)
+    assert isinstance(
+        c.dmgr.attribute_handlers[1], HighCardinalityNominalAttributeHandler
+    )
