@@ -440,23 +440,31 @@ class GradientBoostedTree(Model):
         self.init_tree = c.tree
         return c
 
-    def _predict1(self, x):
+    def _predict1(self, x, m=None):
         p = self.init_tree.traverse(x).value
         p = self.dmgr.metrics.inverse_transform(p)
-        for i, t in enumerate(self.trees):
+        M = len(self.trees)
+        if not m:
+            m = M
+        for i in range(m):
+            t = self.trees[i]
             p += self.learning_rate * self.gamma[i] * t.traverse(x).value
         return p
 
-    def _predict_raw(self, df):
-        y_hat = [self._predict1(x) for x in df.iloc]
+    def _predict_raw(self, df, m=None):
+        y_hat = [self._predict1(x, m) for x in df.iloc]
         return np.array(y_hat)
 
-    def predict(self, df):
-        y_hat = self._predict_raw(df)
+    def predict(self, df, m=None):
+        y_hat = self._predict_raw(df, m)
         return self.dmgr.metrics.output_transform(y_hat)
+        
+    def _predict_partial(self, df, m):
+        y_hat = [self._predict1(x, m) for x in df.iloc]
+        y_hat = self.dmgr.metrics.output_transform(np.array(y_hat))
 
-    def _pseudo_residuals(self):
-        res = self.df[self.y_name] - self.predict(self.df)
+    def _pseudo_residuals(self,m=None):
+        res = self.df[self.y_name] - self.predict(self.df,m=m)
         return res
 
     def train(self, M):
@@ -524,7 +532,7 @@ class GradientBoostedTree(Model):
         self.reporter["gamma"] = x
         self.reporter["sse"] = y / self.N
         return x
-
+        
     def _opt_fun(self, tree):
         y_hat = self._predict_raw(self.df)
         delta = np.empty_like(y_hat)
@@ -545,6 +553,10 @@ class GradientBoostedTree(Model):
         y_hat = self.predict(df)
         y = df[self.y_name]
         return self.dmgr.metrics.validate(y, y_hat)
+        
+    def update(self, df, update_method):
+        pass
+
 
 
 class RandomForest(Model):
