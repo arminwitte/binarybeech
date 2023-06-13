@@ -440,64 +440,68 @@ class GradientBoostedTree(Model):
         self.init_tree = c.tree
         return c
 
-    def _predict1(self, x):
+    def _predict1(self, x, m=None):
         p = self.init_tree.traverse(x).value
         p = self.dmgr.metrics.inverse_transform(p)
-        for i, t in enumerate(self.trees):
+        M = len(self.trees)
+        if not m:
+            m = M
+        for i in range(m):
+            t = self.trees[i]
             p += self.learning_rate * self.gamma[i] * t.traverse(x).value
         return p
 
-    def _predict_raw(self, df):
-        y_hat = [self._predict1(x) for x in df.iloc]
+    def _predict_raw(self, df, m=None):
+        y_hat = [self._predict1(x, m) for x in df.iloc]
         return np.array(y_hat)
 
-    def predict(self, df):
-        y_hat = self._predict_raw(df)
+    def predict(self, df, m=None):
+        y_hat = self._predict_raw(df, m)
         return self.dmgr.metrics.output_transform(y_hat)
 
-    def _pseudo_residuals(self):
-        res = self.df[self.y_name] - self.predict(self.df)
+    def _pseudo_residuals(self, df, m=None):
+        res = df[self.y_name] - self.predict(df, m=m)
         return res
 
     def train(self, M):
         self._initial_tree()
         df = self.df
-        seed = self.seed
         self.trees = []
         self.gamma = []
 
         for i in range(M):
-            res = self._pseudo_residuals()
+            res = self._pseudo_residuals(df)
             # print(f"Norm of pseudo-residuals: {np.linalg.norm(res)}")
             self.reporter["iter"] = i
             self.reporter["res_norm"] = np.linalg.norm(res)
             df["pseudo_residuals"] = res
 
-            if self.n_attributes is None:
-                X_names = self.X_names
-            else:
-                rng = np.random.default_rng(seed=seed)
-                if seed is not None:
-                    seed += 1
-                X_names = rng.choice(self.X_names, self.n_attributes, replace=False)
+            # if self.n_attributes is None:
+            #     X_names = self.X_names
+            # else:
+            #     rng = np.random.default_rng(seed=seed)
+            #     if seed is not None:
+            #         seed += 1
+            #     X_names = rng.choice(self.X_names, self.n_attributes, replace=False)
 
-            kwargs = dict(
-                max_depth=3,
-                min_leaf_samples=5,
-                min_split_samples=4,
-                method="regression",
-            )
-            kwargs = {**kwargs, **self.cart_settings}
+            # kwargs = dict(
+            #     max_depth=3,
+            #     min_leaf_samples=5,
+            #     min_split_samples=4,
+            #     method="regression",
+            # )
+            # kwargs = {**kwargs, **self.cart_settings}
 
-            c = CART(
-                df=df.sample(frac=self.sample_frac, replace=True, random_state=seed),
-                y_name="pseudo_residuals",
-                X_names=X_names,
-                **kwargs,
-            )
-            c.create_tree()
-            if seed is not None:
-                seed += 1
+            # c = CART(
+            #     df=df.sample(frac=self.sample_frac, replace=True, random_state=seed),
+            #     y_name="pseudo_residuals",
+            #     X_names=X_names,
+            #     **kwargs,
+            # )
+            # c.create_tree()
+            # if seed is not None:
+            #     seed += 1
+            c = self._append_regression_tree(df)
 
             if self.gamma_setting is None:
                 gamma = self._gamma(c.tree)
@@ -506,6 +510,36 @@ class GradientBoostedTree(Model):
             self.trees.append(c.tree)
             self.gamma.append(gamma)
             self.reporter.print()
+
+    def _append_regression_tree(self, df):
+        if self.n_attributes is None:
+            X_names = self.X_names
+        else:
+            rng = np.random.default_rng(seed=self.seed)
+            if self.seed is not None:
+                self.seed += 1
+            X_names = rng.choice(self.X_names, self.n_attributes, replace=False)
+
+        kwargs = dict(
+            max_depth=3,
+            min_leaf_samples=5,
+            min_split_samples=4,
+            method="regression",
+        )
+        kwargs = {**kwargs, **self.cart_settings}
+
+        c = CART(
+            df=df.sample(frac=self.sample_frac, replace=True, random_state=self.seed),
+            y_name="pseudo_residuals",
+            X_names=X_names,
+            **kwargs,
+        )
+        c.create_tree()
+
+        if self.seed is not None:
+            self.seed += 1
+
+        return c
 
     # def _gamma(self, tree):
     #     res = opt.minimize_scalar(self._opt_fun(tree), bounds=[0.0, 10.0])
@@ -545,6 +579,75 @@ class GradientBoostedTree(Model):
         y_hat = self.predict(df)
         y = df[self.y_name]
         return self.dmgr.metrics.validate(y, y_hat)
+
+    def update(self, df, update_method="elastic"):
+        if update_method == "gamma":
+            self._update_gamma(df)
+        elif update_method == "elastic":
+            self._update_elastic(df)
+        else:
+            raise ValueError(f"unknown update method {update_method}")
+
+    def _update_elastic(self, df):
+        # Wang, K., Liu, A., Lu, J., Zhang, G., Xiong, L. (2020). An Elastic Gradient
+        # Boosting Decision Tree for Concept Drift Learning. In: Gallagher, M.,
+        # Moustafa, N., Lakshika, E. (eds) AI 2020: Advances in Artificial
+        # Intelligence. AI 2020. Lecture Notes in Computer Science(), vol 12576.
+        # Springer, Cham. https://doi.org/10.1007/978-3-030-64984-5_33
+        M = len(self.trees)
+        res_norm = np.Inf
+        m = M
+        for i in range(M):
+            res_norm_old = res_norm
+            res_norm = np.linalg.norm(self._pseudo_residuals(df, i))
+
+            print(res_norm_old, "->", res_norm)
+
+            if res_norm_old < res_norm:
+                self.reporter.message("update required")
+                m = i
+
+        if m == M:
+            self.reporter.message("no update necessary")
+        self.trees = self.trees[:m]
+
+        for i in range(m, M):
+            res = self._pseudo_residuals(df)
+            self.reporter["iter"] = i
+            self.reporter["res_norm"] = np.linalg.norm(res)
+            df["pseudo_residuals"] = res
+            c = self._append_regression_tree(df)
+
+            if self.gamma_setting is None:
+                gamma = self._gamma(c.tree)
+            else:
+                gamma = self.gamma_setting
+            self.trees.append(c.tree)
+            self.gamma.append(gamma)
+            self.reporter.print()
+            
+    def _update_gamma(self, df):
+        if self.gamma_setting is not None:
+            print("fixed gamma specified. No update required")
+            return
+        
+        M = len(self.trees)
+        
+        bag_of_trees = self.trees.copy()
+        self.trees = []
+        self.gamma = []
+
+        for i in range(M):
+            res = self._pseudo_residuals(df)
+            self.reporter["iter"] = i
+            self.reporter["res_norm"] = np.linalg.norm(res)
+            df["pseudo_residuals"] = res
+            tree = bag_of_trees[i]
+            gamma = self._gamma(tree)
+            self.trees.append(tree)
+            self.gamma.append(gamma)
+            self.reporter.print()
+        
 
 
 class RandomForest(Model):
