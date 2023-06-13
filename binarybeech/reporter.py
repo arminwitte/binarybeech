@@ -22,8 +22,9 @@ class Reporter:
         if self.n == 0:
             for L in self.labels:
                 print(L, end=" ")
+            print("")
 
-        if self.n > 20:
+        if self.n > 19:
             self.n = -1
 
         s = ""
