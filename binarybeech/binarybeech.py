@@ -581,7 +581,12 @@ class GradientBoostedTree(Model):
         return self.dmgr.metrics.validate(y, y_hat)
 
     def update(self, df, update_method="elastic"):
-        self._update_elastic(df)
+        if update_method == "gamma":
+            self._update_gamma(df)
+        elif update_method == "elastic":
+            self._update_elastic(df)
+        else:
+            raise ValueError(f"unknown update method {update_method}")
 
     def _update_elastic(self, df):
         # Wang, K., Liu, A., Lu, J., Zhang, G., Xiong, L. (2020). An Elastic Gradient
@@ -620,6 +625,29 @@ class GradientBoostedTree(Model):
             self.trees.append(c.tree)
             self.gamma.append(gamma)
             self.reporter.print()
+            
+    def _update_gamma(self, df):
+        if self.gamma_setting is not None:
+            print("fixed gamma specified. No update required")
+            return
+        
+        M = len(self.trees)
+        
+        bag_of_trees = self.trees.copy()
+        self.trees = []
+        self.gamma = []
+
+        for i in range(M):
+            res = self._pseudo_residuals(df)
+            self.reporter["iter"] = i
+            self.reporter["res_norm"] = np.linalg.norm(res)
+            df["pseudo_residuals"] = res
+            tree = bag_of_trees[i]
+            gamma = self._gamma(tree)
+            self.trees.append(tree)
+            self.gamma.append(gamma)
+            self.reporter.print()
+        
 
 
 class RandomForest(Model):
