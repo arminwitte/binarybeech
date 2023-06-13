@@ -28,6 +28,8 @@ def test_tree_parent():
         branches=[n1, n2],
         decision_fun=(lambda x, y: x < y),
     )
+    n1.parent = n0
+    n2.parent = n0
     t = Tree(root=n0)
     assert isinstance(t.traverse({"var": 0.0}).parent, Node)
     assert len(t.leafs()) == 2
