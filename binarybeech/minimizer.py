@@ -233,7 +233,7 @@ class ScalarSimulatedAnnealing(Minimizer):
         delta = b - a
         new = a - 1
         while new < a or new > b:
-            new = random.normalvariate(mu=current, sigma=delta / 6)
+            new = random.normalvariate(mu=current, sigma=delta / 4)
             # new = a + random.random() * delta
         return new
 
