@@ -260,13 +260,14 @@ class CART(Model):
                 attribute=split_name,
                 threshold=split_threshold,
                 value=value,
-                decision_fun=self.dmgr[split_name].decide,
-            )
+                decision_fun=self.dmgr[split_name].decide,)
             item.pinfo["N"] = len(df.index)
             item.pinfo["r"] = self.dmgr.metrics.loss_prune(y, y_hat)
             item.pinfo["R"] = (
                 item.pinfo["N"] / len(self.training_data.df.index) * item.pinfo["r"]
             )
+            for b in item.branches:
+                b.parent=item
         else:
             item = self._leaf(y, y_hat)
 

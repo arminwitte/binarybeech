@@ -12,6 +12,7 @@ class Node:
         threshold=None,
         value=None,
         decision_fun=None,
+        parent=None,
     ):
         if branches is None and value is None:
             raise ValueError(
@@ -25,6 +26,7 @@ class Node:
         self.is_leaf = True if self.branches is None else False
         self.value = value
         self.pinfo = {}
+        self.parent = parent
 
     def get_child(self, df):
         return (
@@ -64,6 +66,9 @@ class Tree:
         for b in node.branches:
             nl += self._nodes(b)
         return nl
+        
+    def leafs(self):
+        return [n for n in self.nodes() if n.is_leaf]
 
     def classes(self):
         nodes = self.nodes()
