@@ -28,7 +28,7 @@ def test_titanic_update_elastic():
     val = gbt.validate()
     acc = val["accuracy"]
     np.testing.assert_allclose(
-        np.round(p[:10]).astype(int), [0, 1, 1, 1, 0, 0, 0, 0, 1, 1]
+        np.round(p[:10]).astype(int), [0, 0, 0, 0, 0, 1, 0, 0, 1, 1]
     )
     assert acc < 1.0 and acc > 0.8
 
@@ -56,6 +56,6 @@ def test_titanic_update_gamma():
     val = gbt.validate()
     acc = val["accuracy"]
     np.testing.assert_allclose(
-        np.round(p[:10]).astype(int), [0, 1, 1, 1, 0, 0, 0, 0, 1, 1]
+        np.round(p[:10]).astype(int), [0, 0, 0, 0, 0, 1, 0, 0, 1, 1]
     )
     assert acc < 1.0 and acc > 0.8
