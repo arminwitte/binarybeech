@@ -74,3 +74,16 @@ def print_tree(tree):
     tree_view = treelib.Tree()
     _show(tree.root, tree_view)
     tree_view.show()
+
+def print_rules(tree):
+    leafs = tree.leafs()
+    d = {}
+    for i, L in enumerate(leafs):
+        rules = []
+        node = L
+        while node is not None:
+            rules.append((node.attribute,node.threshold))
+            node = node.parent
+        d[i] = rules
+    return d
+        
