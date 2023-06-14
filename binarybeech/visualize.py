@@ -75,15 +75,26 @@ def print_tree(tree):
     _show(tree.root, tree_view)
     tree_view.show()
 
-def print_rules(tree):
+def extract_rules(tree):
     leafs = tree.leafs()
     d = {}
     for i, L in enumerate(leafs):
         rules = []
         node = L
+        value = node.value
+        d.setdefault(value,[])
         while node is not None:
             rules.append((node.attribute,node.threshold))
             node = node.parent
-        d[i] = rules
+        d[value].append(rules)
     return d
+    
+def print_rules(d: dict):
+    for key, val in d:
+        print(key)
+        for i, rules in enumerate(val):
+            print("    ",end="")
+            if i > 0:
+                print("or", end=" ")
+            print(rules)
         

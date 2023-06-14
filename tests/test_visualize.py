@@ -22,7 +22,10 @@ def test_print_rules():
     df_iris = pd.read_csv("data/iris.csv")
     c = CART(df=df_iris, y_name="species", method="classification", seed=42)
     c.train()
-    rules = print_rules(c.tree)
+    rules = extract_rules(c.tree)
     print(rules)
+    
+    print_rules(rules)
+    
     assert 1 == 2
     assert isinstance(rules,dict)
