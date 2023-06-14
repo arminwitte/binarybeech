@@ -23,9 +23,10 @@ def test_print_rules():
     c = CART(df=df_iris, y_name="species", method="classification", seed=42)
     c.train()
     rules = extract_rules(c.tree)
-    print(rules)
-    
-    print_rules(rules)
-    
-    assert 1 == 2
     assert isinstance(rules,dict)
+    
+    s = print_rules(rules)
+    print(s)
+    
+    assert isinstance(s,str)
+    assert s.split()[0] == "setosa"

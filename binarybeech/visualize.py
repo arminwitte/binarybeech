@@ -78,7 +78,7 @@ def print_tree(tree):
 def extract_rules(tree):
     leafs = tree.leafs()
     d = {}
-    for i, L in enumerate(leafs):
+    for L in leafs:
         rules = []
         node = L
         value = node.value
@@ -87,15 +87,17 @@ def extract_rules(tree):
         while node is not None:
             rules.append((node.attribute,node.threshold))
             node = node.parent
-        d[value].append(rules)
+        d[value].append(reversed(rules))
     return d
     
 def print_rules(d: dict):
+    s = ""
     for key, val in d.items():
-        print(key)
+        s += key + "\n"
         for i, rules in enumerate(val):
-            print("    ",end="")
+            s += "    "
             if i > 0:
-                print("or", end=" ")
-            print(rules)
+                s += "or "
+            s += str(rules) += "\n"
+    return s
         
