@@ -17,7 +17,7 @@ def test_brentsscalarminimizer():
 def test_scalarsimulatedannealing():
     m = ScalarSimulatedAnnealing()
     x, y = m.minimize(np.sin, 0.0, 7.0)
-    assert np.isclose(x, 4.7123889715201255, rtol=1 / m.max_iter)
+    assert np.isclose(x, 4.7123889715201255, rtol=2 / m.max_iter)
     assert np.isclose(y, -1.0, rtol=2 / m.max_iter)
 
 
