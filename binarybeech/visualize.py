@@ -82,7 +82,8 @@ def extract_rules(tree):
         rules = []
         node = L
         value = node.value
-        d.setdefault(value,[])
+        if value not in d:
+            d[value] = []
         while node is not None:
             rules.append((node.attribute,node.threshold))
             node = node.parent

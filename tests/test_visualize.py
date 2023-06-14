@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 
 from binarybeech.binarybeech import CART
-from binarybeech.visualize import plot_areas, plot_pruning_quality, print_rules
+from binarybeech.visualize import plot_areas, plot_pruning_quality, extract_rules, print_rules
 
 
 def test_plot_areas():
