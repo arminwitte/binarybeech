@@ -91,7 +91,7 @@ def extract_rules(tree):
     return d
     
 def print_rules(d: dict):
-    for key, val in d:
+    for key, val in d.items():
         print(key)
         for i, rules in enumerate(val):
             print("    ",end="")
