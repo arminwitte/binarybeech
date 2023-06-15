@@ -51,7 +51,7 @@ class Node:
         if filename is None:
             return json.dumps(d)
         else:
-            with open(filename,"w") as f
+            with open(filename,"w") as f:
                 json.dump(d,f)
 
 
