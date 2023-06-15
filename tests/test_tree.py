@@ -33,3 +33,19 @@ def test_tree_parent():
     t = Tree(root=n0)
     assert isinstance(t.traverse({"var": 0.0}).parent, Node)
     assert len(t.leafs()) == 2
+    
+def test_tree_to_json():
+    n1 = Node(value=1)
+    n2 = Node(value=2)
+    n0 = Node(
+        attribute="var",
+        threshold=0.5,
+        branches=[n1, n2],
+        decision_fun=(lambda x, y: x < y),
+    )
+    t = Tree(root=n0)
+    
+    print(t.to_json())
+    
+    assert 1 == 2
+

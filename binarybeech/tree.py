@@ -2,7 +2,7 @@
 # coding: utf-8
 
 import numpy as np
-
+import json
 
 class Node:
     def __init__(
@@ -34,6 +34,25 @@ class Node:
             if self.decision_fun(df[self.attribute], self.threshold)
             else self.branches[1]
         )
+        
+    def to_dict(self):
+        d = {}
+        d["branches"] = None
+        d["threshold"] = self.threshold
+        d["attribute"] = self.attribute
+        d["decision_fun"] = None
+        d["is_leaf"] = self.is_leaf
+        d["value"] = self.value
+        d["pinfo"] = self.pinfo
+        return d
+        
+    def to_json(self,filename=None):
+        d = self.to_dict()
+        if filename is None:
+            return json.dumps(d)
+        else:
+            with open(filename,"w") as f
+                json.dump(d,f)
 
 
 class Tree:
@@ -76,3 +95,27 @@ class Tree:
         for n in nodes:
             c.append(n.value)
         return np.unique(c).tolist()
+
+    def to_dict(self):
+        pass
+    
+    def _to_dict(self, node):
+        if node.is_leaf:
+            return node.to_dict()
+        else:
+            d = node.to_dict()
+            d["branches"] = []
+            for b in node.branches:
+                d_ = self._to_dict(b)
+                d["branches"].append(d_)
+            return d
+                
+        
+    def to_json(self,filename=None):
+        d = self.to_dict()
+        if filename is None:
+            return json.dumps(d)
+        else:
+            with open(filename,"w") as f
+                json.dump(d,f)
+    
