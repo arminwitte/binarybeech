@@ -98,6 +98,6 @@ def print_rules(d: dict):
             s += "    "
             if i > 0:
                 s += "or "
-            s += str(rules) += "\n"
+            s += str(rules) + "\n"
     return s
         
