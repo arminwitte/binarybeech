@@ -97,7 +97,7 @@ class Tree:
         return np.unique(c).tolist()
 
     def to_dict(self):
-        pass
+        return self._to_dict(self.root)
     
     def _to_dict(self, node):
         if node.is_leaf:
