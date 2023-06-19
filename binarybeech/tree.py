@@ -114,9 +114,17 @@ class Tree:
         
     def to_json(self,filename=None):
         d = self.to_dict()
+        self._replace_fun(d)
         if filename is None:
             return json.dumps(d)
         else:
             with open(filename,"w") as f:
                 json.dump(d,f)
+                
+    def _replace_fun(self, d):
+        if "decision_fun" in d:
+            d["decision_fun"] = d["decision_fun"].__qualname__
+        if "branches" in d:
+            for b in d["branches"]:
+                self._replace_fun(b)
     

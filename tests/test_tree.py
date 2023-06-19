@@ -35,13 +35,15 @@ def test_tree_parent():
     assert len(t.leafs()) == 2
     
 def test_tree_to_json():
+    def decfun(x, y):
+        return x < y
     n1 = Node(value=1)
     n2 = Node(value=2)
     n0 = Node(
         attribute="var",
         threshold=0.5,
         branches=[n1, n2],
-        decision_fun=(lambda x, y: x < y),
+        decision_fun = decfun,
     )
     t = Tree(root=n0)
     
