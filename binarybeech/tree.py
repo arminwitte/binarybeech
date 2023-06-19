@@ -40,7 +40,7 @@ class Node:
         d["branches"] = None
         d["threshold"] = self.threshold
         d["attribute"] = self.attribute
-        d["decision_fun"] = None
+        d["decision_fun"] = self.decision_fun
         d["is_leaf"] = self.is_leaf
         d["value"] = self.value
         d["pinfo"] = self.pinfo
@@ -48,6 +48,7 @@ class Node:
         
     def to_json(self,filename=None):
         d = self.to_dict()
+        d["decision_fun"] = d["decision_fun"].__qualname__
         if filename is None:
             return json.dumps(d)
         else:
