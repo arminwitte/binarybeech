@@ -122,9 +122,9 @@ class Tree:
                 json.dump(d,f)
                 
     def _replace_fun(self, d):
-        if "decision_fun" in d:
+        if "decision_fun" in d and d["decision_fun"] is not None:
             d["decision_fun"] = d["decision_fun"].__qualname__
-        if "branches" in d:
+        if "branches" in d and d["branches"] is not None:
             for b in d["branches"]:
                 self._replace_fun(b)
     
