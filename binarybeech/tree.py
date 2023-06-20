@@ -54,6 +54,19 @@ class Node:
         else:
             with open(filename,"w") as f:
                 json.dump(d,f)
+                
+    @classmethod
+    def from_dict(cls,d):
+        n = cls(branches=d.get("branches"),
+                attribute=d.get("attribute"),
+                threshold=d.get("threshold"),
+                value=d.get("value"),
+                decision_fun=d.get("decision_fun"),
+                parent=d.get("parent"),
+            )
+        n.pinfo = d.get("pinfo",{})
+        return n
+        
 
 
 class Tree:
@@ -127,4 +140,21 @@ class Tree:
         if "branches" in d and d["branches"] is not None:
             for b in d["branches"]:
                 self._replace_fun(b)
+                
+    @classmethod
+    def from_dict(cls,d):
+        root = cls._from_dict(d)
+        return cls(root)
+    
+    @staticmethod
+    def _from_dict(d):
+        # if the dict does not describe a leaf, process the branches first.
+        if not d["is_leaf"]:
+            branches = []
+            for b in d["branches"]:
+                branches.append(Tree._from_dict(b))
+            d["branches"] = branches
+        return Node.from_dict(d)
+        
+        
     
