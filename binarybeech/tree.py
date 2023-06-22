@@ -3,7 +3,7 @@
 
 import numpy as np
 import json
-import inspect
+from binarybeech.attributehandler import attribute_handler_factory
 
 class Node:
     def __init__(
@@ -137,7 +137,7 @@ class Tree:
                 
     def _replace_fun(self, d):
         if "decision_fun" in d and d["decision_fun"] is not None:
-            d["decision_fun"] = d["decision_fun"].__qualname__
+            d["decision_fun"] = d["decision_fun"].__qualname__.split(".")[-2]
         if "branches" in d and d["branches"] is not None:
             for b in d["branches"]:
                 self._replace_fun(b)
@@ -176,7 +176,7 @@ class Tree:
     @staticmethod
     def _replace_str_with_fun(d):
         s = d["decision_fun"]
-        d["decision_fun"] = getattr(s)
+        d["decision_fun"] = attribute_handler_factory[s].decide
         if not d["is_leaf"]:
             for b in d["branches"]:
                 Tree._replace_str_with_fun(b)
