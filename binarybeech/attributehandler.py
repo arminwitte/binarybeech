@@ -448,7 +448,7 @@ class AttributeHandlerFactory:
         for val in self.attribute_handlers.values():
             for a in val:
                 if name == a.__name__:
-                ahc = a
+                    ahc = a
         return ahc
 
     def get_attribute_handler_class(self, arr, method_group="default"):
