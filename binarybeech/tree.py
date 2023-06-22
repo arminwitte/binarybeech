@@ -3,6 +3,7 @@
 
 import numpy as np
 import json
+import inspect
 
 class Node:
     def __init__(
@@ -155,6 +156,32 @@ class Tree:
                 branches.append(Tree._from_dict(b))
             d["branches"] = branches
         return Node.from_dict(d)
+        
+    @classmethod
+    def from_json(cls,filename=None,string=None):
+        if not filename and not string:
+            raise ValueError("Either filename or a string has to be passed as argument to from_json.")
+        
+        if filename is not None:
+            with open(filename, "r") as f:
+                d = json.load(f)
+        else:
+            d = json.loads(string)
+    
+        cls._replace_str_with_fun(d)
+        
+        tree = cls.from_dict(d)
+        return tree
+        
+    @staticmethod
+    def _replace_str_with_fun(d):
+        s = d["decision_fun"]
+        d["decision_fun"] = getattr(s)
+        if not d["is_leaf"]:
+            for b in branches:
+                Tree._replace_str_with_fun(b)
+        
+        
         
         
     

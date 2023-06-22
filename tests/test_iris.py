@@ -55,3 +55,21 @@ def test_iris_from_dict():
     acc = val["accuracy"]
     np.testing.assert_array_equal(p[:10], ["setosa"] * 10)
     assert acc <= 1.0 and acc > 0.95
+    
+def test_iris_from_json():
+    df_iris = pd.read_csv("data/iris.csv")
+    c = CART(df=df_iris, y_name="species", method="classification")
+    c.create_tree()
+    
+    tree_json = c.tree.to_json()
+    assert isinstance(tree_json, str)
+    
+    tree = Tree.from_json(string=tree_json)
+    assert isinstance(tree, Tree)
+    
+    c.tree = tree
+    p = c.predict(df_iris)
+    val = c.validate()
+    acc = val["accuracy"]
+    np.testing.assert_array_equal(p[:10], ["setosa"] * 10)
+    assert acc <= 1.0 and acc > 0.95
