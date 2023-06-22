@@ -46,6 +46,8 @@ def test_iris_from_dict():
     tree_dict = c.tree.to_dict()
     assert isinstance(tree_dict, dict)
     
+    print(tree_dict)
+    
     tree = Tree.from_dict(tree_dict)
     assert isinstance(tree, Tree)
     
@@ -63,6 +65,8 @@ def test_iris_from_json():
     
     tree_json = c.tree.to_json()
     assert isinstance(tree_json, str)
+    
+    print(tree_json)
     
     tree = Tree.from_json(string=tree_json)
     assert isinstance(tree, Tree)

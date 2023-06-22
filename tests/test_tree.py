@@ -47,7 +47,5 @@ def test_tree_to_json():
     )
     t = Tree(root=n0)
     
-    print(t.to_json())
-    
-    assert 1 == 2
+    assert isinstance(t.to_json(),str)
 
