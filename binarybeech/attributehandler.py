@@ -447,7 +447,7 @@ class AttributeHandlerFactory:
         ahc = None
         for val in self.attribute_handlers.values():
             for a in val:
-                if name == a.__name__
+                if name == a.__name__:
                 ahc = a
         return ahc
 
