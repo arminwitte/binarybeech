@@ -178,7 +178,7 @@ class Tree:
         s = d["decision_fun"]
         d["decision_fun"] = getattr(s)
         if not d["is_leaf"]:
-            for b in branches:
+            for b in d["branches"]:
                 Tree._replace_str_with_fun(b)
         
         
