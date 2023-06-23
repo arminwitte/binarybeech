@@ -115,15 +115,13 @@ class Tree:
         return self._to_dict(self.root)
     
     def _to_dict(self, node):
-        if node.is_leaf:
-            return node.to_dict()
-        else:
-            d = node.to_dict()
+        d = node.to_dict()
+        if not node.is_leaf:
             d["branches"] = []
             for b in node.branches:
                 d_ = self._to_dict(b)
                 d["branches"].append(d_)
-            return d
+        return d
                 
         
     def to_json(self,filename=None):
@@ -176,9 +174,9 @@ class Tree:
         
     @staticmethod
     def _replace_str_with_fun(d):
-        s = d["decision_fun"]
-        d["decision_fun"] = attribute_handler_factory[s].decide
         if not d["is_leaf"]:
+            s = d["decision_fun"]
+            d["decision_fun"] = attribute_handler_factory[s].decide
             for b in d["branches"]:
                 Tree._replace_str_with_fun(b)
         
