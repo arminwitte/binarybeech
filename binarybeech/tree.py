@@ -126,7 +126,6 @@ class Tree:
         
     def to_json(self,filename=None):
         d = self.to_dict()
-        print(d)
         self._replace_fun(d)
         if filename is None:
             return json.dumps(d)

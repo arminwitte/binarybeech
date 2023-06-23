@@ -50,6 +50,9 @@ def test_iris_from_dict():
     
     tree = Tree.from_dict(tree_dict)
     assert isinstance(tree, Tree)
+    assert len(tree.nodes) == 8
+    assert tree.leaf_count() == 4
+        
     
     c.tree = tree
     p = c.predict(df_iris)
@@ -61,15 +64,17 @@ def test_iris_from_dict():
 def test_iris_from_json():
     df_iris = pd.read_csv("data/iris.csv")
     c = CART(df=df_iris, y_name="species", method="classification")
-    c.create_tree()
+    c.train()
     
     tree_json = c.tree.to_json()
     assert isinstance(tree_json, str)
     
-    print(tree_json)
+    # print(tree_json)
     
     tree = Tree.from_json(string=tree_json)
     assert isinstance(tree, Tree)
+    assert len(tree.nodes) == 8
+    assert tree.leaf_count() == 4
     
     c.tree = tree
     p = c.predict(df_iris)
