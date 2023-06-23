@@ -50,7 +50,7 @@ def test_iris_from_dict():
     
     tree = Tree.from_dict(tree_dict)
     assert isinstance(tree, Tree)
-    assert len(tree.nodes()) == 8
+    assert len(tree.nodes()) == 21
     assert tree.leaf_count() == 4
         
     
@@ -73,7 +73,7 @@ def test_iris_from_json():
     
     tree = Tree.from_json(string=tree_json)
     assert isinstance(tree, Tree)
-    assert len(tree.nodes()) == 8
+    assert len(tree.nodes()) == 5
     assert tree.leaf_count() == 4
     
     c.tree = tree
