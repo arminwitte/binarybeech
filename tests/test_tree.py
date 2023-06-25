@@ -19,6 +19,7 @@ def test_tree():
     assert t.traverse({"var": 0.0}).value == 1
     assert t.traverse({"var": 1.0}).value == 2
 
+
 def test_tree_parent():
     n1 = Node(value=1)
     n2 = Node(value=2)
@@ -33,19 +34,20 @@ def test_tree_parent():
     t = Tree(root=n0)
     assert isinstance(t.traverse({"var": 0.0}).parent, Node)
     assert len(t.leafs()) == 2
-    
+
+
 def test_tree_to_json():
     def decfun(x, y):
         return x < y
+
     n1 = Node(value=1)
     n2 = Node(value=2)
     n0 = Node(
         attribute="var",
         threshold=0.5,
         branches=[n1, n2],
-        decision_fun = decfun,
+        decision_fun=decfun,
     )
     t = Tree(root=n0)
-    
-    assert isinstance(t.to_json(),str)
 
+    assert isinstance(t.to_json(), str)

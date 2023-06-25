@@ -75,6 +75,7 @@ def print_tree(tree):
     _show(tree.root, tree_view)
     tree_view.show()
 
+
 def extract_rules(tree):
     leafs = tree.leafs()
     d = {}
@@ -85,11 +86,12 @@ def extract_rules(tree):
         if value not in d:
             d[value] = []
         while node is not None:
-            rules.append((node.attribute,node.threshold))
+            rules.append((node.attribute, node.threshold))
             node = node.parent
         d[value].append(reversed(rules))
     return d
-    
+
+
 def print_rules(d: dict):
     s = ""
     for key, val in d.items():
@@ -100,4 +102,3 @@ def print_rules(d: dict):
                 s += "or "
             s += str(rules) + "\n"
     return s
-        

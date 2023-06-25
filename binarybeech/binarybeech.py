@@ -260,14 +260,15 @@ class CART(Model):
                 attribute=split_name,
                 threshold=split_threshold,
                 value=value,
-                decision_fun=self.dmgr[split_name].decide,)
+                decision_fun=self.dmgr[split_name].decide,
+            )
             item.pinfo["N"] = len(df.index)
             item.pinfo["r"] = self.dmgr.metrics.loss_prune(y, y_hat)
             item.pinfo["R"] = (
                 item.pinfo["N"] / len(self.training_data.df.index) * item.pinfo["r"]
             )
             for b in item.branches:
-                b.parent=item
+                b.parent = item
         else:
             item = self._leaf(y, y_hat)
 
@@ -626,14 +627,14 @@ class GradientBoostedTree(Model):
             self.trees.append(c.tree)
             self.gamma.append(gamma)
             self.reporter.print()
-            
+
     def _update_gamma(self, df):
         if self.gamma_setting is not None:
             print("fixed gamma specified. No update required")
             return
-        
+
         M = len(self.trees)
-        
+
         bag_of_trees = self.trees.copy()
         self.trees = []
         self.gamma = []
@@ -648,7 +649,8 @@ class GradientBoostedTree(Model):
             self.trees.append(tree)
             self.gamma.append(gamma)
             self.reporter.print()
-        
+
+
 class AdaBoostTree(Model):
     def __init__(
         self,
@@ -679,7 +681,7 @@ class AdaBoostTree(Model):
         self.N = len(self.df.index)
 
         self.trees = []
-        self.alpha = [] # gamma
+        self.alpha = []  # gamma
         self.cart_settings = cart_settings
         self.init_method = init_method
         self.sample_frac = sample_frac
@@ -689,7 +691,6 @@ class AdaBoostTree(Model):
         self.logger = logging.getLogger(__name__)
         self.reporter = Reporter(["iter", "res_norm", "alpha", "sse"])
 
-    
     def _predict1(self, x, m=None):
         pass
         p = self.init_tree.traverse(x).value
@@ -739,7 +740,7 @@ class AdaBoostTree(Model):
             self.trees.append(c.tree)
             self.gamma.append(gamma)
             self.reporter.print()
-            
+
 
 class RandomForest(Model):
     def __init__(

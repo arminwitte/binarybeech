@@ -32,6 +32,7 @@ def test_titanic_update_elastic():
     )
     assert acc < 1.0 and acc > 0.8
 
+
 def test_titanic_update_gamma():
     df_titanic = pd.read_csv("data/titanic.csv").sample(
         frac=1.0, replace=False, random_state=42

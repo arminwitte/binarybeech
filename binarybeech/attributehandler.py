@@ -442,8 +442,8 @@ class AttributeHandlerFactory:
 
     def register_handler(self, attribute_handler_class, method_group="default"):
         self.attribute_handlers[method_group].append(attribute_handler_class)
-        
-    def __getitem__(self,name):
+
+    def __getitem__(self, name):
         ahc = None
         for val in self.attribute_handlers.values():
             for a in val:
