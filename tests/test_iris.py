@@ -61,7 +61,7 @@ def test_iris_from_dict():
     
 def test_iris_from_json():
     df_iris = pd.read_csv("data/iris.csv")
-    c = CART(df=df_iris, y_name="species", method="classification")
+    c = CART(df=df_iris, y_name="species", method="classification", seed=42)
     c.train()
     
     tree_json = c.tree.to_json()
