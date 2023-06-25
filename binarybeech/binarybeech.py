@@ -649,7 +649,97 @@ class GradientBoostedTree(Model):
             self.gamma.append(gamma)
             self.reporter.print()
         
+class AdaBoostTree(Model):
+    def __init__(
+        self,
+        training_data=None,
+        df=None,
+        y_name=None,
+        X_names=None,
+        sample_frac=1,
+        n_attributes=None,
+        cart_settings={},
+        init_method="logistic",
+        handle_missings="simple",
+        attribute_handlers=None,
+        seed=None,
+        algorithm_kwargs={},
+    ):
+        super().__init__(
+            training_data,
+            df,
+            y_name,
+            X_names,
+            attribute_handlers,
+            init_method,
+            handle_missings,
+            algorithm_kwargs,
+        )
+        self.df = self.training_data.df.copy()
+        self.N = len(self.df.index)
 
+        self.trees = []
+        self.alpha = [] # gamma
+        self.cart_settings = cart_settings
+        self.init_method = init_method
+        self.sample_frac = sample_frac
+        self.n_attributes = n_attributes
+        self.seed = seed
+
+        self.logger = logging.getLogger(__name__)
+        self.reporter = Reporter(["iter", "res_norm", "alpha", "sse"])
+
+    
+    def _predict1(self, x, m=None):
+        pass
+        p = self.init_tree.traverse(x).value
+        p = self.dmgr.metrics.inverse_transform(p)
+        M = len(self.trees)
+        if not m:
+            m = M
+        for i in range(m):
+            t = self.trees[i]
+            p += self.learning_rate * self.gamma[i] * t.traverse(x).value
+        return p
+
+    def _predict_raw(self, df, m=None):
+        pass
+        y_hat = [self._predict1(x, m) for x in df.iloc]
+        return np.array(y_hat)
+
+    def predict(self, df, m=None):
+        pass
+        y_hat = self._predict_raw(df, m)
+        return self.dmgr.metrics.output_transform(y_hat)
+
+    def _pseudo_residuals(self, df, m=None):
+        pass
+        res = df[self.y_name] - self.predict(df, m=m)
+        return res
+
+    def train(self, M):
+        pass
+        self._initial_tree()
+        df = self.df
+        self.trees = []
+        self.gamma = []
+
+        for i in range(M):
+            res = self._pseudo_residuals(df)
+            self.reporter["iter"] = i
+            self.reporter["res_norm"] = np.linalg.norm(res)
+            df["pseudo_residuals"] = res
+
+            c = self._append_regression_tree(df)
+
+            if self.gamma_setting is None:
+                gamma = self._gamma(c.tree)
+            else:
+                gamma = self.gamma_setting
+            self.trees.append(c.tree)
+            self.gamma.append(gamma)
+            self.reporter.print()
+            
 
 class RandomForest(Model):
     def __init__(
