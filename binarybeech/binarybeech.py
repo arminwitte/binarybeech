@@ -661,7 +661,7 @@ class AdaBoostTree(Model):
         sample_frac=1,
         n_attributes=None,
         cart_settings={},
-        init_method="logistic",
+        method="regression",
         handle_missings="simple",
         attribute_handlers=None,
         seed=None,
@@ -673,7 +673,7 @@ class AdaBoostTree(Model):
             y_name,
             X_names,
             attribute_handlers,
-            init_method,
+            method,
             handle_missings,
             algorithm_kwargs,
         )
@@ -683,7 +683,6 @@ class AdaBoostTree(Model):
         self.trees = []
         self.alpha = []  # gamma
         self.cart_settings = cart_settings
-        self.init_method = init_method
         self.sample_frac = sample_frac
         self.n_attributes = n_attributes
         self.seed = seed
