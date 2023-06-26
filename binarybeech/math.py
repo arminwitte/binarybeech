@@ -20,6 +20,11 @@ def gini_impurity(x):
     N = x.size
     p = counts / N
     return 1.0 - np.sum(p**2)
+    
+
+def gini_impurity_weighted(x, w):
+    _, p = unique_weighted(x, w)
+    return 1.0 - np.sum(p**2)
 
 
 def shannon_entropy(x):
@@ -28,12 +33,23 @@ def shannon_entropy(x):
     p = counts / N
     return -np.sum(p * np.log2(p))
 
+def shannon_entropy_weighted(x, w):
+    _, p = unique_weighted(x,w)
+    return -np.sum(p * np.log2(p))
+
+
 
 def misclassification_cost(x):
     unique, counts = np.unique(x, return_counts=True)
     N = x.size
     p = np.max(counts) / N
     return 1.0 - p
+
+def misclassification_cost_weighted(x, w):
+    _, share = unique_weighted(x, w)
+    p = np.max(share)
+    return 1.0 - p
+
 
 
 def logistic_loss(y, p):
@@ -44,6 +60,11 @@ def logistic_loss(y, p):
 def mean_squared_error(y, y_hat):
     e = y - y_hat
     return 1 / e.size * (e.T @ e)
+
+def mean_squared_error_weighted(y, y_hat, w):
+    e = (y - y_hat) * w
+    return 1 / e.size * (e.T @ e)
+
 
 
 def r_squared(y, y_hat):
@@ -56,6 +77,11 @@ def r_squared(y, y_hat):
 def majority_class(x):
     unique, counts = np.unique(x, return_counts=True)
     ind_max = np.argmax(counts)
+    return unique[ind_max]
+
+def majority_class_weighted(x, w):
+    unique, share = unique_weighted(x, w)
+    ind_max = np.argmax(share)
     return unique[ind_max]
 
 

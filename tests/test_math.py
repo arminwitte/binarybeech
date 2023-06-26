@@ -52,3 +52,10 @@ def test_unique_weighted():
     print(share)
     np.testing.assert_allclose(share,[0.33333333, 0.38095238, 0.28571429])
     
+def test_gini_impurity_weighted():
+    x = ["A"]*5 + ["B"]*4 + ["C"]*3 + ["A"]*2 + ["B"]*1
+    w = np.linspace(0,1,num=len(x))
+    loss = math.gini_impurity_weighted(x, w)
+    print(loss)
+    np.testing.assert_allclose(loss,[0.33333333, 0.38095238, 0.28571429])
+    
