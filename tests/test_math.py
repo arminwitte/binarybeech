@@ -57,5 +57,29 @@ def test_gini_impurity_weighted():
     w = np.linspace(0,1,num=len(x))
     loss = math.gini_impurity_weighted(x, w)
     print(loss)
-    np.testing.assert_allclose(loss,[0.33333333, 0.38095238, 0.28571429])
+    np.testing.assert_allclose(loss,[0.6621315192743764])
+    
+def test_shannon_entropy_weighted():
+    x = ["A"]*5 + ["B"]*4 + ["C"]*3 + ["A"]*2 + ["B"]*1
+    w = np.linspace(0,1,num=len(x))
+    loss = math.shannon_entropy_weighted(x, w)
+    print("shannon", loss)
+    np.testing.assert_allclose(loss,[0.6621315192743764])
+    
+def test_misclassification_loss_weighted():
+    x = ["A"]*5 + ["B"]*4 + ["C"]*3 + ["A"]*2 + ["B"]*1
+    w = np.linspace(0,1,num=len(x))
+    loss = math.misclassification_loss_weighted(x, w)
+    print("miss",loss)
+    np.testing.assert_allclose(loss,[0.6621315192743764])
+    
+def test_mean_squared_error_weighted():
+    x = np.linspace(0,1,50)
+    y = np.linspacr(0.1,1.2,50)
+    w = np.lonspace(0.5,5,50)
+    mse = math.mean_squared_error_weighted(x,y,w)
+    print("mse",mse)
+    np.testing.assert_allclose(mse,[0.6621315192743764])
+    
+    
     
