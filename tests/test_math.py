@@ -63,19 +63,19 @@ def test_shannon_entropy_weighted():
     x = ["A"]*5 + ["B"]*4 + ["C"]*3 + ["A"]*2 + ["B"]*1
     w = np.linspace(0,1,num=len(x))
     loss = math.shannon_entropy_weighted(x, w)
-    print("shannon", loss)
-    np.testing.assert_allclose(loss,[0.6621315192743764])
+    #print("shannon", loss)
+    np.testing.assert_allclose(loss,[1.5751145914106572])
     
-def test_misclassification_loss_weighted():
+def test_misclassification_cost_weighted():
     x = ["A"]*5 + ["B"]*4 + ["C"]*3 + ["A"]*2 + ["B"]*1
     w = np.linspace(0,1,num=len(x))
-    loss = math.misclassification_loss_weighted(x, w)
+    loss = math.misclassification_cost_weighted(x, w)
     print("miss",loss)
     np.testing.assert_allclose(loss,[0.6621315192743764])
     
 def test_mean_squared_error_weighted():
     x = np.linspace(0,1,50)
-    y = np.linspacr(0.1,1.2,50)
+    y = np.linspace(0.1,1.2,50)
     w = np.lonspace(0.5,5,50)
     mse = math.mean_squared_error_weighted(x,y,w)
     print("mse",mse)
