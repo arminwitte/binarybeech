@@ -4,6 +4,14 @@ import numpy as np
 import pandas as pd
 import scipy.signal
 
+def unique_weighted(x, w):
+    d = {}
+    for i, x_ in enumerate(x):
+        if x_ in d:
+            d[x_] += w[i]
+        else:
+            d[x_] = w[i]
+    return [s for s in d.keys()], [x for x in d.values()]
 
 def gini_impurity(x):
     unique, counts = np.unique(x, return_counts=True)
