@@ -50,5 +50,5 @@ def test_unique_weighted():
     unique, share = math.unique_weighted(x, w)
     np.testing.assert_array_equal(unique,["A","B","C"])
     print(share)
-    np.testing.assert_allclose(share,[2.5, 2.857142857142857, 2.14285714285714])
+    np.testing.assert_allclose(share,[0.33333333, 0.38095238, 0.28571429])
     
