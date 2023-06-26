@@ -47,8 +47,8 @@ def test_shannon_entropy_histogram():
 def test_unique_weighted():
     x = ["A"]*5 + ["B"]*4 + ["C"]*3 + ["A"]*2 + ["B"]*1
     w = np.linspace(0,1,num=len(x))
-    unique, counts = math.unique_weighted(x, w)
+    unique, share = math.unique_weighted(x, w)
     np.testing.assert_array_equal(unique,["A","B","C"])
-    print(counts)
-    np.testing.assert_allclose(counts,[2.5, 2.857142857142857, 2.14285714285714])
+    print(share)
+    np.testing.assert_allclose(share,[2.5, 2.857142857142857, 2.14285714285714])
     

@@ -11,7 +11,9 @@ def unique_weighted(x, w):
             d[x_] += w[i]
         else:
             d[x_] = w[i]
-    return [s for s in d.keys()], [x for x in d.values()]
+    u = [s for s in d.keys()]
+    c = [x for x in d.values()]
+    return np.array(u), np.array(c)/np.sum(c)
 
 def gini_impurity(x):
     unique, counts = np.unique(x, return_counts=True)
