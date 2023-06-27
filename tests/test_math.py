@@ -64,7 +64,7 @@ def test_shannon_entropy_weighted():
     w = np.linspace(0,1,num=len(x))
     loss = math.shannon_entropy_weighted(x, w)
     #print("shannon", loss)
-    np.testing.assert_allclose(loss,[1.5751145914106572])
+    np.testing.assert_allclose(loss,[1.575114591410657])
     
 def test_misclassification_cost_weighted():
     x = ["A"]*5 + ["B"]*4 + ["C"]*3 + ["A"]*2 + ["B"]*1
