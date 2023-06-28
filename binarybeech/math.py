@@ -61,7 +61,7 @@ def misclassification_cost_weighted(x, w):
 def misclassification_cost(x, w=None):
     if w is None:
         return misclassification_cost_fast(x)
-    return misclassification_cost_weightd(x, w)
+    return misclassification_cost_weighted(x, w)
 
 
 
