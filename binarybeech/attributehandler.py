@@ -79,7 +79,7 @@ class NominalAttributeHandler(AttributeHandlerBase):
             n = [len(df_.index) for df_ in split_df]
             val = [self.metrics.node_value(df_[self.y_name]) for df_ in split_df]
             if "__weights__" in df:
-                w = [df_["__weights__"].values() for df_ in split_df]
+                w = [df_["__weights__"].values for df_ in split_df]
             else:
                 w = [None for df_ in split_df]
             loss = n[0] / N * self.metrics.loss(split_df[0][self.y_name], val[0], w[0]) + n[
@@ -159,7 +159,7 @@ class HighCardinalityNominalAttributeHandler(AttributeHandlerBase):
                 return np.Inf
             val = [self.metrics.node_value(df_[self.y_name]) for df_ in split_df]
             if "__weights__" in df:
-                w = [df_["__weights__"].values() for df_ in split_df]
+                w = [df_["__weights__"].values for df_ in split_df]
             else:
                 w = [None for df_ in split_df]
             return n[0] / N * self.metrics.loss(split_df[0][self.y_name], val[0], w[0]) + n[
@@ -207,7 +207,7 @@ class DichotomousAttributeHandler(AttributeHandlerBase):
         n = [len(df_.index) for df_ in self.split_df]
         val = [self.metrics.node_value(df_[self.y_name]) for df_ in self.split_df]
         if "__weights__" in df:
-            w = [df_["__weights__"].values() for df_ in self.split_df]
+            w = [df_["__weights__"].values for df_ in self.split_df]
         else:
             w = [None for df_ in self.split_df]
         self.loss = n[0] / N * self.metrics.loss(
@@ -284,7 +284,7 @@ class IntervalAttributeHandler(AttributeHandlerBase):
             n = [len(df_.index) for df_ in split_df]
             val = [self.metrics.node_value(df_[self.y_name]) for df_ in split_df]
             if "__weights__" in df:
-                w = [df_["__weights__"].values() for df_ in split_df]
+                w = [df_["__weights__"].values for df_ in split_df]
             else:
                 w = [None for df_ in split_df]
             return n[0] / N * self.metrics.loss(split_df[0][self.y_name], val[0], w[0]) + n[

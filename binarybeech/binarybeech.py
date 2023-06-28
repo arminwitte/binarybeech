@@ -226,7 +226,7 @@ class CART(Model):
         y = df[self.y_name]
         y_hat = self.dmgr.metrics.node_value(y)
         if "__weights__" in df:
-            w = df["__weights__"].values()
+            w = df["__weights__"].values
         else:
             w = None
         loss_parent = self.dmgr.metrics.loss(y, y_hat, w)
@@ -572,7 +572,7 @@ class GradientBoostedTree(Model):
             delta[i] = tree.traverse(x).value
         y = self.df[self.y_name].values
         if "__weights__" in self.df:
-            w = self.df["__weights__"].values()
+            w = self.df["__weights__"].values
         else:
             w = None
 
