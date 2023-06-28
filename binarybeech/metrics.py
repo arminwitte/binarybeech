@@ -52,7 +52,7 @@ class Metrics(ABC):
         return arr
 
     @abstractmethod
-    def loss(self, y, y_hat):
+    def loss(self, y, y_hat, w):
         pass
 
     @abstractmethod
@@ -85,13 +85,13 @@ class RegressionMetrics(Metrics):
     def __init__(self):
         pass
 
-    def loss(self, y, y_hat):
+    def loss(self, y, y_hat, w):
         # Implementation of the loss calculation for regression
         return math.mean_squared_error(y, y_hat)
 
     def loss_prune(self, y, y_hat):
         # Implementation of the loss pruning calculation for regression
-        return self.loss(y, y_hat)
+        return self.loss(y, y_hat, None)
 
     def node_value(self, y):
         # Implementation of the node value calculation for regression
@@ -132,7 +132,7 @@ class LogisticMetrics(Metrics):
     def __init__(self):
         pass
 
-    def loss(self, y, y_hat):
+    def loss(self, y, y_hat, w):
         # Implementation of the loss calculation for logistic
         return math.logistic_loss(y, y_hat)
 
@@ -207,9 +207,9 @@ class ClassificationMetrics(Metrics):
     def __init__(self):
         pass
 
-    def loss(self, y, y_hat):
+    def loss(self, y, y_hat, w):
         # Implementation of the loss calculation for classification
-        return math.gini_impurity(y)
+        return math.gini_impurity(y, w)
 
     def loss_prune(self, y, y_hat):
         # Implementation of the loss pruning calculation for classification
@@ -259,15 +259,15 @@ class ClassificationMetrics(Metrics):
     @staticmethod
     def check(x):
         return math.check_nominal(x)
-
+        
 
 class ClassificationMetricsEntropy(ClassificationMetrics):
     def __init__(self):
         pass
 
-    def loss(self, y, y_hat):
+    def loss(self, y, y_hat, w):
         # Implementation of the loss calculation for classification
-        return math.shannon_entropy(y)
+        return math.shannon_entropy(y, w)
 
 
 # =============================
@@ -277,11 +277,11 @@ class UnsupervisedMetrics(Metrics):
     def __init__(self):
         pass
 
-    def loss(self, y, y_hat):
+    def loss(self, y, y_hat, w):
         return np.inf
 
     def loss_prune(self, y, y_hat):
-        return self.loss(y, y_hat)
+        return self.loss(y, y_hat, None)
 
     def node_value(self, y):
         return f"cluster {str(uuid.uuid4())}"

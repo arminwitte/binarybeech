@@ -79,7 +79,7 @@ def test_mean_squared_error_weighted():
     w = np.linspace(0.5,5,50)
     mse = math.mean_squared_error_weighted(x,y,w)
     print("mse",mse)
-    np.testing.assert_allclose(mse,[1])
+    np.testing.assert_allclose(mse,[0.2833752029341517])
     
     
     

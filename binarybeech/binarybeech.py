@@ -225,7 +225,11 @@ class CART(Model):
     def _node_or_leaf(self, df):
         y = df[self.y_name]
         y_hat = self.dmgr.metrics.node_value(y)
-        loss_parent = self.dmgr.metrics.loss(y, y_hat)
+        if "__weights__" in df:
+            w = df["__weights__"].values()
+        else:
+            w = None
+        loss_parent = self.dmgr.metrics.loss(y, y_hat, w)
         # p = self._probability(df)
         if (
             loss_parent < self.leaf_loss_threshold
@@ -567,11 +571,15 @@ class GradientBoostedTree(Model):
         for i, x in enumerate(self.df.iloc):
             delta[i] = tree.traverse(x).value
         y = self.df[self.y_name].values
+        if "__weights__" in self.df:
+            w = self.df["__weights__"].values()
+        else:
+            w = None
 
         def fun(gamma):
             y_ = y_hat + gamma * delta
             p = self.dmgr.metrics.output_transform(y_)
-            return self.dmgr.metrics.loss(y, p)
+            return self.dmgr.metrics.loss(y, p, w)
 
         return fun
 
