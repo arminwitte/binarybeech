@@ -82,9 +82,9 @@ class NominalAttributeHandler(AttributeHandlerBase):
                 w = [df_["__weights__"].values for df_ in split_df]
             else:
                 w = [None for df_ in split_df]
-            loss = n[0] / N * self.metrics.loss(split_df[0][self.y_name], val[0], w[0]) + n[
-                1
-            ] / N * self.metrics.loss(split_df[1][self.y_name], val[1], w[1])
+            loss = n[0] / N * self.metrics.loss(
+                split_df[0][self.y_name], val[0], w[0]
+            ) + n[1] / N * self.metrics.loss(split_df[1][self.y_name], val[1], w[1])
             if loss < self.loss:
                 success = True
                 self.loss = loss
@@ -162,9 +162,9 @@ class HighCardinalityNominalAttributeHandler(AttributeHandlerBase):
                 w = [df_["__weights__"].values for df_ in split_df]
             else:
                 w = [None for df_ in split_df]
-            return n[0] / N * self.metrics.loss(split_df[0][self.y_name], val[0], w[0]) + n[
-                1
-            ] / N * self.metrics.loss(split_df[1][self.y_name], val[1], w[1])
+            return n[0] / N * self.metrics.loss(
+                split_df[0][self.y_name], val[0], w[0]
+            ) + n[1] / N * self.metrics.loss(split_df[1][self.y_name], val[1], w[1])
 
         return fun
 
@@ -287,9 +287,9 @@ class IntervalAttributeHandler(AttributeHandlerBase):
                 w = [df_["__weights__"].values for df_ in split_df]
             else:
                 w = [None for df_ in split_df]
-            return n[0] / N * self.metrics.loss(split_df[0][self.y_name], val[0], w[0]) + n[
-                1
-            ] / N * self.metrics.loss(split_df[1][self.y_name], val[1], w[1])
+            return n[0] / N * self.metrics.loss(
+                split_df[0][self.y_name], val[0], w[0]
+            ) + n[1] / N * self.metrics.loss(split_df[1][self.y_name], val[1], w[1])
 
         return fun
 

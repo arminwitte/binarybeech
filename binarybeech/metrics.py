@@ -259,7 +259,7 @@ class ClassificationMetrics(Metrics):
     @staticmethod
     def check(x):
         return math.check_nominal(x)
-        
+
 
 class ClassificationMetricsEntropy(ClassificationMetrics):
     def __init__(self):

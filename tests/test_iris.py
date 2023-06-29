@@ -78,11 +78,12 @@ def test_iris_from_json():
     acc = val["accuracy"]
     np.testing.assert_array_equal(p[:10], ["setosa"] * 10)
     assert acc <= 1.0 and acc > 0.95
-    
+
+
 def test_iris_cart_create_weighted():
     df_iris = pd.read_csv("data/iris.csv")
     df_iris["__weights__"] = 1
-    df_iris[df_iris["species"]== "versicolor"]["__weights__"] = 3
+    df_iris[df_iris["species"] == "versicolor"]["__weights__"] = 3
     c = CART(df=df_iris, y_name="species", method="classification")
     c.create_tree()
     p = c.predict(df_iris)
@@ -90,5 +91,3 @@ def test_iris_cart_create_weighted():
     acc = val["accuracy"]
     np.testing.assert_array_equal(p[:10], ["setosa"] * 10)
     assert acc <= 1.0 and acc > 0.95
-
-

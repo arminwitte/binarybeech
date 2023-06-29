@@ -706,9 +706,9 @@ class AdaBoostTree(Model):
         d = {}
         for i in range(m):
             t = self.trees[i]
-            #print(t)
+            # print(t)
             label = t.traverse(x).value
-            #print(">>>>>>>> label:", label)
+            # print(">>>>>>>> label:", label)
             if label in d:
                 d[label] += self.alpha[i]
             else:
@@ -732,34 +732,34 @@ class AdaBoostTree(Model):
         df = self.df.copy()
         self.trees = []
         self.alpha = []
-        
+
         # Initialize the observation weights
         N = len(df.index)
         # w = np.ones((N,)) * 1/N
-        df["__weights__"] = 1/N
+        df["__weights__"] = 1 / N
 
         for i in range(M):
             self.reporter["iter"] = i
-            
+
             # Fit a classifier
             c = self._decision_stump(df)
-            
+
             I = self._I(df, c)
             err = self._err(df, I)
             self.reporter["err"] = err
-            
+
             alpha = self._alpha(err)
             self.reporter["alpha"] = alpha * 1000
-            
+
             w = df["__weights__"] * np.exp(alpha * I)
             self.reporter["w_max"] = np.max(w) * 1000
             df["__weights__"] = w
-            
+
             if err < 0.5:
                 self.trees.append(c.tree)
                 self.alpha.append(alpha)
             self.reporter.print()
-            
+
     def _decision_stump(self, df):
         if self.n_attributes is None:
             X_names = self.X_names
@@ -789,31 +789,30 @@ class AdaBoostTree(Model):
             self.seed += 1
 
         return c
-        
+
     def _I(self, df, c):
         y_hat = np.array(c.predict(df)).ravel()
         I = np.empty_like(y_hat)
         for i, x in enumerate(df.iloc):
             I[i] = 1 if x[self.y_name] != y_hat[i] else 0
         return I.astype(int)
-        
+
     def _err(self, df, I):
         err = np.sum(I * df["__weights__"])
         # err = 0
         # for i, x in enumerate(df.iloc):
         #     err += x["__weights__"] if df[self.y_name] != y_hat[i] else 0.
-        return err/np.sum(df["__weights__"])
-            
+        return err / np.sum(df["__weights__"])
+
     def _alpha(self, err):
-        return np.log((1.0 - err)/err)
-        
+        return np.log((1.0 - err) / err)
+
     def validate(self, df=None):
         if df is None:
             df = self.df
         y_hat = self.predict(df)
         y = df[self.y_name]
         return self.dmgr.metrics.validate(y, y_hat)
-
 
 
 class RandomForest(Model):
