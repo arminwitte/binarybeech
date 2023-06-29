@@ -747,7 +747,7 @@ class AdaBoostTree(Model):
             self.trees.append(c.tree)
             
             I = self._I(df, c)
-            err = self._err(df, c, I)
+            err = self._err(df, y_hat, I)
             self.reporter["err"] = err
             
             alpha = self._alpha(err)
@@ -797,11 +797,11 @@ class AdaBoostTree(Model):
             I[i] = 1 if x[self.y_name] != y_hat[i] else 0
         return I
         
-    def _err(self, df, c, I):
-        err = 0
-        y_hat = c.predict(df)
-        for i, x in enumerate(df.iloc):
-            err += x["__weights__"] if df[self.y_name] != y_hat[i] else 0.
+    def _err(self, df, I):
+        err = np.sum(I * df["_weights__"])
+        # err = 0
+        # for i, x in enumerate(df.iloc):
+        #     err += x["__weights__"] if df[self.y_name] != y_hat[i] else 0.
         return err/np.sum(df["__weights__"])
             
     def _alpha(self, err):
