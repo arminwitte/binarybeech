@@ -13,7 +13,7 @@ def test_adaboost_iris():
     val = c.validate()
     acc = val["accuracy"]
     np.testing.assert_array_equal(p[:10], ["setosa"] * 10)
-    assert acc <= 1.0 and acc > 0.95
+    assert acc <= 1.0 and acc > 0.96
 
 def test_adaboost_titanic():
     df_titanic = pd.read_csv("data/titanic.csv")
@@ -22,7 +22,7 @@ def test_adaboost_titanic():
     p = c.predict(df_titanic)
     val = c.validate()
     acc = val["accuracy"]
-    np.testing.assert_allclose(p[:10], [0, 1, 0, 1, 0, 0, 0, 0, 1, 1])
+    np.testing.assert_allclose(p[:10], [0, 1, 0, 1, 0, 0, 0, 0, 0, 1])
     assert acc < 1.0 and acc > 0.78
     
 

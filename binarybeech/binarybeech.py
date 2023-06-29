@@ -715,8 +715,8 @@ class AdaBoostTree(Model):
                 d[label] = self.alpha[i]
         labels = [k for k in d.keys()]
         scores = [s for s in d.values()]
-        #print(labels)
-        #print(scores)
+        # print(labels)
+        # print(scores)
         ind_max = np.argmax(scores)
         return labels[ind_max]
 
@@ -743,20 +743,21 @@ class AdaBoostTree(Model):
             
             # Fit a classifier
             c = self._decision_stump(df)
-            self.trees.append(c.tree)
             
             I = self._I(df, c)
             err = self._err(df, I)
             self.reporter["err"] = err
             
             alpha = self._alpha(err)
-            self.alpha.append(alpha)
-            self.reporter["alpha"] = alpha
+            self.reporter["alpha"] = alpha * 1000
             
             w = df["__weights__"] * np.exp(alpha * I)
-            self.reporter["w_max"] = np.max(w)
+            self.reporter["w_max"] = np.max(w) * 1000
             df["__weights__"] = w
-                
+            
+            if err < 0.5:
+                self.trees.append(c.tree)
+                self.alpha.append(alpha)
             self.reporter.print()
             
     def _decision_stump(self, df):
@@ -794,7 +795,7 @@ class AdaBoostTree(Model):
         I = np.empty_like(y_hat)
         for i, x in enumerate(df.iloc):
             I[i] = 1 if x[self.y_name] != y_hat[i] else 0
-        return I
+        return I.astype(int)
         
     def _err(self, df, I):
         err = np.sum(I * df["__weights__"])
