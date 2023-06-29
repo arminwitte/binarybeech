@@ -747,7 +747,7 @@ class AdaBoostTree(Model):
             self.trees.append(c.tree)
             
             I = self._I(df, c)
-            err = self._err(df, y_hat, I)
+            err = self._err(df, I)
             self.reporter["err"] = err
             
             alpha = self._alpha(err)
