@@ -8,7 +8,7 @@ from binarybeech.tree import Tree
 def test_adaboost_iris():
     df_iris = pd.read_csv("data/iris.csv")
     c = AdaBoostTree(df=df_iris, y_name="species", method="classification")
-    c.train()
+    c.train(100)
     p = c.predict(df_iris)
     val = c.validate()
     acc = val["accuracy"]
@@ -18,7 +18,7 @@ def test_adaboost_iris():
 def test_adaboost_titanic():
     df_titanic = pd.read_csv("data/titanic.csv")
     c = AdaBoostTree(df=df_titanic, y_name="Survived", method="classification")
-    c.train()
+    c.train(100)
     p = c.predict(df_titanic)
     val = c.validate()
     acc = val["accuracy"]
