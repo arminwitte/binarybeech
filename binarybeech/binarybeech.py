@@ -669,7 +669,7 @@ class AdaBoostTree(Model):
         sample_frac=1,
         n_attributes=None,
         cart_settings={},
-        method="regression",
+        method="classification",
         handle_missings="simple",
         attribute_handlers=None,
         seed=None,
@@ -687,6 +687,7 @@ class AdaBoostTree(Model):
         )
         self.df = self.training_data.df.copy()
         self.N = len(self.df.index)
+        self.method = method
 
         self.trees = []
         self.alpha = []  # gamma
