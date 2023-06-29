@@ -700,24 +700,23 @@ class AdaBoostTree(Model):
         self.reporter = Reporter(["iter", "err", "alpha", "w_max"])
 
     def _predict1(self, x, m=None):
-        pass
         M = len(self.trees)
         if not m:
             m = M
         d = {}
         for i in range(m):
             t = self.trees[i]
-            print(t)
+            #print(t)
             label = t.traverse(x).value
-            print(">>>>>>>> label:", label)
+            #print(">>>>>>>> label:", label)
             if label in d:
                 d[label] += self.alpha[i]
             else:
                 d[label] = self.alpha[i]
         labels = [k for k in d.keys()]
         scores = [s for s in d.values()]
-        print(labels)
-        print(scores)
+        #print(labels)
+        #print(scores)
         ind_max = np.argmax(scores)
         return labels[ind_max]
 
