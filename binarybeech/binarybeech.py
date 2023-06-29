@@ -696,57 +696,117 @@ class AdaBoostTree(Model):
         self.seed = seed
 
         self.logger = logging.getLogger(__name__)
-        self.reporter = Reporter(["iter", "res_norm", "alpha", "sse"])
+        self.reporter = Reporter(["iter", "err", "alpha", "w_max"])
 
     def _predict1(self, x, m=None):
         pass
-        p = self.init_tree.traverse(x).value
-        p = self.dmgr.metrics.inverse_transform(p)
         M = len(self.trees)
         if not m:
             m = M
+        d = {}
         for i in range(m):
             t = self.trees[i]
-            p += self.learning_rate * self.gamma[i] * t.traverse(x).value
-        return p
+            label = t.traverse(x).value
+            if label in d:
+                d[label] += self.alpha[i]
+            else:
+                d[label] = self.alpha[i]
+        labels = [k for k in d.keys()]
+        scores = [s for s in d.values()]
+        ind_max = np.argmax(scores)
+        return labels[ind_max]
 
     def _predict_raw(self, df, m=None):
-        pass
         y_hat = [self._predict1(x, m) for x in df.iloc]
         return np.array(y_hat)
 
     def predict(self, df, m=None):
-        pass
         y_hat = self._predict_raw(df, m)
         return self.dmgr.metrics.output_transform(y_hat)
 
-    def _pseudo_residuals(self, df, m=None):
-        pass
-        res = df[self.y_name] - self.predict(df, m=m)
-        return res
-
     def train(self, M):
-        pass
-        self._initial_tree()
-        df = self.df
+        df = self.df.copy()
         self.trees = []
-        self.gamma = []
+        self.alpha = []
+        
+        # Initialize the observation weights
+        N = len(df.index)
+        # w = np.ones((N,)) * 1/N
+        df["__weights__"] = 1/N
 
         for i in range(M):
-            res = self._pseudo_residuals(df)
             self.reporter["iter"] = i
-            self.reporter["res_norm"] = np.linalg.norm(res)
-            df["pseudo_residuals"] = res
+            
+            # Fit a classifier
+            c = self._decision_stump(df)
 
-            c = self._append_regression_tree(df)
-
-            if self.gamma_setting is None:
-                gamma = self._gamma(c.tree)
-            else:
-                gamma = self.gamma_setting
+            I = self._I(df)
+            err = self._err(df, I)
+            self.reporter["err"] = err
+            alpha = self._alpha(err)
+            self.reporter["alpha"] = alpha
+            w = df["__weights__"] * np.exp(alpha * I)
+            self.reporter["w_max"] = np.max(w)
+            df["__weights__"] = w
+                
             self.trees.append(c.tree)
-            self.gamma.append(gamma)
+            self.alpha.append(alpha)
             self.reporter.print()
+            
+    def _decision_stump(self, df):
+        if self.n_attributes is None:
+            X_names = self.X_names
+        else:
+            rng = np.random.default_rng(seed=self.seed)
+            if self.seed is not None:
+                self.seed += 1
+            X_names = rng.choice(self.X_names, self.n_attributes, replace=False)
+
+        kwargs = dict(
+            max_depth=1,
+            min_leaf_samples=5,
+            min_split_samples=4,
+            method=self.method,
+        )
+        kwargs = {**kwargs, **self.cart_settings}
+
+        c = CART(
+            df=df.sample(frac=self.sample_frac, replace=True, random_state=self.seed),
+            y_name=self.y_name,
+            X_names=X_names,
+            **kwargs,
+        )
+        c.create_tree()
+
+        if self.seed is not None:
+            self.seed += 1
+
+        return c
+        
+    def _I(self, df):
+        y_hat = np.array(self.predict(df)).ravel()
+        I = np.empty_like(y_hat)
+        for i, x in enumerate(df.iloc):
+            I[i] = 1 if x[self.y_name] != y_hat[i] else 0
+        return I
+        
+    def _err(self, df, I):
+        err = 0
+        y_hat = self.predict(df)
+        for i, x in enumerate(df.iloc):
+            err += x["__weights__"] if df[self.y_name] != y_hat[i] else 0.
+        return err/np.sum(df["__weights__"])
+            
+    def _alpha(self, err):
+        return np.log((1.0 - err)/err)
+        
+    def validate(self, df=None):
+        if df is None:
+            df = self.df
+        y_hat = self.predict(df)
+        y = df[self.y_name]
+        return self.dmgr.metrics.validate(y, y_hat)
+
 
 
 class RandomForest(Model):
