@@ -791,7 +791,7 @@ class AdaBoostTree(Model):
         return c
         
     def _I(self, df, c):
-        y_hat = np.array(self.predict(df)).ravel()
+        y_hat = np.array(c.predict(df)).ravel()
         I = np.empty_like(y_hat)
         for i, x in enumerate(df.iloc):
             I[i] = 1 if x[self.y_name] != y_hat[i] else 0
