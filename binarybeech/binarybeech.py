@@ -744,18 +744,20 @@ class AdaBoostTree(Model):
             
             # Fit a classifier
             c = self._decision_stump(df)
-
+            self.trees.append(c.tree)
+            
             I = self._I(df)
             err = self._err(df, I)
             self.reporter["err"] = err
+            
             alpha = self._alpha(err)
+            self.alpha.append(alpha)
             self.reporter["alpha"] = alpha
+            
             w = df["__weights__"] * np.exp(alpha * I)
             self.reporter["w_max"] = np.max(w)
             df["__weights__"] = w
                 
-            self.trees.append(c.tree)
-            self.alpha.append(alpha)
             self.reporter.print()
             
     def _decision_stump(self, df):
