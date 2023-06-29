@@ -746,8 +746,8 @@ class AdaBoostTree(Model):
             c = self._decision_stump(df)
             self.trees.append(c.tree)
             
-            I = self._I(df)
-            err = self._err(df, I)
+            I = self._I(df, c)
+            err = self._err(df, c, I)
             self.reporter["err"] = err
             
             alpha = self._alpha(err)
@@ -790,16 +790,16 @@ class AdaBoostTree(Model):
 
         return c
         
-    def _I(self, df):
+    def _I(self, df, c):
         y_hat = np.array(self.predict(df)).ravel()
         I = np.empty_like(y_hat)
         for i, x in enumerate(df.iloc):
             I[i] = 1 if x[self.y_name] != y_hat[i] else 0
         return I
         
-    def _err(self, df, I):
+    def _err(self, df, c, I):
         err = 0
-        y_hat = self.predict(df)
+        y_hat = c.predict(df)
         for i, x in enumerate(df.iloc):
             err += x["__weights__"] if df[self.y_name] != y_hat[i] else 0.
         return err/np.sum(df["__weights__"])
