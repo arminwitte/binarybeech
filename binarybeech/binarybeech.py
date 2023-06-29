@@ -798,7 +798,7 @@ class AdaBoostTree(Model):
         return I
         
     def _err(self, df, I):
-        err = np.sum(I * df["_weights__"])
+        err = np.sum(I * df["__weights__"])
         # err = 0
         # for i, x in enumerate(df.iloc):
         #     err += x["__weights__"] if df[self.y_name] != y_hat[i] else 0.
