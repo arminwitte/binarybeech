@@ -807,7 +807,7 @@ class AdaBoostTree(Model):
         return err / np.sum(df["__weights__"])
 
     def _alpha(self, err, K):
-        return np.log((1.0 - err) / err) + np.log(1.0 - K)
+        return np.log((1.0 - err) / err) + np.log(K - 1)
 
     def validate(self, df=None):
         if df is None:
