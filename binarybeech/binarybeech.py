@@ -705,14 +705,17 @@ class AdaBoostTree(Model):
             m = M
         d = {}
         for i in range(m):
+            alpha = self.alpha[i]
+            if alpha <= 0:
+                continue
             t = self.trees[i]
             # print(t)
             label = t.traverse(x).value
             # print(">>>>>>>> label:", label)
             if label in d:
-                d[label] += self.alpha[i]
+                d[label] += alpha
             else:
-                d[label] = self.alpha[i]
+                d[label] = alpha
         labels = [k for k in d.keys()]
         scores = [s for s in d.values()]
         # print(labels)
@@ -751,15 +754,15 @@ class AdaBoostTree(Model):
             self.reporter["err"] = err
 
             alpha = self._alpha(err, K)
+            alpha = max(0,alpha)
             self.reporter["alpha"] = alpha
 
             w = df["__weights__"] * np.exp(alpha * mis)
             self.reporter["w_ratio"] = np.max(w)/np.min(w)
             df["__weights__"] = w
 
-            if err < 1/K:
-                self.trees.append(c.tree)
-                self.alpha.append(alpha)
+            self.trees.append(c.tree)
+            self.alpha.append(alpha)
             self.reporter.print()
 
     def _decision_stump(self, df):
