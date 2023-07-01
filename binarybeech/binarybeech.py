@@ -697,7 +697,7 @@ class AdaBoostTree(Model):
         self.seed = seed
 
         self.logger = logging.getLogger(__name__)
-        self.reporter = Reporter(["iter", "err", "alpha", "w_max"])
+        self.reporter = Reporter(["iter", "err", "alpha", "w_ratio"])
 
     def _predict1(self, x, m=None):
         M = len(self.trees)
@@ -736,7 +736,9 @@ class AdaBoostTree(Model):
         # Initialize the observation weights
         N = len(df.index)
         # w = np.ones((N,)) * 1/N
-        df["__weights__"] = 1 / N
+        if "__weights__" not in df:
+            df["__weights__"] = 1 / N
+        K = len(np.unique(df[self.y_name]))
 
         for i in range(M):
             self.reporter["iter"] = i
@@ -744,18 +746,18 @@ class AdaBoostTree(Model):
             # Fit a classifier
             c = self._decision_stump(df)
 
-            I = self._I(df, c)
-            err = self._err(df, I)
+            mis = self._I(df, c)
+            err = self._err(df, mis)
             self.reporter["err"] = err
 
-            alpha = self._alpha(err)
-            self.reporter["alpha"] = alpha * 1000
+            alpha = self._alpha(err, K)
+            self.reporter["alpha"] = alpha
 
             w = df["__weights__"] * np.exp(alpha * I)
-            self.reporter["w_max"] = np.max(w) * 1000
+            self.reporter["w_ratio"] = np.max(w)/np.min(w)
             df["__weights__"] = w
 
-            if err < 0.5:
+            if err < 1/K:
                 self.trees.append(c.tree)
                 self.alpha.append(alpha)
             self.reporter.print()
@@ -792,20 +794,20 @@ class AdaBoostTree(Model):
 
     def _I(self, df, c):
         y_hat = np.array(c.predict(df)).ravel()
-        I = np.empty_like(y_hat)
+        mis = np.empty_like(y_hat)
         for i, x in enumerate(df.iloc):
-            I[i] = 1 if x[self.y_name] != y_hat[i] else 0
-        return I.astype(int)
+            mis[i] = 1 if x[self.y_name] != y_hat[i] else 0
+        return mis.astype(int)
 
-    def _err(self, df, I):
-        err = np.sum(I * df["__weights__"])
+    def _err(self, df, mis):
+        err = np.sum(mis * df["__weights__"])
         # err = 0
         # for i, x in enumerate(df.iloc):
         #     err += x["__weights__"] if df[self.y_name] != y_hat[i] else 0.
         return err / np.sum(df["__weights__"])
 
-    def _alpha(self, err):
-        return np.log((1.0 - err) / err)
+    def _alpha(self, err, K):
+        return np.log((1.0 - err) / err) + np.log(1.0 - K)
 
     def validate(self, df=None):
         if df is None:
