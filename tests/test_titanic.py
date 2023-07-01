@@ -11,7 +11,7 @@ def test_titanic_cart_create():
     p = c.predict(df_titanic)
     val = c.validate()
     acc = val["accuracy"]
-    np.testing.assert_allclose(p[:10], [0, 1, 0, 1, 0, 0, 0, 0, 1, 1])
+    np.testing.assert_allclose(p[:10], [0, 1, 1, 1, 0, 0, 0, 0, 1, 1])
     assert acc < 1.0 and acc > 0.78
 
 
