@@ -224,11 +224,12 @@ class CART(Model):
 
     def _node_or_leaf(self, df):
         y = df[self.y_name]
-        y_hat = self.dmgr.metrics.node_value(y)
+
         if "__weights__" in df:
             w = df["__weights__"].values
         else:
             w = None
+        y_hat = self.dmgr.metrics.node_value(y, w)
         loss_parent = self.dmgr.metrics.loss(y, y_hat, w)
         # p = self._probability(df)
         if (

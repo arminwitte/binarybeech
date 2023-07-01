@@ -94,10 +94,22 @@ def r_squared(y, y_hat):
     return 1 - sse / sst
 
 
-def majority_class(x):
+def majority_class(x, w=None):
+    if w is None:
+        return majority_class_fast(x)
+    return majority_class_weighted(x, w)
+    
+def majority_class_fast(x):
     unique, counts = np.unique(x, return_counts=True)
     ind_max = np.argmax(counts)
     return unique[ind_max]
+    
+def majority_class_weighted(x, w):
+    unique, share = unique_weighted(x, w)
+    ind_max = np.argmax(share)
+    return unique[ind_max]
+
+
 
 
 def odds(x):
