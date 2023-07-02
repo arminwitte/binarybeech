@@ -262,7 +262,7 @@ class ClassificationMetrics(Metrics):
         if "__weights__" in df:
             w = df["__weights__"].values
         else:
-            w = None        
+            w = None
         y_hat = self.node_value(y, w)
         bins = [[], []]
         unique = np.unique(df[attribute])

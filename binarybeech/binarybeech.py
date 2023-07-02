@@ -755,11 +755,11 @@ class AdaBoostTree(Model):
             self.reporter["err"] = err
 
             alpha = self._alpha(err, K)
-            alpha = max(0,alpha)
+            alpha = max(0, alpha)
             self.reporter["alpha"] = alpha
 
             w = df["__weights__"] * np.exp(alpha * mis)
-            self.reporter["w_ratio"] = np.max(w)/np.min(w)
+            self.reporter["w_ratio"] = np.max(w) / np.min(w)
             df["__weights__"] = w
 
             self.trees.append(c.tree)
