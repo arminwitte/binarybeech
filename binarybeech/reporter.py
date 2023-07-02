@@ -3,10 +3,11 @@
 
 
 class Reporter:
-    def __init__(self, labels):
+    def __init__(self, labels, verbosity=2):
         self.labels = labels
         self.buffer = {}
         self.n = -1
+        self.verbosity = verbosity
 
     def set(self, **kwargs):
         self.buffer.update(kwargs)
@@ -18,6 +19,9 @@ class Reporter:
         self.buffer[key] = value
 
     def print(self):
+        if self.verbosity < 2:
+            return
+        
         self.n += 1
         if self.n == 0:
             for L in self.labels:
@@ -44,4 +48,16 @@ class Reporter:
         self.buffer = {}
 
     def message(self, s):
+        if self.verbosity < 2:
+            return
+        print(s)
+
+    def warning(self, s):
+        if self.verbosity < 1:
+            return
+        print(s)
+
+    def info(self, s):
+        if self.verbosity < 3:
+            return
         print(s)

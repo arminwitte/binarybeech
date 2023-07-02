@@ -104,6 +104,7 @@ class CART(Model):
         attribute_handlers=None,
         seed=None,
         algorithm_kwargs={},
+        verbosity = 2,
     ):
         super().__init__(
             training_data,
@@ -127,7 +128,7 @@ class CART(Model):
         self.seed = seed
 
         self.logger = logging.getLogger(__name__)
-        self.reporter = Reporter([])
+        self.reporter = Reporter([],verbosity=verbosity)
 
     def _predict1(self, x):
         return self.tree.traverse(x).value
@@ -165,6 +166,7 @@ class CART(Model):
                 max_depth=self.max_depth,
                 method=self.dmgr.method,
                 attribute_handlers=self.dmgr,
+                verbosity=0,
             )
             c.create_tree()
             pres = c.prune(test_set=data[1])
@@ -405,6 +407,7 @@ class GradientBoostedTree(Model):
         attribute_handlers=None,
         seed=None,
         algorithm_kwargs={},
+        verbosity=2,
     ):
         super().__init__(
             training_data,
@@ -431,7 +434,7 @@ class GradientBoostedTree(Model):
         self.seed = seed
 
         self.logger = logging.getLogger(__name__)
-        self.reporter = Reporter(["iter", "res_norm", "gamma", "sse"])
+        self.reporter = Reporter(["iter", "res_norm", "gamma", "sse"],verbosity=verbosity)
 
     def _initial_tree(self):
         c = CART(
@@ -442,6 +445,7 @@ class GradientBoostedTree(Model):
             method=self.init_method,
             attribute_handlers=self.dmgr,
             seed=None,
+            verbosity=0,
         )
         c.create_tree()
         self.init_tree = c.tree
@@ -483,31 +487,6 @@ class GradientBoostedTree(Model):
             self.reporter["res_norm"] = np.linalg.norm(res)
             df["pseudo_residuals"] = res
 
-            # if self.n_attributes is None:
-            #     X_names = self.X_names
-            # else:
-            #     rng = np.random.default_rng(seed=seed)
-            #     if seed is not None:
-            #         seed += 1
-            #     X_names = rng.choice(self.X_names, self.n_attributes, replace=False)
-
-            # kwargs = dict(
-            #     max_depth=3,
-            #     min_leaf_samples=5,
-            #     min_split_samples=4,
-            #     method="regression",
-            # )
-            # kwargs = {**kwargs, **self.cart_settings}
-
-            # c = CART(
-            #     df=df.sample(frac=self.sample_frac, replace=True, random_state=seed),
-            #     y_name="pseudo_residuals",
-            #     X_names=X_names,
-            #     **kwargs,
-            # )
-            # c.create_tree()
-            # if seed is not None:
-            #     seed += 1
             c = self._append_regression_tree(df)
 
             if self.gamma_setting is None:
@@ -532,6 +511,7 @@ class GradientBoostedTree(Model):
             min_leaf_samples=5,
             min_split_samples=4,
             method="regression",
+            verbosity=0,
         )
         kwargs = {**kwargs, **self.cart_settings}
 
@@ -675,6 +655,7 @@ class AdaBoostTree(Model):
         attribute_handlers=None,
         seed=None,
         algorithm_kwargs={},
+        verbosity=2,
     ):
         super().__init__(
             training_data,
@@ -698,7 +679,7 @@ class AdaBoostTree(Model):
         self.seed = seed
 
         self.logger = logging.getLogger(__name__)
-        self.reporter = Reporter(["iter", "err", "alpha", "w_ratio"])
+        self.reporter = Reporter(["iter", "err", "alpha", "w_ratio"],verbosity=verbosity)
 
     def _predict1(self, x, m=None):
         M = len(self.trees)
@@ -780,6 +761,7 @@ class AdaBoostTree(Model):
             min_leaf_samples=5,
             min_split_samples=4,
             method=self.method,
+            verbosity=0,
         )
         kwargs = {**kwargs, **self.cart_settings}
 
@@ -837,6 +819,7 @@ class RandomForest(Model):
         attribute_handlers=None,
         seed=None,
         algorithm_kwargs={},
+        verbosity = 2,
     ):
         super().__init__(
             training_data,
@@ -860,7 +843,7 @@ class RandomForest(Model):
 
         self.verbose = verbose
         self.logger = logging.getLogger(__name__)
-        self.reporter = Reporter(["no", "n_leafs"])
+        self.reporter = Reporter(["no", "n_leafs"],verbosity=verbosity)
 
     def train(self, M):
         self.trees = []
@@ -883,6 +866,7 @@ class RandomForest(Model):
                 min_split_samples=4,
                 method=self.dmgr.method,
                 attribute_handlers=self.dmgr,
+                verbosity=0,
             )
             kwargs = {**kwargs, **self.cart_settings}
             c = CART(df=df, y_name=self.y_name, X_names=X_names, **kwargs)
