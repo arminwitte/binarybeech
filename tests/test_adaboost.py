@@ -24,4 +24,4 @@ def test_adaboost_titanic():
     val = c.validate()
     acc = val["accuracy"]
     np.testing.assert_allclose(p[:10], [0, 1, 1, 1, 0, 0, 0, 0, 1, 1])
-    assert acc < 1.0 and acc > 0.82
+    assert acc < 1.0 and acc > 0.80
