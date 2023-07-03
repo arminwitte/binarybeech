@@ -3,12 +3,14 @@
 
 
 class Reporter:
-    def __init__(self, labels, verbosity=2):
-        self.labels = labels
+    def __init__(self):
         self.buffer = {}
         self.n = -1
-        self.verbosity = verbosity
-
+        self.flight_level = 2
+        
+    def reset(self, labels):
+        self.labels = labels
+        
     def set(self, **kwargs):
         self.buffer.update(kwargs)
 
@@ -18,8 +20,8 @@ class Reporter:
             return
         self.buffer[key] = value
 
-    def print(self):
-        if self.verbosity < 2:
+    def print(self, level = 2):
+        if self.flight_level > level:
             return
         
         self.n += 1
@@ -47,17 +49,9 @@ class Reporter:
         print(s)
         self.buffer = {}
 
-    def message(self, s):
-        if self.verbosity < 2:
+    def message(self, s, level = 0):
+        if self.flight_level > level:
             return
         print(s)
-
-    def warning(self, s):
-        if self.verbosity < 1:
-            return
-        print(s)
-
-    def info(self, s):
-        if self.verbosity < 3:
-            return
-        print(s)
+        
+reporter = Reporter()
