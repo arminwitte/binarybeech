@@ -7,10 +7,10 @@ class Reporter:
         self.buffer = {}
         self.n = -1
         self.flight_level = 2
-        
+
     def reset(self, labels):
         self.labels = labels
-        
+
     def set(self, **kwargs):
         self.buffer.update(kwargs)
 
@@ -20,10 +20,10 @@ class Reporter:
             return
         self.buffer[key] = value
 
-    def print(self, level = 2):
+    def print(self, level=2):
         if self.flight_level > level:
             return
-        
+
         self.n += 1
         if self.n == 0:
             for L in self.labels:
@@ -49,9 +49,10 @@ class Reporter:
         print(s)
         self.buffer = {}
 
-    def message(self, s, level = 0):
+    def message(self, s, level=0):
         if self.flight_level > level:
             return
         print(s)
-        
+
+
 reporter = Reporter()

@@ -218,7 +218,7 @@ class CART(Model):
         root = self._node_or_leaf(self.training_data.df)
         self.tree = Tree(root)
         n_leafs = self.tree.leaf_count()
-        reporter.message(f"A tree with {n_leafs} leafs was created",1)
+        reporter.message(f"A tree with {n_leafs} leafs was created", 1)
         return self.tree
 
     def _node_or_leaf(self, df):
