@@ -5,25 +5,71 @@ import pandas as pd
 import scipy.signal
 
 
-def gini_impurity(x):
+def unique_weighted(x, w):
+    d = {}
+    for i, x_ in enumerate(x):
+        if x_ in d:
+            d[x_] += w[i]
+        else:
+            d[x_] = w[i]
+    u = [s for s in d.keys()]
+    c = [x for x in d.values()]
+    return np.array(u), np.array(c) / np.sum(c)
+
+
+def gini_impurity_fast(x):
     unique, counts = np.unique(x, return_counts=True)
     N = x.size
     p = counts / N
     return 1.0 - np.sum(p**2)
 
 
-def shannon_entropy(x):
+def gini_impurity_weighted(x, w):
+    _, p = unique_weighted(x, w)
+    return 1.0 - np.sum(p**2)
+
+
+def gini_impurity(x, w=None):
+    if w is None:
+        return gini_impurity_fast(x)
+    return gini_impurity_weighted(x, w)
+
+
+def shannon_entropy_fast(x):
     unique, counts = np.unique(x, return_counts=True)
     N = x.size
     p = counts / N
     return -np.sum(p * np.log2(p))
 
 
-def misclassification_cost(x):
+def shannon_entropy_weighted(x, w):
+    _, p = unique_weighted(x, w)
+    return -np.sum(p * np.log2(p))
+
+
+def shannon_entropy(x, w=None):
+    if w is None:
+        return shannon_entropy_fast(x)
+    return shannon_entropy_weighted(x, w)
+
+
+def misclassification_cost_fast(x):
     unique, counts = np.unique(x, return_counts=True)
     N = x.size
     p = np.max(counts) / N
     return 1.0 - p
+
+
+def misclassification_cost_weighted(x, w):
+    _, share = unique_weighted(x, w)
+    p = np.max(share)
+    return 1.0 - p
+
+
+def misclassification_cost(x, w=None):
+    if w is None:
+        return misclassification_cost_fast(x)
+    return misclassification_cost_weighted(x, w)
 
 
 def logistic_loss(y, p):
@@ -36,6 +82,11 @@ def mean_squared_error(y, y_hat):
     return 1 / e.size * (e.T @ e)
 
 
+def mean_squared_error_weighted(y, y_hat, w):
+    e = (y - y_hat) * w
+    return 1 / e.size * (e.T @ e)
+
+
 def r_squared(y, y_hat):
     e = y - y_hat
     sse = e.T @ e
@@ -43,9 +94,21 @@ def r_squared(y, y_hat):
     return 1 - sse / sst
 
 
-def majority_class(x):
+def majority_class(x, w=None):
+    if w is None:
+        return majority_class_fast(x)
+    return majority_class_weighted(x, w)
+
+
+def majority_class_fast(x):
     unique, counts = np.unique(x, return_counts=True)
     ind_max = np.argmax(counts)
+    return unique[ind_max]
+
+
+def majority_class_weighted(x, w):
+    unique, share = unique_weighted(x, w)
+    ind_max = np.argmax(share)
     return unique[ind_max]
 
 

@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-from binarybeech.binarybeech import CART, GradientBoostedTree, RandomForest
+from binarybeech.binarybeech import GradientBoostedTree
 
 
 def test_titanic_update_elastic():
@@ -31,6 +31,7 @@ def test_titanic_update_elastic():
         np.round(p[:10]).astype(int), [0, 0, 0, 0, 0, 1, 0, 0, 1, 1]
     )
     assert acc < 1.0 and acc > 0.8
+
 
 def test_titanic_update_gamma():
     df_titanic = pd.read_csv("data/titanic.csv").sample(

@@ -52,7 +52,7 @@ class Metrics(ABC):
         return arr
 
     @abstractmethod
-    def loss(self, y, y_hat):
+    def loss(self, y, y_hat, w):
         pass
 
     @abstractmethod
@@ -60,7 +60,7 @@ class Metrics(ABC):
         pass
 
     @abstractmethod
-    def node_value(self, y):
+    def node_value(self, y, w):
         pass
 
     @abstractmethod
@@ -85,15 +85,15 @@ class RegressionMetrics(Metrics):
     def __init__(self):
         pass
 
-    def loss(self, y, y_hat):
+    def loss(self, y, y_hat, w):
         # Implementation of the loss calculation for regression
         return math.mean_squared_error(y, y_hat)
 
     def loss_prune(self, y, y_hat):
         # Implementation of the loss pruning calculation for regression
-        return self.loss(y, y_hat)
+        return self.loss(y, y_hat, None)
 
-    def node_value(self, y):
+    def node_value(self, y, w):
         # Implementation of the node value calculation for regression
         return np.nanmean(y)
 
@@ -110,12 +110,20 @@ class RegressionMetrics(Metrics):
 
     def bins(self, df, y_name, attribute):
         y = df[y_name]
-        y_hat = self.node_value(y)
+        if "__weights__" in df:
+            w = df["__weights__"].values
+        else:
+            w = None
+        y_hat = self.node_value(y, w)
         bins = [[], []]
         unique = np.unique(df[attribute])
         for u in unique:
             y_u = df[df[attribute] == u][y_name]
-            y_hat_u = self.node_value(y_u)
+            if "__weights__" in df:
+                w = df[df[attribute] == u]["__weights__"].values
+            else:
+                w = None
+            y_hat_u = self.node_value(y_u, w)
             if y_hat_u > y_hat:
                 bins[0].append(u)
             else:
@@ -132,7 +140,7 @@ class LogisticMetrics(Metrics):
     def __init__(self):
         pass
 
-    def loss(self, y, y_hat):
+    def loss(self, y, y_hat, w):
         # Implementation of the loss calculation for logistic
         return math.logistic_loss(y, y_hat)
 
@@ -140,7 +148,7 @@ class LogisticMetrics(Metrics):
         # Implementation of the loss pruning calculation for logistic
         return math.misclassification_cost(y)
 
-    def node_value(self, y):
+    def node_value(self, y, w):
         # Implementation of the node value calculation for logistic
         return math.max_probability(y)
 
@@ -171,12 +179,20 @@ class LogisticMetrics(Metrics):
 
     def bins(self, df, y_name, attribute):
         y = df[y_name]
-        y_hat = self.node_value(y)
+        if "__weights__" in df:
+            w = df["__weights__"].values
+        else:
+            w = None
+        y_hat = self.node_value(y, w)
         bins = [[], []]
         unique = np.unique(df[attribute])
         for u in unique:
             y_u = df[df[attribute] == u][y_name]
-            y_hat_u = self.node_value(y_u)
+            if "__weights__" in df:
+                w = df[df[attribute] == u]["__weights__"].values
+            else:
+                w = None
+            y_hat_u = self.node_value(y_u, w)
             if y_hat_u == y_hat:
                 bins[0].append(u)
             else:
@@ -207,17 +223,17 @@ class ClassificationMetrics(Metrics):
     def __init__(self):
         pass
 
-    def loss(self, y, y_hat):
+    def loss(self, y, y_hat, w):
         # Implementation of the loss calculation for classification
-        return math.gini_impurity(y)
+        return math.gini_impurity(y, w)
 
     def loss_prune(self, y, y_hat):
         # Implementation of the loss pruning calculation for classification
         return math.misclassification_cost(y)
 
-    def node_value(self, y):
+    def node_value(self, y, w):
         # Implementation of the node value calculation for classification
-        return math.majority_class(y)
+        return math.majority_class(y, w)
 
     def validate(self, y, y_hat):
         return self._classification_metrics(y, y_hat)
@@ -243,12 +259,20 @@ class ClassificationMetrics(Metrics):
 
     def bins(self, df, y_name, attribute):
         y = df[y_name]
-        y_hat = self.node_value(y)
+        if "__weights__" in df:
+            w = df["__weights__"].values
+        else:
+            w = None
+        y_hat = self.node_value(y, w)
         bins = [[], []]
         unique = np.unique(df[attribute])
         for u in unique:
             y_u = df[df[attribute] == u][y_name]
-            y_hat_u = self.node_value(y_u)
+            if "__weights__" in df:
+                w = df[df[attribute] == u]["__weights__"].values
+            else:
+                w = None
+            y_hat_u = self.node_value(y_u, w)
             if y_hat_u == y_hat:
                 bins[0].append(u)
             else:
@@ -265,9 +289,9 @@ class ClassificationMetricsEntropy(ClassificationMetrics):
     def __init__(self):
         pass
 
-    def loss(self, y, y_hat):
+    def loss(self, y, y_hat, w):
         # Implementation of the loss calculation for classification
-        return math.shannon_entropy(y)
+        return math.shannon_entropy(y, w)
 
 
 # =============================
@@ -277,13 +301,13 @@ class UnsupervisedMetrics(Metrics):
     def __init__(self):
         pass
 
-    def loss(self, y, y_hat):
+    def loss(self, y, y_hat, w):
         return np.inf
 
     def loss_prune(self, y, y_hat):
-        return self.loss(y, y_hat)
+        return self.loss(y, y_hat, None)
 
-    def node_value(self, y):
+    def node_value(self, y, w):
         return f"cluster {str(uuid.uuid4())}"
 
     def validate(self, y, y_hat):

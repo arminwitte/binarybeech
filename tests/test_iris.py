@@ -36,43 +36,56 @@ def test_iris_randomforest():
     acc = val["accuracy"]
     np.testing.assert_array_equal(p[:10], ["setosa"] * 10)
     assert acc <= 1.0 and acc > 0.9
-    
+
 
 def test_iris_from_dict():
     df_iris = pd.read_csv("data/iris.csv")
     c = CART(df=df_iris, y_name="species", method="classification")
     c.create_tree()
-    
+
     tree_dict = c.tree.to_dict()
     assert isinstance(tree_dict, dict)
-    
+
     tree = Tree.from_dict(tree_dict)
     assert isinstance(tree, Tree)
     assert len(tree.nodes()) == 21
     assert tree.leaf_count() == 11
-        
-    
+
     c.tree = tree
     p = c.predict(df_iris)
     val = c.validate()
     acc = val["accuracy"]
     np.testing.assert_array_equal(p[:10], ["setosa"] * 10)
     assert acc <= 1.0 and acc > 0.95
-    
+
+
 def test_iris_from_json():
     df_iris = pd.read_csv("data/iris.csv")
     c = CART(df=df_iris, y_name="species", method="classification", seed=42)
     c.train()
-    
+
     tree_json = c.tree.to_json()
     assert isinstance(tree_json, str)
-    
+
     tree = Tree.from_json(string=tree_json)
     assert isinstance(tree, Tree)
     assert len(tree.nodes()) == 5
     assert tree.leaf_count() == 3
-    
+
     c.tree = tree
+    p = c.predict(df_iris)
+    val = c.validate()
+    acc = val["accuracy"]
+    np.testing.assert_array_equal(p[:10], ["setosa"] * 10)
+    assert acc <= 1.0 and acc > 0.95
+
+
+def test_iris_cart_create_weighted():
+    df_iris = pd.read_csv("data/iris.csv")
+    df_iris["__weights__"] = 1
+    df_iris[df_iris["species"] == "versicolor"]["__weights__"] = 3
+    c = CART(df=df_iris, y_name="species", method="classification")
+    c.create_tree()
     p = c.predict(df_iris)
     val = c.validate()
     acc = val["accuracy"]

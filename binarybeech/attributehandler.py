@@ -77,10 +77,18 @@ class NominalAttributeHandler(AttributeHandlerBase):
             ]
             N = len(df.index)
             n = [len(df_.index) for df_ in split_df]
-            val = [self.metrics.node_value(df_[self.y_name]) for df_ in split_df]
-            loss = n[0] / N * self.metrics.loss(split_df[0][self.y_name], val[0]) + n[
-                1
-            ] / N * self.metrics.loss(split_df[1][self.y_name], val[1])
+
+            if "__weights__" in df:
+                w = [df_["__weights__"].values for df_ in split_df]
+            else:
+                w = [None for df_ in split_df]
+            val = [
+                self.metrics.node_value(df_[self.y_name], w[i])
+                for i, df_ in enumerate(split_df)
+            ]
+            loss = n[0] / N * self.metrics.loss(
+                split_df[0][self.y_name], val[0], w[0]
+            ) + n[1] / N * self.metrics.loss(split_df[1][self.y_name], val[1], w[1])
             if loss < self.loss:
                 success = True
                 self.loss = loss
@@ -153,10 +161,18 @@ class HighCardinalityNominalAttributeHandler(AttributeHandlerBase):
             n = [len(df_.index) for df_ in split_df]
             if min(n) == 0:
                 return np.Inf
-            val = [self.metrics.node_value(df_[self.y_name]) for df_ in split_df]
-            return n[0] / N * self.metrics.loss(split_df[0][self.y_name], val[0]) + n[
-                1
-            ] / N * self.metrics.loss(split_df[1][self.y_name], val[1])
+
+            if "__weights__" in df:
+                w = [df_["__weights__"].values for df_ in split_df]
+            else:
+                w = [None for df_ in split_df]
+            val = [
+                self.metrics.node_value(df_[self.y_name], w[i])
+                for i, df_ in enumerate(split_df)
+            ]
+            return n[0] / N * self.metrics.loss(
+                split_df[0][self.y_name], val[0], w[0]
+            ) + n[1] / N * self.metrics.loss(split_df[1][self.y_name], val[1], w[1])
 
         return fun
 
@@ -197,10 +213,18 @@ class DichotomousAttributeHandler(AttributeHandlerBase):
         ]
         N = len(df.index)
         n = [len(df_.index) for df_ in self.split_df]
-        val = [self.metrics.node_value(df_[self.y_name]) for df_ in self.split_df]
+
+        if "__weights__" in df:
+            w = [df_["__weights__"].values for df_ in self.split_df]
+        else:
+            w = [None for df_ in self.split_df]
+        val = [
+            self.metrics.node_value(df_[self.y_name], w[i])
+            for i, df_ in enumerate(self.split_df)
+        ]
         self.loss = n[0] / N * self.metrics.loss(
-            self.split_df[0][self.y_name], val[0]
-        ) + n[1] / N * self.metrics.loss(self.split_df[1][self.y_name], val[1])
+            self.split_df[0][self.y_name], val[0], w[0]
+        ) + n[1] / N * self.metrics.loss(self.split_df[1][self.y_name], val[1], w[1])
 
         return success
 
@@ -270,10 +294,18 @@ class IntervalAttributeHandler(AttributeHandlerBase):
         def fun(x):
             split_df = [df[df[split_name] < x], df[df[split_name] >= x]]
             n = [len(df_.index) for df_ in split_df]
-            val = [self.metrics.node_value(df_[self.y_name]) for df_ in split_df]
-            return n[0] / N * self.metrics.loss(split_df[0][self.y_name], val[0]) + n[
-                1
-            ] / N * self.metrics.loss(split_df[1][self.y_name], val[1])
+
+            if "__weights__" in df:
+                w = [df_["__weights__"].values for df_ in split_df]
+            else:
+                w = [None for df_ in split_df]
+            val = [
+                self.metrics.node_value(df_[self.y_name], w[i])
+                for i, df_ in enumerate(split_df)
+            ]
+            return n[0] / N * self.metrics.loss(
+                split_df[0][self.y_name], val[0], w[0]
+            ) + n[1] / N * self.metrics.loss(split_df[1][self.y_name], val[1], w[1])
 
         return fun
 
@@ -409,9 +441,6 @@ class ClusteringNominalAttributeHandler(AttributeHandlerBase):
                 df[df[name].isin(threshold)],
                 df[~df[name].isin(threshold)],
             ]
-            # N = len(df.index)
-            # n = [len(df_.index) for df_ in split_df]
-            # val = [self.metrics.node_value(None) for df_ in split_df]
             loss = math.shannon_entropy(df[c])
             if loss < self.loss:
                 success = True
@@ -442,8 +471,8 @@ class AttributeHandlerFactory:
 
     def register_handler(self, attribute_handler_class, method_group="default"):
         self.attribute_handlers[method_group].append(attribute_handler_class)
-        
-    def __getitem__(self,name):
+
+    def __getitem__(self, name):
         ahc = None
         for val in self.attribute_handlers.values():
             for a in val:
@@ -471,9 +500,9 @@ class AttributeHandlerFactory:
 
         if method_group not in self.attribute_handlers.keys():
             # raise ValueError(f"{method} is not a registered method_group")
-            print(
-                f"WARNING: '{method_group}' is not a registered method group. Chosing 'default'."
-            )
+            # print(
+            #     f"WARNING: '{method_group}' is not a registered method group. Chosing 'default'."
+            # )
             method_group = "default"
 
         ahc = self.get_attribute_handler_class(df[y_name], method_group=method_group)

@@ -10,7 +10,7 @@ import pandas as pd
 
 from binarybeech.datamanager import DataManager
 from binarybeech.minimizer import minimize
-from binarybeech.reporter import Reporter
+from binarybeech.reporter import reporter
 from binarybeech.trainingdata import TrainingData
 from binarybeech.tree import Node, Tree
 
@@ -127,7 +127,6 @@ class CART(Model):
         self.seed = seed
 
         self.logger = logging.getLogger(__name__)
-        self.reporter = Reporter([])
 
     def _predict1(self, x):
         return self.tree.traverse(x).value
@@ -219,13 +218,18 @@ class CART(Model):
         root = self._node_or_leaf(self.training_data.df)
         self.tree = Tree(root)
         n_leafs = self.tree.leaf_count()
-        self.reporter.message(f"A tree with {n_leafs} leafs was created")
+        reporter.message(f"A tree with {n_leafs} leafs was created", 1)
         return self.tree
 
     def _node_or_leaf(self, df):
         y = df[self.y_name]
-        y_hat = self.dmgr.metrics.node_value(y)
-        loss_parent = self.dmgr.metrics.loss(y, y_hat)
+
+        if "__weights__" in df:
+            w = df["__weights__"].values
+        else:
+            w = None
+        y_hat = self.dmgr.metrics.node_value(y, w)
+        loss_parent = self.dmgr.metrics.loss(y, y_hat, w)
         # p = self._probability(df)
         if (
             loss_parent < self.leaf_loss_threshold
@@ -260,14 +264,15 @@ class CART(Model):
                 attribute=split_name,
                 threshold=split_threshold,
                 value=value,
-                decision_fun=self.dmgr[split_name].decide,)
+                decision_fun=self.dmgr[split_name].decide,
+            )
             item.pinfo["N"] = len(df.index)
             item.pinfo["r"] = self.dmgr.metrics.loss_prune(y, y_hat)
             item.pinfo["R"] = (
                 item.pinfo["N"] / len(self.training_data.df.index) * item.pinfo["r"]
             )
             for b in item.branches:
-                b.parent=item
+                b.parent = item
         else:
             item = self._leaf(y, y_hat)
 
@@ -425,7 +430,7 @@ class GradientBoostedTree(Model):
         self.seed = seed
 
         self.logger = logging.getLogger(__name__)
-        self.reporter = Reporter(["iter", "res_norm", "gamma", "sse"])
+        reporter.reset(["iter", "res_norm", "gamma", "sse"])
 
     def _initial_tree(self):
         c = CART(
@@ -473,35 +478,10 @@ class GradientBoostedTree(Model):
         for i in range(M):
             res = self._pseudo_residuals(df)
             # print(f"Norm of pseudo-residuals: {np.linalg.norm(res)}")
-            self.reporter["iter"] = i
-            self.reporter["res_norm"] = np.linalg.norm(res)
+            reporter["iter"] = i
+            reporter["res_norm"] = np.linalg.norm(res)
             df["pseudo_residuals"] = res
 
-            # if self.n_attributes is None:
-            #     X_names = self.X_names
-            # else:
-            #     rng = np.random.default_rng(seed=seed)
-            #     if seed is not None:
-            #         seed += 1
-            #     X_names = rng.choice(self.X_names, self.n_attributes, replace=False)
-
-            # kwargs = dict(
-            #     max_depth=3,
-            #     min_leaf_samples=5,
-            #     min_split_samples=4,
-            #     method="regression",
-            # )
-            # kwargs = {**kwargs, **self.cart_settings}
-
-            # c = CART(
-            #     df=df.sample(frac=self.sample_frac, replace=True, random_state=seed),
-            #     y_name="pseudo_residuals",
-            #     X_names=X_names,
-            #     **kwargs,
-            # )
-            # c.create_tree()
-            # if seed is not None:
-            #     seed += 1
             c = self._append_regression_tree(df)
 
             if self.gamma_setting is None:
@@ -510,7 +490,7 @@ class GradientBoostedTree(Model):
                 gamma = self.gamma_setting
             self.trees.append(c.tree)
             self.gamma.append(gamma)
-            self.reporter.print()
+            reporter.print(level=2)
 
     def _append_regression_tree(self, df):
         if self.n_attributes is None:
@@ -542,13 +522,6 @@ class GradientBoostedTree(Model):
 
         return c
 
-    # def _gamma(self, tree):
-    #     res = opt.minimize_scalar(self._opt_fun(tree), bounds=[0.0, 10.0])
-    #     # print(f"{res.x:.2f}\t {res.fun/self.N:.4f}")
-    #     self.reporter["gamma"] = res.x
-    #     self.reporter["sse"] = res.fun / self.N
-    #     return res.x
-
     def _gamma(self, tree):
         # minimizer = BrentsScalarMinimizer()
         # x, y = minimizer.minimize(self._opt_fun(tree), 0.0, 10.0)
@@ -556,8 +529,8 @@ class GradientBoostedTree(Model):
         x, y = minimize(
             self._opt_fun(tree), 0.0, 10.0, method=method, options=self.algorithm_kwargs
         )
-        self.reporter["gamma"] = x
-        self.reporter["sse"] = y / self.N
+        reporter["gamma"] = x
+        reporter["sse"] = y / self.N
         return x
 
     def _opt_fun(self, tree):
@@ -566,11 +539,15 @@ class GradientBoostedTree(Model):
         for i, x in enumerate(self.df.iloc):
             delta[i] = tree.traverse(x).value
         y = self.df[self.y_name].values
+        if "__weights__" in self.df:
+            w = self.df["__weights__"].values
+        else:
+            w = None
 
         def fun(gamma):
             y_ = y_hat + gamma * delta
             p = self.dmgr.metrics.output_transform(y_)
-            return self.dmgr.metrics.loss(y, p)
+            return self.dmgr.metrics.loss(y, p, w)
 
         return fun
 
@@ -605,17 +582,17 @@ class GradientBoostedTree(Model):
             print(res_norm_old, "->", res_norm)
 
             if res_norm_old < res_norm:
-                self.reporter.message("update required")
+                reporter.message("update required")
                 m = i
 
         if m == M:
-            self.reporter.message("no update necessary")
+            reporter.message("no update necessary")
         self.trees = self.trees[:m]
 
         for i in range(m, M):
             res = self._pseudo_residuals(df)
-            self.reporter["iter"] = i
-            self.reporter["res_norm"] = np.linalg.norm(res)
+            reporter["iter"] = i
+            reporter["res_norm"] = np.linalg.norm(res)
             df["pseudo_residuals"] = res
             c = self._append_regression_tree(df)
 
@@ -625,30 +602,190 @@ class GradientBoostedTree(Model):
                 gamma = self.gamma_setting
             self.trees.append(c.tree)
             self.gamma.append(gamma)
-            self.reporter.print()
-            
+            reporter.print()
+
     def _update_gamma(self, df):
         if self.gamma_setting is not None:
             print("fixed gamma specified. No update required")
             return
-        
+
         M = len(self.trees)
-        
+
         bag_of_trees = self.trees.copy()
         self.trees = []
         self.gamma = []
 
         for i in range(M):
             res = self._pseudo_residuals(df)
-            self.reporter["iter"] = i
-            self.reporter["res_norm"] = np.linalg.norm(res)
+            reporter["iter"] = i
+            reporter["res_norm"] = np.linalg.norm(res)
             df["pseudo_residuals"] = res
             tree = bag_of_trees[i]
             gamma = self._gamma(tree)
             self.trees.append(tree)
             self.gamma.append(gamma)
-            self.reporter.print()
-        
+            reporter.print()
+
+
+class AdaBoostTree(Model):
+    def __init__(
+        self,
+        training_data=None,
+        df=None,
+        y_name=None,
+        X_names=None,
+        sample_frac=1,
+        n_attributes=None,
+        cart_settings={},
+        method="classification",
+        handle_missings="simple",
+        attribute_handlers=None,
+        seed=None,
+        algorithm_kwargs={},
+    ):
+        super().__init__(
+            training_data,
+            df,
+            y_name,
+            X_names,
+            attribute_handlers,
+            method,
+            handle_missings,
+            algorithm_kwargs,
+        )
+        self.df = self.training_data.df.copy()
+        self.N = len(self.df.index)
+        self.method = method
+
+        self.trees = []
+        self.alpha = []  # gamma
+        self.cart_settings = cart_settings
+        self.sample_frac = sample_frac
+        self.n_attributes = n_attributes
+        self.seed = seed
+
+        self.logger = logging.getLogger(__name__)
+        reporter.reset(["iter", "err", "alpha", "w_ratio"])
+
+    def _predict1(self, x, m=None):
+        M = len(self.trees)
+        if not m:
+            m = M
+        d = {}
+        for i in range(m):
+            alpha = self.alpha[i]
+            if alpha <= 0:
+                continue
+            t = self.trees[i]
+            # print(t)
+            label = t.traverse(x).value
+            # print(">>>>>>>> label:", label)
+            if label in d:
+                d[label] += alpha
+            else:
+                d[label] = alpha
+        labels = [k for k in d.keys()]
+        scores = [s for s in d.values()]
+        # print(labels)
+        # print(scores)
+        ind_max = np.argmax(scores)
+        return labels[ind_max]
+
+    def _predict_raw(self, df, m=None):
+        y_hat = [self._predict1(x, m) for x in df.iloc]
+        return np.array(y_hat)
+
+    def predict(self, df, m=None):
+        y_hat = self._predict_raw(df, m)
+        return self.dmgr.metrics.output_transform(y_hat)
+
+    def train(self, M):
+        df = self.df.copy()
+        self.trees = []
+        self.alpha = []
+
+        # Initialize the observation weights
+        N = len(df.index)
+        # w = np.ones((N,)) * 1/N
+        if "__weights__" not in df:
+            df["__weights__"] = 1 / N
+        K = len(np.unique(df[self.y_name]))
+
+        for i in range(M):
+            reporter["iter"] = i
+
+            # Fit a classifier
+            c = self._decision_stump(df)
+
+            mis = self._I(df, c)
+            err = self._err(df, mis)
+            reporter["err"] = err
+
+            alpha = self._alpha(err, K)
+            alpha = max(0, alpha)
+            reporter["alpha"] = alpha
+
+            w = df["__weights__"] * np.exp(alpha * mis)
+            reporter["w_ratio"] = np.max(w) / np.min(w)
+            df["__weights__"] = w
+
+            self.trees.append(c.tree)
+            self.alpha.append(alpha)
+            reporter.print()
+
+    def _decision_stump(self, df):
+        if self.n_attributes is None:
+            X_names = self.X_names
+        else:
+            rng = np.random.default_rng(seed=self.seed)
+            if self.seed is not None:
+                self.seed += 1
+            X_names = rng.choice(self.X_names, self.n_attributes, replace=False)
+
+        kwargs = dict(
+            max_depth=1,
+            min_leaf_samples=5,
+            min_split_samples=4,
+            method=self.method,
+        )
+        kwargs = {**kwargs, **self.cart_settings}
+
+        c = CART(
+            df=df.sample(frac=self.sample_frac, replace=True, random_state=self.seed),
+            y_name=self.y_name,
+            X_names=X_names,
+            **kwargs,
+        )
+        c.create_tree()
+
+        if self.seed is not None:
+            self.seed += 1
+
+        return c
+
+    def _I(self, df, c):
+        y_hat = np.array(c.predict(df)).ravel()
+        mis = np.empty_like(y_hat)
+        for i, x in enumerate(df.iloc):
+            mis[i] = 1 if x[self.y_name] != y_hat[i] else 0
+        return mis.astype(int)
+
+    def _err(self, df, mis):
+        err = np.sum(mis * df["__weights__"])
+        # err = 0
+        # for i, x in enumerate(df.iloc):
+        #     err += x["__weights__"] if df[self.y_name] != y_hat[i] else 0.
+        return err / np.sum(df["__weights__"])
+
+    def _alpha(self, err, K):
+        return np.log((1.0 - err) / err) + np.log(K - 1)
+
+    def validate(self, df=None):
+        if df is None:
+            df = self.df
+        y_hat = self.predict(df)
+        y = df[self.y_name]
+        return self.dmgr.metrics.validate(y, y_hat)
 
 
 class RandomForest(Model):
@@ -690,7 +827,7 @@ class RandomForest(Model):
 
         self.verbose = verbose
         self.logger = logging.getLogger(__name__)
-        self.reporter = Reporter(["no", "n_leafs"])
+        reporter.reset(["no", "n_leafs"])
 
     def train(self, M):
         self.trees = []
@@ -720,9 +857,9 @@ class RandomForest(Model):
             self.trees.append(c.tree)
             self.oob_indices.append(self.df.index.difference(df.index))
             if self.verbose:
-                self.reporter["no"] = i
-                self.reporter["n_leafs"] = c.tree.leaf_count()
-                self.reporter.print()
+                reporter["no"] = i
+                reporter["n_leafs"] = c.tree.leaf_count()
+                reporter.print()
 
     def _predict1(self, x):
         y = []
