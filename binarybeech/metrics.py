@@ -56,7 +56,7 @@ class Metrics(ABC):
         pass
 
     @abstractmethod
-    def loss_prune(self, y, y_hat):
+    def loss_prune(self, y, y_hat, w):
         pass
 
     @abstractmethod
@@ -89,9 +89,9 @@ class RegressionMetrics(Metrics):
         # Implementation of the loss calculation for regression
         return math.mean_squared_error(y, y_hat)
 
-    def loss_prune(self, y, y_hat):
+    def loss_prune(self, y, y_hat, w):
         # Implementation of the loss pruning calculation for regression
-        return self.loss(y, y_hat, None)
+        return self.loss(y, y_hat, w)
 
     def node_value(self, y, w):
         # Implementation of the node value calculation for regression
@@ -144,9 +144,9 @@ class LogisticMetrics(Metrics):
         # Implementation of the loss calculation for logistic
         return math.logistic_loss(y, y_hat)
 
-    def loss_prune(self, y, y_hat):
+    def loss_prune(self, y, y_hat, w):
         # Implementation of the loss pruning calculation for logistic
-        return math.misclassification_cost(y)
+        return math.misclassification_cost(y, w)
 
     def node_value(self, y, w):
         # Implementation of the node value calculation for logistic
@@ -227,9 +227,9 @@ class ClassificationMetrics(Metrics):
         # Implementation of the loss calculation for classification
         return math.gini_impurity(y, w)
 
-    def loss_prune(self, y, y_hat):
+    def loss_prune(self, y, y_hat, w):
         # Implementation of the loss pruning calculation for classification
-        return math.misclassification_cost(y)
+        return math.misclassification_cost(y, w)
 
     def node_value(self, y, w):
         # Implementation of the node value calculation for classification
@@ -304,8 +304,8 @@ class UnsupervisedMetrics(Metrics):
     def loss(self, y, y_hat, w):
         return np.inf
 
-    def loss_prune(self, y, y_hat):
-        return self.loss(y, y_hat, None)
+    def loss_prune(self, y, y_hat, w):
+        return self.loss(y, y_hat, w)
 
     def node_value(self, y, w):
         return f"cluster {str(uuid.uuid4())}"

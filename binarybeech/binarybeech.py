@@ -238,11 +238,11 @@ class CART(Model):
             or len(df.index) < self.min_leaf_samples
             or self.depth >= self.max_depth
         ):
-            return self._leaf(y, y_hat)
+            return self._leaf(y, y_hat, w)
 
         loss_best, split_df, split_threshold, split_name = self._loss_best(df)
         if not split_df:
-            return self._leaf(y, y_hat)
+            return self._leaf(y, y_hat, w)
         # print(
         #    f"Computed split:
         # \nloss: {loss_best:.2f} (parent: {loss_parent:.2f})
@@ -267,18 +267,19 @@ class CART(Model):
                 decision_fun=self.dmgr[split_name].decide,
             )
             item.pinfo["N"] = len(df.index)
-            item.pinfo["r"] = self.dmgr.metrics.loss_prune(y, y_hat)
+            item.pinfo["r"] = self.dmgr.metrics.loss_prune(y, y_hat, w)
             item.pinfo["R"] = (
                 item.pinfo["N"] / len(self.training_data.df.index) * item.pinfo["r"]
             )
+            item.pinfo["p"] = 1.0 - item.pinfo["r"]
             for b in item.branches:
                 b.parent = item
         else:
-            item = self._leaf(y, y_hat)
+            item = self._leaf(y, y_hat, w)
 
         return item
 
-    def _leaf(self, y, y_hat):
+    def _leaf(self, y, y_hat, w):
         leaf = Node(value=y_hat)
 
         leaf.pinfo["N"] = y.size
@@ -286,6 +287,7 @@ class CART(Model):
         leaf.pinfo["R"] = (
             leaf.pinfo["N"] / len(self.training_data.df.index) * leaf.pinfo["r"]
         )
+        item.pinfo["p"] = 1.0 - item.pinfo["r"]
         return leaf
 
     def _loss_best(self, df):
