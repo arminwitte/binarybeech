@@ -287,7 +287,7 @@ class CART(Model):
         leaf.pinfo["R"] = (
             leaf.pinfo["N"] / len(self.training_data.df.index) * leaf.pinfo["r"]
         )
-        item.pinfo["p"] = 1.0 - item.pinfo["r"]
+        leaf.pinfo["p"] = 1.0 - leaf.pinfo["r"]
         return leaf
 
     def _loss_best(self, df):
