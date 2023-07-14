@@ -1,10 +1,18 @@
 # binarybeech
 Simplistic algorithms to train decision trees for regression and classification
 
-> **NOTE:**  These pure python (and a bit of numpy) algorithms are many times slower than, e.g., `sklearn` or `xgboost`.
+## Features
 
-## Principle
-Decision trees are, by design, data type agnostic. With only a few methods like _spliter_ for input variables and meaningful quantification for the _loss_, any data type can be perused. In this code, this is implemented using a factory pattern for _data handling_ and _metrics_ making decision tree learing simple and versatile.
+- Create binary trees using the CART (Classification and Regression Tree) algorithm.
+- Train ensembles of trees using Gradient Boosting, Adaptive Boosting (AdaBoost) or Random Forest.
+- Process each datatype with a data handler as provided or impöememted to suit your needs. Just add your own implementation to the factory.
+- Metrics for different kinds of outcome variables are implemented analogously.
+- Features with high cardinality are treated with a simulated annealing solver to find the best combination.
+- No need for dummy encoding.
+- Train models using supervised or unsupervised learning.
+- Specify weights for unbalanced datasets.
+
+> **NOTE:**  These pure python (and a bit of numpy) algorithms are many times slower than, e.g., `sklearn` or `xgboost`.
 
 ## Install
 
@@ -122,6 +130,40 @@ Class for a Gradient Boosted Tree model.
 * Attributes
     - **trees**
 
+### binarybeech.binarybeech.AdaBoostTree
+
+**AdaBoostTree(training_data=None, df=None, y_name=None, X_names=None, sample_frac=1, n_attributes=None, cart_settings={}, method="classification", handle_missings="simple", attribute_handlers=None, seed=None, algorithm_kwargs={})**
+
+Class for a AdaBoost model using CARTs as weak learners.
+
+* Parameters:
+    - **training_data**: Preprocessed instance of class _TrainingData_.
+    - **df**: pandas _dataframe_ with training data
+    - **y_name**: name of the column with the output data/labels
+    - **X_names**: _list_ of names with the inputs to use for the modelling. If _None_, all columns except y_name are chosen. Default is _None_.
+    - **method**: Metrics to use for the evaluation of split loss, etc. Can be either "classification", "logistic", "regression", or _None_. Default is "regression". If _None_ is chosen, the `method` is deduced from the training _dataframe_.
+    - **handle_missings**: Specify the way how missing data is handeled. Can be eiter _None_ or "simple".
+    - **attribute_handlers**: _dict_ with attribute handler instances for each variable. The data handler determins, e.g., how splits of the dataset are made.
+* Methods
+    - **predict(df)**
+        + Parameters:
+            * **df**: _dataframe_ with inputs for predictions.
+        + Returns:
+            * array with predicted values/labels.
+    - **train(M)**
+        + Parameters:
+            * **M**: Number of individual trees to create for the ensemble.
+        + Returns:
+    - **validate(df=None)**
+        + Parameters:
+            * **df**: _dataframe_ to use for (cross-)validation. If _None_, the training set is used. Default is _None_.
+        + Returns:
+            * _dict_ with metrics, e.g. accuracy or RSquared.
+    - **variable_importance()**:
+        + Returns:
+            * _dict_ with normalized importance values.
+* Attributes
+
 ### binarybeech.binarybeech.RandomForest
 
 **RandomForest(df, y_name, X_names=None, verbose=False, sample_frac=1, n_attributes=None, cart_settings={}, method="regression", handle_missings="simple", attribute_handlers=None)**
@@ -161,6 +203,9 @@ Class for a Random Forest model.
         + Returns:
             * _dict_ with normalized importance values.
 * Attributes
+
+## Principle
+Decision trees are, by design, data type agnostic. With only a few methods like _spliter_ for input variables and meaningful quantification for the _loss_, any data type can be perused. In this code, this is implemented using a factory pattern for _data handling_ and _metrics_ making decision tree learing simple and versatile.
 
 For more information please feel free to take a look at the code.
 
