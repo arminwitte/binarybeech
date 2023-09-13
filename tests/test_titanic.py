@@ -24,6 +24,7 @@ def test_titanic_cart_create_min_split_loss():
     acc = val["accuracy"]
     np.testing.assert_allclose(p[:10], [0, 1, 1, 1, 0, 0, 0, 0, 1, 1])
     assert acc < 1.0 and acc > 0.78
+    assert c.tree.leaf_count() == 10
 
 
 def test_titanic_cart_train():
@@ -35,6 +36,7 @@ def test_titanic_cart_train():
     acc = val["accuracy"]
     np.testing.assert_allclose(p[:10], [0, 1, 1, 1, 0, 0, 0, 0, 1, 1])
     assert acc < 1.0 and acc > 0.78
+    assert c.tree.leaf_count() == 10
 
 
 def test_titanic_gradientboostedtree():
