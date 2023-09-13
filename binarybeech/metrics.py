@@ -243,7 +243,9 @@ class ClassificationMetrics(Metrics):
 
     def node_value(self, y, **kwargs):
         # Implementation of the node value calculation for classification
-        return math.majority_class(y, kwargs["weights"])
+        if "weights" in kwargs.keys():
+            return math.majority_class_weighted(y, kwargs["weights"])
+        return math.majority_class(y)
 
     def validate(self, y, y_hat):
         return self._classification_metrics(y, y_hat)
