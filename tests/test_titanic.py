@@ -17,7 +17,7 @@ def test_titanic_cart_create():
 def test_titanic_cart_create_min_split_loss():
     df_titanic = pd.read_csv("data/titanic.csv")
     c = CART(df=df_titanic, y_name="Survived", method="classification",
-        min_split_loss = 1.)
+        min_split_loss = 0.1)
     c.create_tree()
     p = c.predict(df_titanic)
     val = c.validate()
