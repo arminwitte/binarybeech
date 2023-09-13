@@ -99,6 +99,7 @@ class CART(Model):
         min_leaf_samples=1,
         min_split_samples=1,
         max_depth=10,
+        min_split_loss = 0.,
         method="regression",
         handle_missings="simple",
         attribute_handlers=None,
@@ -122,6 +123,7 @@ class CART(Model):
         self.min_leaf_samples = min_leaf_samples
         self.min_split_samples = min_split_samples
         self.max_depth = max_depth
+        self.min_split_loss = min_split_loss
 
         self.depth = 0
         self.seed = seed
@@ -250,7 +252,8 @@ class CART(Model):
         # \nthreshold: {split_threshold}
         # \ncount: {[len(df_.index) for df_ in split_df]}"
         # )
-        if loss_best < loss_parent:
+        print(f"gain: {loss_parent - loss_best}")
+        if loss_best < loss_parent - self.min_split_loss:
             # print(f"=> Node({split_name}, {split_threshold})")
             branches = []
             self.depth += 1
