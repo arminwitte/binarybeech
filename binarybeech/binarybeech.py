@@ -270,7 +270,8 @@ class CART(Model):
                 decision_fun=self.dmgr[split_name].decide,
             )
             item.pinfo["N"] = len(df.index)
-            item.pinfo["r"] = self.dmgr.metrics.loss_prune(y, y_hat, {})
+            loss_args ={}
+            item.pinfo["r"] = self.dmgr.metrics.loss_prune(y, y_hat, **loss_args)
             item.pinfo["R"] = (
                 item.pinfo["N"] / len(self.training_data.df.index) * item.pinfo["r"]
             )
@@ -285,7 +286,8 @@ class CART(Model):
         leaf = Node(value=y_hat)
 
         leaf.pinfo["N"] = y.size
-        leaf.pinfo["r"] = self.dmgr.metrics.loss_prune(y, y_hat, {})
+        loss_args = {}
+        leaf.pinfo["r"] = self.dmgr.metrics.loss_prune(y, y_hat, **loss_args)
         leaf.pinfo["R"] = (
             leaf.pinfo["N"] / len(self.training_data.df.index) * leaf.pinfo["r"]
         )
