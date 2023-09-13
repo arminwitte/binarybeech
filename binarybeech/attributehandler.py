@@ -77,9 +77,12 @@ class NominalAttributeHandler(AttributeHandlerBase):
             ]
             N = len(df.index)
             n = [len(df_.index) for df_ in split_df]
-
+            
+            loss_args = {}
             if "__weights__" in df:
                 w = [df_["__weights__"].values for df_ in split_df]
+                            
+            loss_args["weights"] = w
             else:
                 w = [None for df_ in split_df]
             val = [
