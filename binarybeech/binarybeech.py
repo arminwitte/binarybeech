@@ -252,7 +252,7 @@ class CART(Model):
         # \nthreshold: {split_threshold}
         # \ncount: {[len(df_.index) for df_ in split_df]}"
         # )
-        print(f"gain: {loss_parent - loss_best}")
+        # print(f"gain: {loss_parent - loss_best}")
         if loss_best < loss_parent - self.min_split_loss:
             # print(f"=> Node({split_name}, {split_threshold})")
             branches = []
