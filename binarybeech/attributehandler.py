@@ -83,12 +83,12 @@ class NominalAttributeHandler(AttributeHandlerBase):
                 loss_args = [{"weights":df_["__weights__"].values} for df_ in split_df]
                             
             val = [
-                self.metrics.node_value(df_[self.y_name], loss_args[i])
+                self.metrics.node_value(df_[self.y_name], **loss_args[i])
                 for i, df_ in enumerate(split_df)
             ]
             loss = n[0] / N * self.metrics.loss(
-                split_df[0][self.y_name], val[0], loss_args[0]
-            ) + n[1] / N * self.metrics.loss(split_df[1][self.y_name], val[1], loss_args[1])
+                split_df[0][self.y_name], val[0], **loss_args[0]
+            ) + n[1] / N * self.metrics.loss(split_df[1][self.y_name], val[1], **loss_args[1])
             if loss < self.loss:
                 success = True
                 self.loss = loss
@@ -166,12 +166,12 @@ class HighCardinalityNominalAttributeHandler(AttributeHandlerBase):
             if "__weights__" in df:
                 w = [{"weights":df_["__weights__"].values} for df_ in split_df]
             val = [
-                self.metrics.node_value(df_[self.y_name], loss_args[i])
+                self.metrics.node_value(df_[self.y_name], **loss_args[i])
                 for i, df_ in enumerate(split_df)
             ]
             return n[0] / N * self.metrics.loss(
-                split_df[0][self.y_name], val[0], loss_args[0]
-            ) + n[1] / N * self.metrics.loss(split_df[1][self.y_name], val[1], loss_args[1])
+                split_df[0][self.y_name], val[0], **loss_args[0]
+            ) + n[1] / N * self.metrics.loss(split_df[1][self.y_name], val[1], **loss_args[1])
 
         return fun
 
@@ -216,15 +216,14 @@ class DichotomousAttributeHandler(AttributeHandlerBase):
         loss_args = [{}, {}]
         if "__weights__" in df:
             loss_args = [{"weights":df_["__weights__"].values} for df_ in self.split_df]
-        else:
-            w = [None for df_ in self.split_df]
+
         val = [
-            self.metrics.node_value(df_[self.y_name], loss_args[i])
+            self.metrics.node_value(df_[self.y_name], **loss_args[i])
             for i, df_ in enumerate(self.split_df)
         ]
         self.loss = n[0] / N * self.metrics.loss(
-            self.split_df[0][self.y_name], val[0], loss_args[0]
-        ) + n[1] / N * self.metrics.loss(self.split_df[1][self.y_name], val[1], loss_args[1])
+            self.split_df[0][self.y_name], val[0], **loss_args[0]
+        ) + n[1] / N * self.metrics.loss(self.split_df[1][self.y_name], val[1], **loss_args[1])
 
         return success
 
@@ -299,12 +298,12 @@ class IntervalAttributeHandler(AttributeHandlerBase):
             if "__weights__" in df:
                 loss_args = [{"weights":df_["__weights__"].values} for df_ in split_df]
             val = [
-                self.metrics.node_value(df_[self.y_name], loss_args[i])
+                self.metrics.node_value(df_[self.y_name], **loss_args[i])
                 for i, df_ in enumerate(split_df)
             ]
             return n[0] / N * self.metrics.loss(
-                split_df[0][self.y_name], val[0], loss_args[0]
-            ) + n[1] / N * self.metrics.loss(split_df[1][self.y_name], val[1], loss_args[1])
+                split_df[0][self.y_name], val[0], **loss_args[0]
+            ) + n[1] / N * self.metrics.loss(split_df[1][self.y_name], val[1], **loss_args[1])
 
         return fun
 
