@@ -138,6 +138,27 @@ class RegressionMetrics(Metrics):
     @staticmethod
     def check(x):
         return math.check_interval(x)
+        
+        
+class RegressionMetricsRegularized(RegressionMetrics):
+    def __init__(self):
+        super().__init__()
+        
+    def node_value(self, y, **kwargs):
+        y = np.array(y).ravel()
+        n = y.shape[0]
+        lambda_l1 = kwargs.get("lambda_l1")
+        lambda_l2 = kwargs.get("lambda_l2")
+        y_sum = np.sum(y)
+        
+        if y_sum < -lambda_l1:
+            return (y_sum + lambda_l1)/(n + lambda_l2)
+        elif y_sum > lambda_l1:
+            return (y_sum - lambda_l1)/(n + lambda_l2)
+        else:
+            return 0.
+        
+
 
 
 class LogisticMetrics(Metrics):
@@ -376,6 +397,7 @@ class MetricsFactory:
 
 metrics_factory = MetricsFactory()
 metrics_factory.register("regression", RegressionMetrics)
+metrics_factory.register("regression:regularized", RegressionMetrics)
 metrics_factory.register("classification:gini", ClassificationMetrics)
 metrics_factory.register("classification:entropy", ClassificationMetricsEntropy)
 metrics_factory.register("logistic", LogisticMetrics)
