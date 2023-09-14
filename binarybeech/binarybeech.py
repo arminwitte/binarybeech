@@ -552,7 +552,7 @@ class GradientBoostedTree(Model):
         def fun(gamma):
             y_ = y_hat + gamma * delta
             p = self.dmgr.metrics.output_transform(y_)
-            return self.dmgr.metrics.loss(y, p, loss_args)
+            return self.dmgr.metrics.loss(y, p, **loss_args)
 
         return fun
 
