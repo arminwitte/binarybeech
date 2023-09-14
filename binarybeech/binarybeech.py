@@ -226,12 +226,12 @@ class CART(Model):
     def _node_or_leaf(self, df):
         y = df[self.y_name]
 
+        loss_args = {}
         if "__weights__" in df:
-            w = df["__weights__"].values
-        else:
-            w = None
-        y_hat = self.dmgr.metrics.node_value(y, w)
-        loss_parent = self.dmgr.metrics.loss(y, y_hat, w)
+            loss_args["weights"] = df["__weights__"].values
+
+        y_hat = self.dmgr.metrics.node_value(y, **loss_args)
+        loss_parent = self.dmgr.metrics.loss(y, y_hat, **loss_args)
         # p = self._probability(df)
         if (
             loss_parent < self.leaf_loss_threshold
@@ -270,7 +270,8 @@ class CART(Model):
                 decision_fun=self.dmgr[split_name].decide,
             )
             item.pinfo["N"] = len(df.index)
-            item.pinfo["r"] = self.dmgr.metrics.loss_prune(y, y_hat)
+            loss_args ={}
+            item.pinfo["r"] = self.dmgr.metrics.loss_prune(y, y_hat, **loss_args)
             item.pinfo["R"] = (
                 item.pinfo["N"] / len(self.training_data.df.index) * item.pinfo["r"]
             )
@@ -285,7 +286,8 @@ class CART(Model):
         leaf = Node(value=y_hat)
 
         leaf.pinfo["N"] = y.size
-        leaf.pinfo["r"] = self.dmgr.metrics.loss_prune(y, y_hat)
+        loss_args = {}
+        leaf.pinfo["r"] = self.dmgr.metrics.loss_prune(y, y_hat, **loss_args)
         leaf.pinfo["R"] = (
             leaf.pinfo["N"] / len(self.training_data.df.index) * leaf.pinfo["r"]
         )
@@ -542,15 +544,15 @@ class GradientBoostedTree(Model):
         for i, x in enumerate(self.df.iloc):
             delta[i] = tree.traverse(x).value
         y = self.df[self.y_name].values
+        
+        loss_args = {}
         if "__weights__" in self.df:
-            w = self.df["__weights__"].values
-        else:
-            w = None
+            loss_args["weights"] = self.df["__weights__"].values
 
         def fun(gamma):
             y_ = y_hat + gamma * delta
             p = self.dmgr.metrics.output_transform(y_)
-            return self.dmgr.metrics.loss(y, p, w)
+            return self.dmgr.metrics.loss(y, p, **loss_args)
 
         return fun
 
