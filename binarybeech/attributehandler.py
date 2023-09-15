@@ -82,7 +82,7 @@ class NominalAttributeHandler(AttributeHandlerBase):
             loss_args = [loss_args]*2
             if "__weights__" in df:
                 for i, df_ in enumerate(split_df):
-                loss_args[i]["weights"] = df_["__weights__"].values
+                    loss_args[i]["weights"] = df_["__weights__"].values
                     
                             
             val = [
@@ -308,7 +308,7 @@ class IntervalAttributeHandler(AttributeHandlerBase):
             loss_args = [loss_args]*2
             if "__weights__" in df:
                 for i, df_ in enumerate(split_df):
-                loss_args[i]["weights"] = df_["__weights__"].values
+                    loss_args[i]["weights"] = df_["__weights__"].values
                     
             val = [
                 self.metrics.node_value(df_[self.y_name], **loss_args[i])
