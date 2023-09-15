@@ -100,6 +100,8 @@ class CART(Model):
         min_split_samples=1,
         max_depth=10,
         min_split_loss = 0.,
+        lambda_l1 = 0.,
+        lambda_l2 = 0.,
         method="regression",
         handle_missings="simple",
         attribute_handlers=None,
@@ -124,6 +126,11 @@ class CART(Model):
         self.min_split_samples = min_split_samples
         self.max_depth = max_depth
         self.min_split_loss = min_split_loss
+        self.loss_args = {
+            "lambda_l1":lambda_l1,
+            "lambda_l2":lambda_l2,
+        }
+        self.algorithm_kwargs.update(self.loss_args)
 
         self.depth = 0
         self.seed = seed
@@ -226,7 +233,7 @@ class CART(Model):
     def _node_or_leaf(self, df):
         y = df[self.y_name]
 
-        loss_args = {}
+        loss_args = self.loss_args
         if "__weights__" in df:
             loss_args["weights"] = df["__weights__"].values
 
@@ -270,7 +277,7 @@ class CART(Model):
                 decision_fun=self.dmgr[split_name].decide,
             )
             item.pinfo["N"] = len(df.index)
-            loss_args ={}
+            loss_args = self.loss_args
             item.pinfo["r"] = self.dmgr.metrics.loss_prune(y, y_hat, **loss_args)
             item.pinfo["R"] = (
                 item.pinfo["N"] / len(self.training_data.df.index) * item.pinfo["r"]
@@ -286,7 +293,7 @@ class CART(Model):
         leaf = Node(value=y_hat)
 
         leaf.pinfo["N"] = y.size
-        loss_args = {}
+        loss_args = self.loss_args
         leaf.pinfo["r"] = self.dmgr.metrics.loss_prune(y, y_hat, **loss_args)
         leaf.pinfo["R"] = (
             leaf.pinfo["N"] / len(self.training_data.df.index) * leaf.pinfo["r"]
@@ -545,7 +552,7 @@ class GradientBoostedTree(Model):
             delta[i] = tree.traverse(x).value
         y = self.df[self.y_name].values
         
-        loss_args = {}
+        loss_args = self.cart_settings["loss_args"]
         if "__weights__" in self.df:
             loss_args["weights"] = self.df["__weights__"].values
 
