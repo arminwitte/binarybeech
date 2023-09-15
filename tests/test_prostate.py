@@ -9,7 +9,7 @@ def test_housing_cart_create():
     train = df_prostate["train"].isin(["T"])
     df_prostate.drop(columns=["Unnamed: 0", "train"])
     
-    c = CART(df=df_prostate[train], y_name="lpsa", meth: od="regression:regularized", seed=42)
+    c = CART(df=df_prostate[train], y_name="lpsa", method="regression:regularized", seed=42)
     c.create_tree()
     p = c.predict(df_prostate[~train])
     val = c.validate(df_prostate[~train])

@@ -222,7 +222,7 @@ class DichotomousAttributeHandler(AttributeHandlerBase):
         loss_args = {key: self.algorithm_kwargs[key] for key in ["lambda_l1", "lambda_l2"]}
         loss_args = [loss_args]*2
         if "__weights__" in df:
-            for i, df_ in enumerate(split_df):
+            for i, df_ in enumerate(self.split_df):
                 loss_args[i]["weights"] = df_["__weights__"].values
                     
 
