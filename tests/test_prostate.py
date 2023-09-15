@@ -74,8 +74,8 @@ def test_housing_gradientboostedtree():
         cart_settings={"lambda_l1":1.,"lambda_l2":1., "method":"regression:regularized"}
     )
     gbt.train(20)
-    p = c.predict(df_prostate[~train])
-    val = c.validate(df_prostate[~train])
+    p = gbt.predict(df_prostate[~train])
+    val = gbt.validate(df_prostate[~train])
     acc = val["R_squared"]
     np.testing.assert_allclose(
         p[:10],
