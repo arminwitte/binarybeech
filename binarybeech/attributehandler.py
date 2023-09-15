@@ -79,7 +79,7 @@ class NominalAttributeHandler(AttributeHandlerBase):
             n = [len(df_.index) for df_ in split_df]
             
             loss_args = {key: self.algorithm_kwargs[key] for key in ["lambda_l1", "lambda_l2"]}
-            loss_args = [loss_args]*2
+            loss_args = [loss_args.copy(), loss_args.copy()]
             if "__weights__" in df:
                 for i, df_ in enumerate(split_df):
                     loss_args[i]["weights"] = df_["__weights__"].values
@@ -166,7 +166,7 @@ class HighCardinalityNominalAttributeHandler(AttributeHandlerBase):
                 return np.Inf
 
             loss_args = {key: self.algorithm_kwargs[key] for key in ["lambda_l1", "lambda_l2"]}
-            loss_args = [loss_args]*2
+            loss_args = [loss_args.copy(), loss_args.copy()]
             if "__weights__" in df:
                 for i, df_ in enumerate(split_df):
                                 loss_args[i]["weights"] = df_["__weights__"].values
@@ -220,7 +220,7 @@ class DichotomousAttributeHandler(AttributeHandlerBase):
         n = [len(df_.index) for df_ in self.split_df]
             
         loss_args = {key: self.algorithm_kwargs[key] for key in ["lambda_l1", "lambda_l2"]}
-        loss_args = [loss_args]*2
+        loss_args = [loss_args.copy(), loss_args.copy()]
         if "__weights__" in df:
             for i, df_ in enumerate(self.split_df):
                 loss_args[i]["weights"] = df_["__weights__"].values
@@ -305,7 +305,7 @@ class IntervalAttributeHandler(AttributeHandlerBase):
                 
                 
             loss_args = {key: self.algorithm_kwargs[key] for key in ["lambda_l1", "lambda_l2"]}
-            loss_args = [loss_args]*2
+            loss_args = [loss_args.copy(), loss_args.copy()]
             if "__weights__" in df:
                 for i, df_ in enumerate(split_df):
                     loss_args[i]["weights"] = df_["__weights__"].values

@@ -11,6 +11,7 @@ def test_datamanager_info():
     assert ah == ["default", "clustering"]
     assert m == [
         "regression",
+        "regression:regularized",
         "classification:gini",
         "classification:entropy",
         "logistic",
