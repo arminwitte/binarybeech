@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "binarybeech"
 description = "Simplistic algorithms to train decision trees for regression and classification"
-version = "0.2.1"
+version = "0.3.0"
 authors = [
   { name="Armin Witte"},
 ]
@@ -21,8 +21,8 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 dependencies = [
-	"numpy>=1.19.0",
-	"scipy>=1.7.0",
+    "numpy>=1.19.0",
+    "scipy>=1.7.0",
     "pandas>=1.3.0"
 ]
 [project.optional-dependencies] 
