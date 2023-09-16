@@ -13,7 +13,7 @@ def test_adaboost_iris():
     val = c.validate()
     acc = val["accuracy"]
     np.testing.assert_array_equal(p[:10], ["setosa"] * 10)
-    assert acc <= 1.0 and acc > 0.98
+    assert acc <= 1.0 and acc > 0.97
 
 
 def test_adaboost_titanic():

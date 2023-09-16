@@ -78,9 +78,12 @@ class NominalAttributeHandler(AttributeHandlerBase):
             N = len(df.index)
             n = [len(df_.index) for df_ in split_df]
             
-            loss_args = [{}, {}]
+            loss_args = {key: self.algorithm_kwargs[key] for key in ["lambda_l1", "lambda_l2"]}
+            loss_args = [loss_args.copy(), loss_args.copy()]
             if "__weights__" in df:
-                loss_args = [{"weights":df_["__weights__"].values} for df_ in split_df]
+                for i, df_ in enumerate(split_df):
+                    loss_args[i]["weights"] = df_["__weights__"].values
+                    
                             
             val = [
                 self.metrics.node_value(df_[self.y_name], **loss_args[i])
@@ -162,9 +165,12 @@ class HighCardinalityNominalAttributeHandler(AttributeHandlerBase):
             if min(n) == 0:
                 return np.Inf
 
-            loss_args = [{}, {}]
+            loss_args = {key: self.algorithm_kwargs[key] for key in ["lambda_l1", "lambda_l2"]}
+            loss_args = [loss_args.copy(), loss_args.copy()]
             if "__weights__" in df:
-                w = [{"weights":df_["__weights__"].values} for df_ in split_df]
+                for i, df_ in enumerate(split_df):
+                                loss_args[i]["weights"] = df_["__weights__"].values
+                                    
             val = [
                 self.metrics.node_value(df_[self.y_name], **loss_args[i])
                 for i, df_ in enumerate(split_df)
@@ -212,10 +218,13 @@ class DichotomousAttributeHandler(AttributeHandlerBase):
         ]
         N = len(df.index)
         n = [len(df_.index) for df_ in self.split_df]
-
-        loss_args = [{}, {}]
+            
+        loss_args = {key: self.algorithm_kwargs[key] for key in ["lambda_l1", "lambda_l2"]}
+        loss_args = [loss_args.copy(), loss_args.copy()]
         if "__weights__" in df:
-            loss_args = [{"weights":df_["__weights__"].values} for df_ in self.split_df]
+            for i, df_ in enumerate(self.split_df):
+                loss_args[i]["weights"] = df_["__weights__"].values
+                    
 
         val = [
             self.metrics.node_value(df_[self.y_name], **loss_args[i])
@@ -293,10 +302,14 @@ class IntervalAttributeHandler(AttributeHandlerBase):
         def fun(x):
             split_df = [df[df[split_name] < x], df[df[split_name] >= x]]
             n = [len(df_.index) for df_ in split_df]
-
-            loss_args = [{}, {}]
+                
+                
+            loss_args = {key: self.algorithm_kwargs[key] for key in ["lambda_l1", "lambda_l2"]}
+            loss_args = [loss_args.copy(), loss_args.copy()]
             if "__weights__" in df:
-                loss_args = [{"weights":df_["__weights__"].values} for df_ in split_df]
+                for i, df_ in enumerate(split_df):
+                    loss_args[i]["weights"] = df_["__weights__"].values
+                    
             val = [
                 self.metrics.node_value(df_[self.y_name], **loss_args[i])
                 for i, df_ in enumerate(split_df)
