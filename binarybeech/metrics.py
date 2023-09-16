@@ -258,9 +258,9 @@ class ClassificationMetrics(Metrics):
 
     def loss_prune(self, y, y_hat, **kwargs):
         # Implementation of the loss pruning calculation for classification
-        if "weights" in kwargs.keys():
-            print(len(y), len(y_hat), len(kwargs["weights"]))
-            return math.misclassification_cost_weighted(y, kwargs["weights"])
+        # if "weights" in kwargs.keys():
+        #     print(len(y), len(y_hat), len(kwargs["weights"]))
+        #     return math.misclassification_cost_weighted(y, kwargs["weights"])
         return math.misclassification_cost(y)
 
     def node_value(self, y, **kwargs):
