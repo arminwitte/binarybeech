@@ -108,6 +108,11 @@ class CART(Model):
         seed=None,
         algorithm_kwargs={},
     ):
+        self.loss_args = {
+            "lambda_l1":lambda_l1,
+            "lambda_l2":lambda_l2,
+        }
+        algorithm_kwargs.update(self.loss_args)
         super().__init__(
             training_data,
             df,
@@ -126,11 +131,7 @@ class CART(Model):
         self.min_split_samples = min_split_samples
         self.max_depth = max_depth
         self.min_split_loss = min_split_loss
-        self.loss_args = {
-            "lambda_l1":lambda_l1,
-            "lambda_l2":lambda_l2,
-        }
-        self.algorithm_kwargs.update(self.loss_args)
+
 
         self.depth = 0
         self.seed = seed

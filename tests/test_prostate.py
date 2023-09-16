@@ -4,7 +4,7 @@ import pandas as pd
 from binarybeech.binarybeech import CART, GradientBoostedTree, RandomForest
 
 
-def test_housing_cart_create():
+def test_prostate_cart_create():
     df_prostate = pd.read_csv("data/prostate.data", sep="\t")
     train = df_prostate["train"].isin(["T"])
     df_prostate.drop(columns=["Unnamed: 0", "train"])
@@ -16,18 +16,7 @@ def test_housing_cart_create():
     acc = val["R_squared"]
     np.testing.assert_allclose(
         p[:10],
-        [
-            13300000.0,
-            12250000.0,
-            12250000.0,
-            12215000.0,
-            11410000.0,
-            10850000.0,
-            10150000.0,
-            10150000.0,
-            9870000.0,
-            9800000.0,
-        ],
+        [0.765468, 1.266948, 1.266948, 1.348073, 1.695616, 1.800058, 1.800058, 1.800058, 2.008214, 2.008214]
     )
     assert acc < 1.0 and acc > 0.8
     assert c.tree.node_count() == 10
@@ -44,24 +33,13 @@ def test_housing_cart_train():
     acc = val["R_squared"]
     np.testing.assert_allclose(
         p[:10],
-        [
-            13300000.0,
-            12250000.0,
-            12250000.0,
-            12215000.0,
-            11410000.0,
-            10850000.0,
-            10150000.0,
-            10150000.0,
-            9870000.0,
-            9800000.0,
-        ],
+        [0.765468, 1.266948, 1.266948, 1.348073, 1.695616, 1.800058, 1.800058, 1.800058, 2.008214, 2.008214],
     )
     assert acc < 1.0 and acc > 0.8
     assert c.tree.node_count() == 10
 
 
-def test_housing_gradientboostedtree():
+def test_prostate_gradientboostedtree():
     df_prostate = pd.read_csv("data/prostate.data", sep="\t")
     train = df_prostate["train"].isin(["T"])
     df_prostate.drop(columns=["Unnamed: 0", "train"])
@@ -79,17 +57,6 @@ def test_housing_gradientboostedtree():
     acc = val["R_squared"]
     np.testing.assert_allclose(
         p[:10],
-        [
-            13300000.0,
-            12250000.0,
-            12250000.0,
-            12215000.0,
-            11410000.0,
-            10850000.0,
-            10150000.0,
-            10150000.0,
-            9870000.0,
-            9800000.0,
-        ],
+        [0.765468, 1.266948, 1.266948, 1.348073, 1.695616, 1.800058, 1.800058, 1.800058, 2.008214, 2.008214],
     )
     assert acc < 1.0 and acc > 0.8
