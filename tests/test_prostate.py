@@ -19,8 +19,8 @@ def test_prostate_cart_create():
         [0.765468, 1.266948, 1.266948, 1.348073, 1.695616, 1.800058, 1.800058, 1.800058, 2.008214, 2.008214],
         rtol=1e-5
     )
-    assert acc < 1.0 and acc > 0.8
-    assert c.tree.node_count() == 10
+    assert acc <= 1.0 and acc > 0.9
+    assert c.tree.leaf_count() == 10
 
 
 def test_housing_cart_train():
@@ -37,8 +37,8 @@ def test_housing_cart_train():
         [0.765468, 1.047319, 1.047319, 1.398717, 1.658228, 1.731656, 1.766442, 1.816452, 2.008214, 2.021548],
         rtol=1e-5
     )
-    assert acc < 1.0 and acc > 0.8
-    assert c.tree.node_count() == 10
+    assert acc < 1.0 and acc > 0.9
+    assert c.tree.leaf_count() == 10
 
 
 def test_prostate_gradientboostedtree():
@@ -49,9 +49,11 @@ def test_prostate_gradientboostedtree():
         df=df_prostate[train],
         y_name="lpsa",
         learning_rate=0.5,
+        lambda_l1=1.,
+        lambda_l2=1.,
         init_method="regression:regularized",
         seed=42,
-        cart_settings={"lambda_l1":1.,"lambda_l2":1., "method":"regression:regularized"}
+        cart_settings={"method":"regression:regularized"}
     )
     gbt.train(20)
     p = gbt.predict(df_prostate[~train])
@@ -59,6 +61,7 @@ def test_prostate_gradientboostedtree():
     acc = val["R_squared"]
     np.testing.assert_allclose(
         p[:10],
-        [0.765468, 1.266948, 1.266948, 1.348073, 1.695616, 1.800058, 1.800058, 1.800058, 2.008214, 2.008214],
+        [1.105652, 0.893312, 0.977413, 1.181106, 1.682712, 1.727287, 1.581879, 1.582912, 1.914011, 1.82538 ],
+        rtol=1e-5
     )
-    assert acc < 1.0 and acc > 0.8
+    assert acc <= 1.0 and acc > 0.9
