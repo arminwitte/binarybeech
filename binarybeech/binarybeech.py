@@ -552,7 +552,7 @@ class GradientBoostedTree(Model):
             delta[i] = tree.traverse(x).value
         y = self.df[self.y_name].values
         
-        loss_args = self.cart_settings["loss_args"]
+        loss_args = {key:self.algorithm_kwargs[key] for key in ["lambda_l1", "lambda_l2"]}
         if "__weights__" in self.df:
             loss_args["weights"] = self.df["__weights__"].values
 
