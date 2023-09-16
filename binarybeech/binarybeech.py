@@ -108,11 +108,7 @@ class CART(Model):
         seed=None,
         algorithm_kwargs={},
     ):
-        self.loss_args = {
-            "lambda_l1":lambda_l1,
-            "lambda_l2":lambda_l2,
-        }
-        algorithm_kwargs.update(self.loss_args)
+        algorithm_kwargs.update(locals())
         super().__init__(
             training_data,
             df,
@@ -234,7 +230,7 @@ class CART(Model):
     def _node_or_leaf(self, df):
         y = df[self.y_name]
 
-        loss_args = self.loss_args
+        loss_args = {key:self.algorithm_kwargs[key] for key in ["lambda_l1", "lambda_l2"]}
         if "__weights__" in df:
             loss_args["weights"] = df["__weights__"].values
 
@@ -278,7 +274,7 @@ class CART(Model):
                 decision_fun=self.dmgr[split_name].decide,
             )
             item.pinfo["N"] = len(df.index)
-            loss_args = self.loss_args
+            loss_args = {key:self.algorithm_kwargs[key] for key in ["lambda_l1", "lambda_l2"]}
             item.pinfo["r"] = self.dmgr.metrics.loss_prune(y, y_hat, **loss_args)
             item.pinfo["R"] = (
                 item.pinfo["N"] / len(self.training_data.df.index) * item.pinfo["r"]
@@ -294,7 +290,7 @@ class CART(Model):
         leaf = Node(value=y_hat)
 
         leaf.pinfo["N"] = y.size
-        loss_args = self.loss_args
+        loss_args = {key:self.algorithm_kwargs[key] for key in ["lambda_l1","lambda_l2"]}
         leaf.pinfo["r"] = self.dmgr.metrics.loss_prune(y, y_hat, **loss_args)
         leaf.pinfo["R"] = (
             leaf.pinfo["N"] / len(self.training_data.df.index) * leaf.pinfo["r"]
@@ -410,6 +406,8 @@ class GradientBoostedTree(Model):
         sample_frac=1,
         n_attributes=None,
         learning_rate=0.1,
+        lambda_l1 = 0.,
+        lambda_l2 = 0.,
         cart_settings={},
         init_method="logistic",
         gamma=None,
@@ -418,6 +416,7 @@ class GradientBoostedTree(Model):
         seed=None,
         algorithm_kwargs={},
     ):
+        algorithm_kwargs.update(locals())
         super().__init__(
             training_data,
             df,
@@ -656,6 +655,7 @@ class AdaBoostTree(Model):
         seed=None,
         algorithm_kwargs={},
     ):
+        algorithm_kwargs.update(locals())
         super().__init__(
             training_data,
             df,
@@ -818,6 +818,7 @@ class RandomForest(Model):
         seed=None,
         algorithm_kwargs={},
     ):
+        algorithm_kwargs.update(locals())
         super().__init__(
             training_data,
             df,
