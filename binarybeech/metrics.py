@@ -398,7 +398,7 @@ class MetricsFactory:
 
 metrics_factory = MetricsFactory()
 metrics_factory.register("regression", RegressionMetrics)
-metrics_factory.register("regression:regularized", RegressionMetrics)
+metrics_factory.register("regression:regularized", RegressionMetricsRegularized)
 metrics_factory.register("classification:gini", ClassificationMetrics)
 metrics_factory.register("classification:entropy", ClassificationMetricsEntropy)
 metrics_factory.register("logistic", LogisticMetrics)
