@@ -112,7 +112,7 @@ class RegressionMetrics(Metrics):
 
     def bins(self, df, y_name, attribute):
         y = df[y_name]
-        
+
         kwargs = {}
         if "__weights__" in df:
             kwargs["weights"] = df["__weights__"].values
@@ -122,7 +122,7 @@ class RegressionMetrics(Metrics):
         unique = np.unique(df[attribute])
         for u in unique:
             y_u = df[df[attribute] == u][y_name]
-            
+
             kwargs = {}
             if "__weights__" in df:
                 kwargs["weights"] = df[df[attribute] == u]["__weights__"].values
@@ -138,27 +138,25 @@ class RegressionMetrics(Metrics):
     @staticmethod
     def check(x):
         return math.check_interval(x)
-        
-        
+
+
 class RegressionMetricsRegularized(RegressionMetrics):
     def __init__(self):
         super().__init__()
-        
+
     def node_value(self, y, **kwargs):
         y = np.array(y).ravel()
         n = y.shape[0]
         lambda_l1 = kwargs.get("lambda_l1")
         lambda_l2 = kwargs.get("lambda_l2")
         y_sum = np.sum(y)
-        
-        if y_sum < -lambda_l1:
-            return (y_sum + lambda_l1)/(n + lambda_l2)
-        elif y_sum > lambda_l1:
-            return (y_sum - lambda_l1)/(n + lambda_l2)
-        else:
-            return 0.
-        
 
+        if y_sum < -lambda_l1:
+            return (y_sum + lambda_l1) / (n + lambda_l2)
+        elif y_sum > lambda_l1:
+            return (y_sum - lambda_l1) / (n + lambda_l2)
+        else:
+            return 0.0
 
 
 class LogisticMetrics(Metrics):
@@ -204,17 +202,17 @@ class LogisticMetrics(Metrics):
 
     def bins(self, df, y_name, attribute):
         y = df[y_name]
-        
+
         kwargs = {}
         if "__weights__" in df:
-            kwargs ["weights"] = df["__weights__"].values
+            kwargs["weights"] = df["__weights__"].values
 
         y_hat = self.node_value(y, **kwargs)
         bins = [[], []]
         unique = np.unique(df[attribute])
         for u in unique:
             y_u = df[df[attribute] == u][y_name]
-            
+
             kwargs = {}
             if "__weights__" in df:
                 kwargs["weights"] = df[df[attribute] == u]["__weights__"].values
@@ -293,7 +291,7 @@ class ClassificationMetrics(Metrics):
 
     def bins(self, df, y_name, attribute):
         y = df[y_name]
-        
+
         kwargs = {}
         if "__weights__" in df:
             kwargs["weights"] = df["__weights__"].values
@@ -303,7 +301,7 @@ class ClassificationMetrics(Metrics):
         unique = np.unique(df[attribute])
         for u in unique:
             y_u = df[df[attribute] == u][y_name]
-            
+
             kwargs = {}
             if "__weights__" in df:
                 kwargs["weights"] = df[df[attribute] == u]["__weights__"].values

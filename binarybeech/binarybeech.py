@@ -99,9 +99,9 @@ class CART(Model):
         min_leaf_samples=1,
         min_split_samples=1,
         max_depth=10,
-        min_split_loss = 0.,
-        lambda_l1 = 0.,
-        lambda_l2 = 0.,
+        min_split_loss=0.0,
+        lambda_l1=0.0,
+        lambda_l2=0.0,
         method="regression",
         handle_missings="simple",
         attribute_handlers=None,
@@ -127,7 +127,6 @@ class CART(Model):
         self.min_split_samples = min_split_samples
         self.max_depth = max_depth
         self.min_split_loss = min_split_loss
-
 
         self.depth = 0
         self.seed = seed
@@ -230,7 +229,9 @@ class CART(Model):
     def _node_or_leaf(self, df):
         y = df[self.y_name]
 
-        loss_args = {key:self.algorithm_kwargs[key] for key in ["lambda_l1", "lambda_l2"]}
+        loss_args = {
+            key: self.algorithm_kwargs[key] for key in ["lambda_l1", "lambda_l2"]
+        }
         if "__weights__" in df:
             loss_args["weights"] = df["__weights__"].values
 
@@ -274,7 +275,9 @@ class CART(Model):
                 decision_fun=self.dmgr[split_name].decide,
             )
             item.pinfo["N"] = len(df.index)
-            loss_args = {key:self.algorithm_kwargs[key] for key in ["lambda_l1", "lambda_l2"]}
+            loss_args = {
+                key: self.algorithm_kwargs[key] for key in ["lambda_l1", "lambda_l2"]
+            }
             item.pinfo["r"] = self.dmgr.metrics.loss_prune(y, y_hat, **loss_args)
             item.pinfo["R"] = (
                 item.pinfo["N"] / len(self.training_data.df.index) * item.pinfo["r"]
@@ -290,7 +293,9 @@ class CART(Model):
         leaf = Node(value=y_hat)
 
         leaf.pinfo["N"] = y.size
-        loss_args = {key:self.algorithm_kwargs[key] for key in ["lambda_l1","lambda_l2"]}
+        loss_args = {
+            key: self.algorithm_kwargs[key] for key in ["lambda_l1", "lambda_l2"]
+        }
         leaf.pinfo["r"] = self.dmgr.metrics.loss_prune(y, y_hat, **loss_args)
         leaf.pinfo["R"] = (
             leaf.pinfo["N"] / len(self.training_data.df.index) * leaf.pinfo["r"]
@@ -406,8 +411,8 @@ class GradientBoostedTree(Model):
         sample_frac=1,
         n_attributes=None,
         learning_rate=0.1,
-        lambda_l1 = 0.,
-        lambda_l2 = 0.,
+        lambda_l1=0.0,
+        lambda_l2=0.0,
         cart_settings={},
         init_method="logistic",
         gamma=None,
@@ -551,8 +556,10 @@ class GradientBoostedTree(Model):
         for i, x in enumerate(self.df.iloc):
             delta[i] = tree.traverse(x).value
         y = self.df[self.y_name].values
-        
-        loss_args = {key:self.algorithm_kwargs[key] for key in ["lambda_l1", "lambda_l2"]}
+
+        loss_args = {
+            key: self.algorithm_kwargs[key] for key in ["lambda_l1", "lambda_l2"]
+        }
         if "__weights__" in self.df:
             loss_args["weights"] = self.df["__weights__"].values
 
@@ -648,8 +655,8 @@ class AdaBoostTree(Model):
         X_names=None,
         sample_frac=1,
         n_attributes=None,
-        lambda_l1 = 0.,
-        lambda_l2 = 0.,
+        lambda_l1=0.0,
+        lambda_l2=0.0,
         cart_settings={},
         method="classification",
         handle_missings="simple",
@@ -813,8 +820,8 @@ class RandomForest(Model):
         verbose=False,
         sample_frac=1,
         n_attributes=None,
-        lambda_l1 = 0.,
-        lambda_l2 = 0.,
+        lambda_l1=0.0,
+        lambda_l2=0.0,
         cart_settings={},
         method="regression",
         handle_missings="simple",
