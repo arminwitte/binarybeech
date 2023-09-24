@@ -69,7 +69,7 @@ def test_prostate_gradientboostedtree():
         lambda_l2=1.,
         init_method="regression:regularized",
         seed=42,
-        cart_settings={"method":"regression:regularized", lambda_l1=1.,lambda_l2=1.,
+        cart_settings={"method":"regression:regularized", "lambda_l1":1.,"lambda_l2":1.,
         }
     )
     gbt.train(20)
