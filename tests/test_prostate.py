@@ -23,11 +23,11 @@ def test_prostate_cart_create():
     assert c.tree.leaf_count() == 63
 
 
-def test_housing_cart_train():
+def test_prostate_cart_l1():
     df_prostate = pd.read_csv("data/prostate.data", sep="\t")
     train = df_prostate["train"].isin(["T"])
     df_prostate.drop(columns=["Unnamed: 0", "train"])
-    c = CART(df=df_prostate, y_name="lpsa", method="regression:regularized", seed=42, lambda_l1=1.,lambda_l2=1.)
+    c = CART(df=df_prostate, y_name="lpsa", method="regression:regularized", seed=42, lambda_l1=1.,lambda_l2=0.)
     c.create_tree()
     p = c.predict(df_prostate[~train])
     val = c.validate(df_prostate[~train])
@@ -40,6 +40,22 @@ def test_housing_cart_train():
     assert acc <= 1.0 and acc > 0.99
     assert c.tree.leaf_count() == 86
 
+def test_prostate_cart_l2():
+    df_prostate = pd.read_csv("data/prostate.data", sep="\t")
+    train = df_prostate["train"].isin(["T"])
+    df_prostate.drop(columns=["Unnamed: 0", "train"])
+    c = CART(df=df_prostate, y_name="lpsa", method="regression:regularized", seed=42, lambda_l1=0.,lambda_l2=1.)
+    c.create_tree()
+    p = c.predict(df_prostate[~train])
+    val = c.validate(df_prostate[~train])
+    acc = val["R_squared"]
+    np.testing.assert_allclose(
+        p[:10],
+        [0.765468, 1.047319, 1.047319, 1.398717, 1.658228, 1.731656, 1.766442, 1.816452, 2.008214, 2.021548],
+        rtol=1e-5
+    )
+    assert acc <= 1.0 and acc > 0.99
+    assert c.tree.leaf_count() == 86
 
 def test_prostate_gradientboostedtree():
     df_prostate = pd.read_csv("data/prostate.data", sep="\t")
@@ -53,7 +69,8 @@ def test_prostate_gradientboostedtree():
         lambda_l2=1.,
         init_method="regression:regularized",
         seed=42,
-        cart_settings={"method":"regression:regularized"}
+        cart_settings={"method":"regression:regularized", lambda_l1=1.,lambda_l2=1.,
+        }
     )
     gbt.train(20)
     p = gbt.predict(df_prostate[~train])
