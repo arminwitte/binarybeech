@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "binarybeech"
 description = "Simplistic algorithms to train decision trees for regression and classification"
-version = "0.3.0"
+version = "0.3.1"
 authors = [
   { name="Armin Witte"},
 ]
