@@ -51,7 +51,7 @@ def print_bars(d, max_width=70):
     usable_width = max_width - 19
     for key, val in d.items():
         L = int(round(usable_width * val / max_val))
-        print(f"{key:10}|{'#'*L}{' '*(usable_width-L)}{val:4.2}")
+        print(f"{key:10}|{'#' * L}{' ' * (usable_width - L)}{val:4.2}")
 
 
 def print_tree(tree):

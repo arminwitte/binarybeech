@@ -12,7 +12,6 @@ def model_missings(df, y_name, X_names=None, cart_settings={}):
     df_ = df.copy()
     has_missings = df.isnull().any()
     for x_name in X_names:
-
         if not has_missings[x_name]:
             continue
 

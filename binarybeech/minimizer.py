@@ -77,7 +77,6 @@ class BrentsScalarMinimizer(Minimizer):
 
     def _update(self):
         if self.fu <= self.fx:
-
             if self.u < self.x:
                 self.b = self.x
             else:
@@ -91,7 +90,6 @@ class BrentsScalarMinimizer(Minimizer):
             self.fx = self.fu
 
         else:
-
             if self.u < self.x:
                 self.a = self.u
             else:
