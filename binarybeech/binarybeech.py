@@ -303,12 +303,12 @@ class CART(Model):
         return leaf
 
     def _loss_best(self, df):
-        loss = np.Inf
+        loss = np.inf
         split_df = None
         split_threshold = None
         split_name = None
         for name in self.X_names:
-            loss_ = np.Inf
+            loss_ = np.inf
             dh = self.dmgr[name]
             success = dh.split(df)
             if not success:
@@ -592,7 +592,7 @@ class GradientBoostedTree(Model):
         # Intelligence. AI 2020. Lecture Notes in Computer Science(), vol 12576.
         # Springer, Cham. https://doi.org/10.1007/978-3-030-64984-5_33
         M = len(self.trees)
-        res_norm = np.Inf
+        res_norm = np.inf
         m = M
         for i in range(M):
             res_norm_old = res_norm
@@ -929,7 +929,7 @@ class RandomForest(Model):
         df = pd.DataFrame(index=self.df.index, dtype="object")
         df[self.y_name] = self.df[self.y_name].values
         df["votes"] = np.empty((len(df), 0)).tolist()
-        df["majority_vote"] = np.NaN
+        df["majority_vote"] = np.empty(len(df), dtype=object)
         return df
 
     def validate(self, df=None):

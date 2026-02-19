@@ -94,7 +94,7 @@ def odds(x):
     for i, u in enumerate(unique):
         d[u] = counts[i]
     if d[0] == 0:
-        return np.Inf
+        return np.inf
     odds = d[1] / d[0]
     return odds
 
@@ -208,7 +208,7 @@ def check_nominal(
         return False
 
     dtype = x.values.dtype
-    if not np.issubdtype(dtype, np.number):
+    if not pd.api.types.is_numeric_dtype(dtype):
         return True
 
     return False
@@ -236,7 +236,7 @@ def check_interval(x):
     # r = L / x.size
     dtype = x.values.dtype
 
-    if np.issubdtype(dtype, np.number):
+    if pd.api.types.is_numeric_dtype(dtype):
         return True
 
     return False
