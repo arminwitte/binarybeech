@@ -142,15 +142,15 @@ def accuracy(m):
 
 
 def distance_matrix(X):
-    n = X.shape[0]
-    D = np.empty((n, n))
-    for i in range(n):
-        D[i, :] = np.linalg.norm(X - X[i, :], axis=1)
-    return D
+    # Vectorized pairwise Euclidean distance computation.
+    # Uses broadcasting: result shape (n_samples, n_samples).
+    # Note: this may use more memory for large n but is much faster than Python loops.
+    X = np.asarray(X)
+    return np.linalg.norm(X[:, None, :] - X[None, :, :], axis=2)
 
 
 def proximity_matrix(D):
-    d_max = np.max(np.max(D))
+    d_max = np.max(D)
     return 1.0 - D / d_max
 
 
