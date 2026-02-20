@@ -217,7 +217,7 @@ def check_nominal(
     if L / len(x) > max_unique_fraction:
         return False
 
-    dtype = x.values.dtype
+    dtype = x.values.dtype if hasattr(x, "values") else np.asarray(x).dtype
     if not pd.api.types.is_numeric_dtype(dtype):
         return True
 
@@ -244,7 +244,7 @@ def check_interval(x: pd.Series | NDArray[Any]) -> bool:
         return False
 
     # r = L / x.size
-    dtype = x.values.dtype
+    dtype = x.values.dtype if hasattr(x, "values") else np.asarray(x).dtype
 
     if pd.api.types.is_numeric_dtype(dtype):
         return True

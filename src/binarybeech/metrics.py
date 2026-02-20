@@ -147,8 +147,8 @@ class RegressionMetricsRegularized(RegressionMetrics):
     def node_value(self, y, **kwargs):
         y = np.array(y).ravel()
         n = y.shape[0]
-        lambda_l1 = kwargs.get("lambda_l1")
-        lambda_l2 = kwargs.get("lambda_l2")
+        lambda_l1 = kwargs.get("lambda_l1", 0.0)
+        lambda_l2 = kwargs.get("lambda_l2", 0.0)
         y_sum = np.sum(y)
 
         if y_sum < -lambda_l1:
@@ -231,7 +231,7 @@ class LogisticMetrics(Metrics):
         unique = np.unique(x)
         L = len(unique)
         # r = l / x.size
-        dtype = x.values.dtype
+        dtype = x.values.dtype if hasattr(x, "values") else np.asarray(x).dtype
 
         if (
             np.issubdtype(dtype, np.number)
