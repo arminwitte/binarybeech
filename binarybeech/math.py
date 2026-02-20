@@ -3,9 +3,13 @@
 import numpy as np
 import pandas as pd
 import scipy.signal
+from typing import Any, Tuple, Sequence, List, Optional
+from numpy.typing import NDArray
 
 
-def unique_weighted(x, w):
+def unique_weighted(
+    x: Sequence[Any], w: Sequence[float]
+) -> Tuple[np.ndarray, np.ndarray]:
     d = {}
     for i, x_ in enumerate(x):
         if x_ in d:
@@ -17,78 +21,80 @@ def unique_weighted(x, w):
     return np.array(u), np.array(c) / np.sum(c)
 
 
-def gini_impurity(x):
+def gini_impurity(x: NDArray[Any]) -> float:
     unique, counts = np.unique(x, return_counts=True)
     N = x.size
     p = counts / N
     return 1.0 - np.sum(p**2)
 
 
-def gini_impurity_weighted(x, w):
+def gini_impurity_weighted(x: Sequence[Any], w: Sequence[float]) -> float:
     _, p = unique_weighted(x, w)
     return 1.0 - np.sum(p**2)
 
 
-def shannon_entropy(x):
+def shannon_entropy(x: NDArray[Any]) -> float:
     unique, counts = np.unique(x, return_counts=True)
     N = x.size
     p = counts / N
     return -np.sum(p * np.log2(p))
 
 
-def shannon_entropy_weighted(x, w):
+def shannon_entropy_weighted(x: Sequence[Any], w: Sequence[float]) -> float:
     _, p = unique_weighted(x, w)
     return -np.sum(p * np.log2(p))
 
 
-def misclassification_cost(x):
+def misclassification_cost(x: NDArray[Any]) -> float:
     unique, counts = np.unique(x, return_counts=True)
     N = x.size
     p = np.max(counts) / N
     return 1.0 - p
 
 
-def misclassification_cost_weighted(x, w):
+def misclassification_cost_weighted(x: Sequence[Any], w: Sequence[float]) -> float:
     _, share = unique_weighted(x, w)
     p = np.max(share)
     return 1.0 - p
 
 
-def logistic_loss(y, p):
+def logistic_loss(y: NDArray[Any], p: NDArray[float]) -> float:
     p = np.clip(p, 1e-12, 1.0 - 1e-12)
     return -np.sum(y * np.log(p) + (1 - y) * np.log(1 - p))
 
 
-def mean_squared_error(y, y_hat):
+def mean_squared_error(y: NDArray[float], y_hat: NDArray[float]) -> float:
     e = y - y_hat
     return 1 / e.size * (e.T @ e)
 
 
-def mean_squared_error_weighted(y, y_hat, w):
+def mean_squared_error_weighted(
+    y: NDArray[float], y_hat: NDArray[float], w: NDArray[float]
+) -> float:
     e = (y - y_hat) * w
     return 1 / e.size * (e.T @ e)
 
 
-def r_squared(y, y_hat):
+def r_squared(y: NDArray[float], y_hat: NDArray[float]) -> float:
     e = y - y_hat
     sse = e.T @ e
     sst = np.sum((y - np.nanmean(y)) ** 2)
     return 1 - sse / sst
 
 
-def majority_class(x):
+def majority_class(x: Sequence[Any]) -> Any:
     unique, counts = np.unique(x, return_counts=True)
     ind_max = np.argmax(counts)
     return unique[ind_max]
 
 
-def majority_class_weighted(x, w):
+def majority_class_weighted(x: Sequence[Any], w: Sequence[float]) -> Any:
     unique, share = unique_weighted(x, w)
     ind_max = np.argmax(share)
     return unique[ind_max]
 
 
-def odds(x):
+def odds(x: Sequence[Any]) -> float:
     unique, counts = np.unique(x, return_counts=True)
     d = {0: 0, 1: 0}
     for i, u in enumerate(unique):
@@ -99,49 +105,49 @@ def odds(x):
     return odds
 
 
-def log_odds(x):
+def log_odds(x: Sequence[Any]) -> float:
     o = odds(x)
     o = np.clip(o, 1e-12, 1e12)
     logodds = np.log(o)
     return logodds
 
 
-def probability(x):
-    # if x == np.Inf:
+def probability(x: float) -> float:
+    # if x == np.inf:
     #    return 1.0
     return x / (1 + x)
 
 
-def max_probability(x):
+def max_probability(x: Sequence[Any]) -> float:
     unique, counts = np.unique(x, return_counts=True)
-    return np.max(counts) / x.size
+    return np.max(counts) / np.asarray(x).size
 
 
-def logistic(x):
+def logistic(x: NDArray[float] | float) -> NDArray[float] | float:
     return 1.0 / (1.0 + np.exp(-x))
 
 
-def logit(x):
+def logit(x: NDArray[float] | float) -> NDArray[float] | float:
     return np.log(x / (1.0 - x))
 
 
-def precision(m):
+def precision(m: NDArray[float]) -> NDArray[float]:
     return np.diag(m) / np.sum(m, axis=1)
 
 
-def recall(m):
+def recall(m: NDArray[float]) -> NDArray[float]:
     return np.diag(m) / np.sum(m, axis=0)
 
 
-def F1(P, R):
+def F1(P: NDArray[float] | float, R: NDArray[float] | float) -> NDArray[float] | float:
     return 2 * P * R / (P + R)
 
 
-def accuracy(m):
+def accuracy(m: NDArray[float]) -> float:
     return np.sum(np.diag(m)) / np.sum(np.sum(m))
 
 
-def distance_matrix(X):
+def distance_matrix(X: Sequence[Sequence[float]] | NDArray[float]) -> NDArray[float]:
     # Vectorized pairwise Euclidean distance computation.
     # Uses broadcasting: result shape (n_samples, n_samples).
     # Note: this may use more memory for large n but is much faster than Python loops.
@@ -149,18 +155,18 @@ def distance_matrix(X):
     return np.linalg.norm(X[:, None, :] - X[None, :, :], axis=2)
 
 
-def proximity_matrix(D):
+def proximity_matrix(D: NDArray[float]) -> NDArray[float]:
     d_max = np.max(D)
     return 1.0 - D / d_max
 
 
-def ambiguity(X):
+def ambiguity(X: Sequence[Sequence[float]] | NDArray[float]) -> float:
     D = distance_matrix(X)
     mu = proximity_matrix(D)
     return -np.sum(mu * (1 - mu))
 
 
-def valley(x):
+def valley(x: Sequence[float] | NDArray[float]) -> List[float]:
     hist, bin_edges = np.histogram(x, bins="sturges", density=False)
     valley_ind, _ = scipy.signal.find_peaks(-hist)
     # if len(valley_ind) < 1:
@@ -171,7 +177,7 @@ def valley(x):
     return v  # [ind_max]
 
 
-def shannon_entropy_histogram(x: np.ndarray, normalized=False):
+def shannon_entropy_histogram(x: np.ndarray, normalized: bool = False) -> float:
     hist, bin_edges = np.histogram(x, bins="sturges", density=False)
     hist = np.maximum(hist, 1e-12)
     s = -np.sum(hist * np.log2(hist))
@@ -189,8 +195,12 @@ def shannon_entropy_histogram(x: np.ndarray, normalized=False):
 
 
 def check_nominal(
-    x, max_unique_fraction=0.2, exclude_dichotomous=True, low=None, high=None
-):
+    x: pd.Series | NDArray[Any],
+    max_unique_fraction: float = 0.2,
+    exclude_dichotomous: bool = True,
+    low: Optional[int] = None,
+    high: Optional[int] = None,
+) -> bool:
     x = x[~pd.isna(x)]
     unique = np.unique(x)
     L = len(unique)
@@ -214,7 +224,7 @@ def check_nominal(
     return False
 
 
-def check_dichotomous(x):
+def check_dichotomous(x: pd.Series | NDArray[Any]) -> bool:
     x = x[~pd.isna(x)]
     unique = np.unique(x)
     L = len(unique)
@@ -225,7 +235,7 @@ def check_dichotomous(x):
     return False
 
 
-def check_interval(x):
+def check_interval(x: pd.Series | NDArray[Any]) -> bool:
     x = x[~pd.isna(x)]
     unique = np.unique(x)
     L = len(unique)

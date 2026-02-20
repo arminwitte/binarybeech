@@ -3,8 +3,11 @@
 
 import itertools
 from abc import ABC, abstractmethod
+from typing import Any, Callable, Optional, List, Dict
+
 
 import numpy as np
+import pandas as pd
 
 import binarybeech.math as math
 from binarybeech.minimizer import minimize
@@ -14,28 +17,30 @@ from binarybeech.minimizer import minimize
 
 
 class AttributeHandlerBase(ABC):
-    def __init__(self, y_name, attribute, metrics, algorithm_kwargs):
+    def __init__(
+        self, y_name: str, attribute: str, metrics: Any, algorithm_kwargs: dict
+    ) -> None:
         self.y_name = y_name
         self.attribute = attribute
         self.metrics = metrics
         self.algorithm_kwargs = algorithm_kwargs
 
-        self.loss = None
-        self.split_df = []
-        self.threshold = None
+        self.loss: Optional[float] = None
+        self.split_df: List[pd.DataFrame] = []
+        self.threshold: Any = None
 
     @abstractmethod
-    def split(self, df):
+    def split(self, df: "pd.DataFrame") -> bool:
         pass
 
     @staticmethod
     @abstractmethod
-    def decide(x, threshold):
+    def decide(x: Any, threshold: Any) -> bool:
         pass
 
     @staticmethod
     @abstractmethod
-    def check(x):
+    def check(x: Any) -> bool:
         pass
 
 

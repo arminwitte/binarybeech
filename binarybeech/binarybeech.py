@@ -4,6 +4,7 @@
 import copy
 import logging
 from abc import ABC, abstractmethod
+from typing import Any, Dict, List, Optional
 
 import numpy as np
 import pandas as pd
@@ -20,15 +21,15 @@ from binarybeech.tree import Node, Tree
 class Model(ABC):
     def __init__(
         self,
-        training_data,
-        df,
-        y_name,
-        X_names,
-        attribute_handlers,
-        method,
-        handle_missings,
-        algorithm_kwargs,
-    ):
+        training_data: Optional[TrainingData],
+        df: Optional[pd.DataFrame],
+        y_name: Optional[str],
+        X_names: Optional[List[str]],
+        attribute_handlers: Any,
+        method: str,
+        handle_missings: Any,
+        algorithm_kwargs: Dict[str, Any],
+    ) -> None:
         if isinstance(training_data, TrainingData):
             self.training_data = training_data
         elif isinstance(df, pd.DataFrame):
@@ -67,21 +68,21 @@ class Model(ABC):
     #     return df
 
     @abstractmethod
-    def train(self):
+    def train(self, *args, **kwargs) -> None:
         pass
 
     @abstractmethod
-    def predict(self, df):
+    def predict(self, df: pd.DataFrame) -> np.ndarray:
         pass
 
-    def validate(self, df=None):
+    def validate(self, df: Optional[pd.DataFrame] = None) -> dict:
         if df is None:
             df = self.training_data.df
         y_hat = self.predict(df)
         y = df[self.y_name]
         return self.dmgr.metrics.validate(y, y_hat)
 
-    def goodness_of_fit(self, df=None):
+    def goodness_of_fit(self, df: Optional[pd.DataFrame] = None) -> float:
         if df is None:
             df = self.training_data.df
         y_hat = self.predict(df)
