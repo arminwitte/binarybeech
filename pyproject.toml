@@ -51,7 +51,7 @@ ruff = "^0.4"
 line-length = 88
 select = ["E", "F", "W", "C", "I", "B"]
 extend-select = ["RUF"]
-src = ["binarybeech"]
+src = ["src"]
 
 [project.optional-dependencies]
 visualize = [
