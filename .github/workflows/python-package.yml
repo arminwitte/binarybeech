@@ -29,6 +29,8 @@ jobs:
         python -m pip install --upgrade pip
         # install package and test/dev dependencies so tests can import required libs
         python -m pip install -e .
+        # install optional visualize extras (matplotlib, treelib) used by tests
+        python -m pip install -e .[visualize]
         python -m pip install pytest flake8
     - name: Lint with flake8
       run: |
