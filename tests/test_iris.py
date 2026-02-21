@@ -83,7 +83,7 @@ def test_iris_from_json():
 def test_iris_cart_create_weighted():
     df_iris = pd.read_csv("data/iris.csv")
     df_iris["__weights__"] = 1
-    df_iris[df_iris["species"] == "versicolor"]["__weights__"] = 3
+    df_iris.loc[df_iris["species"] == "versicolor", "__weights__"] = 3
     c = CART(df=df_iris, y_name="species", method="classification")
     c.create_tree()
     p = c.predict(df_iris)

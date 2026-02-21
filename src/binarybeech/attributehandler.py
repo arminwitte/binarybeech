@@ -271,46 +271,72 @@ class BinnedAttributeHandler(AttributeHandlerBase):
 
         success = False
 
-        # collect unique non-NaN values
-        bin_edges = pd.Series(df[self.attribute]).dropna().unique()
-        if len(bin_edges) < 2:
+        # Try optimized histogram-based split from metrics when available.
+        # Filter NaNs first (can appear during preprocessing)
+        clean_df = df.dropna(subset=[self.attribute])
+        if len(clean_df) < 2:
             return success
 
-        bin_edges = np.sort(bin_edges)
+        loss_args = {}
+        if "__weights__" in df:
+            loss_args["weights"] = clean_df["__weights__"].values
 
-        loss = np.inf
-        N = len(df.index)
-
-        for i in range(1, len(bin_edges)):
-            threshold = (bin_edges[i - 1] + bin_edges[i]) / 2.0
-            split_df = [df[df[self.attribute] < threshold], df[df[self.attribute] >= threshold]]
-            n = [len(df_.index) for df_ in split_df]
-
-            if min(n) == 0:
-                continue
-
-            loss_args = {key: self.algorithm_kwargs[key] for key in ["lambda_l1", "lambda_l2"] if key in self.algorithm_kwargs}
-            loss_args = [loss_args.copy(), loss_args.copy()]
-            if "__weights__" in df:
-                for j, df_ in enumerate(split_df):
-                    loss_args[j]["weights"] = df_["__weights__"].values
-
-            val = [
-                self.metrics.node_value(df_[self.y_name], **loss_args[j])
-                for j, df_ in enumerate(split_df)
-            ]
-
-            current_loss = (
-                n[0] / N * self.metrics.loss(split_df[0][self.y_name], val[0], **loss_args[0])
-                + n[1] / N * self.metrics.loss(split_df[1][self.y_name], val[1], **loss_args[1])
+        try:
+            best_loss, best_threshold = self.metrics.binned_loss(
+                clean_df, self.y_name, self.attribute, **loss_args
             )
+        except AttributeError:
+            # Fallback to classic scan if metric doesn't implement binned_loss
+            bin_edges = pd.Series(clean_df[self.attribute]).dropna().unique()
+            if len(bin_edges) < 2:
+                return success
 
-            if current_loss < loss:
-                success = True
-                loss = current_loss
-                self.loss = loss
-                self.threshold = threshold
-                self.split_df = split_df
+            bin_edges = np.sort(bin_edges)
+            loss = np.inf
+            N = len(df.index)
+
+            for i in range(1, len(bin_edges)):
+                threshold = (bin_edges[i - 1] + bin_edges[i]) / 2.0
+                split_df = [df[df[self.attribute] < threshold], df[df[self.attribute] >= threshold]]
+                n = [len(df_.index) for df_ in split_df]
+
+                if min(n) == 0:
+                    continue
+
+                loss_args_local = {key: self.algorithm_kwargs[key] for key in ["lambda_l1", "lambda_l2"] if key in self.algorithm_kwargs}
+                loss_args_local = [loss_args_local.copy(), loss_args_local.copy()]
+                if "__weights__" in df:
+                    for j, df_ in enumerate(split_df):
+                        loss_args_local[j]["weights"] = df_["__weights__"].values
+
+                val = [
+                    self.metrics.node_value(df_[self.y_name], **loss_args_local[j])
+                    for j, df_ in enumerate(split_df)
+                ]
+
+                current_loss = (
+                    n[0] / N * self.metrics.loss(split_df[0][self.y_name], val[0], **loss_args_local[0])
+                    + n[1] / N * self.metrics.loss(split_df[1][self.y_name], val[1], **loss_args_local[1])
+                )
+
+                if current_loss < loss:
+                    success = True
+                    loss = current_loss
+                    self.loss = loss
+                    self.threshold = threshold
+                    self.split_df = split_df
+
+            return success
+
+        # If we get a valid threshold from binned_loss, set split and return
+        if best_threshold is not None and best_loss < np.Inf:
+            success = True
+            self.loss = best_loss
+            self.threshold = best_threshold
+            self.split_df = [
+                df[df[self.attribute] < self.threshold],
+                df[df[self.attribute] >= self.threshold],
+            ]
 
         return success
 
@@ -320,7 +346,10 @@ class BinnedAttributeHandler(AttributeHandlerBase):
 
     @staticmethod
     def check(x):
-        if not np.issubdtype(x.dtype, np.number):
+        try:
+            if not pd.api.types.is_numeric_dtype(x):
+                return False
+        except Exception:
             return False
 
         # count uniques, handle Series vs array
