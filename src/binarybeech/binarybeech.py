@@ -228,10 +228,16 @@ class CART(Model):
             handler_map = {}
         self.logger.info("Attribute handlers: %s", handler_map)
 
+        # initialize per-run timing info for handler splits
+        self._split_times = {}
         root = self._node_or_leaf(self.training_data.df)
         self.tree = Tree(root)
         n_leafs = self.tree.leaf_count()
         reporter.message(f"A tree with {n_leafs} leafs was created", 1)
+        try:
+            self.logger.info("Attribute handler split times (ms): %s", {k: round(v*1000, 3) for k, v in self._split_times.items()})
+        except Exception:
+            pass
         return self.tree
 
     def _node_or_leaf(self, df):
@@ -330,12 +336,20 @@ class CART(Model):
         for name in self.X_names:
             loss_ = np.inf
             dh = self.dmgr[name]
-            # log which handler is tried for this attribute
+            # log which handler is tried for this attribute and time the split
             try:
                 self.logger.debug("Checking attribute '%s' with handler %s", name, dh.__class__.__name__)
             except Exception:
                 pass
+            import time as _time
+            t0 = _time.perf_counter()
             success = dh.split(df)
+            t = _time.perf_counter() - t0
+            try:
+                key = dh.__class__.__name__
+                self._split_times[key] = self._split_times.get(key, 0.0) + t
+            except Exception:
+                pass
             if not success:
                 continue
             loss_ = dh.loss
