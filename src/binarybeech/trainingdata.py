@@ -29,7 +29,6 @@ class TrainingData:
         self.df = df
 
         if handle_missings is not None:
-
             if missings_handlers is None:
                 missings_handlers = missings_handler_factory.create_missings_handlers(
                     self.df, self.y_name, self.X_names, handle_missings

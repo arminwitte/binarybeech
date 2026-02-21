@@ -3,8 +3,11 @@
 
 import itertools
 from abc import ABC, abstractmethod
+from typing import Any, Callable, Optional, List, Dict
+
 
 import numpy as np
+import pandas as pd
 
 import binarybeech.math as math
 from binarybeech.minimizer import minimize
@@ -14,28 +17,30 @@ from binarybeech.minimizer import minimize
 
 
 class AttributeHandlerBase(ABC):
-    def __init__(self, y_name, attribute, metrics, algorithm_kwargs):
+    def __init__(
+        self, y_name: str, attribute: str, metrics: Any, algorithm_kwargs: dict
+    ) -> None:
         self.y_name = y_name
         self.attribute = attribute
         self.metrics = metrics
         self.algorithm_kwargs = algorithm_kwargs
 
-        self.loss = None
-        self.split_df = []
-        self.threshold = None
+        self.loss: Optional[float] = None
+        self.split_df: List[pd.DataFrame] = []
+        self.threshold: Any = None
 
     @abstractmethod
-    def split(self, df):
+    def split(self, df: "pd.DataFrame") -> bool:
         pass
 
     @staticmethod
     @abstractmethod
-    def decide(x, threshold):
+    def decide(x: Any, threshold: Any) -> bool:
         pass
 
     @staticmethod
     @abstractmethod
-    def check(x):
+    def check(x: Any) -> bool:
         pass
 
 
@@ -47,7 +52,7 @@ class NominalAttributeHandler(AttributeHandlerBase):
         super().__init__(y_name, attribute, metrics, algorithm_kwargs)
 
     def split(self, df):
-        self.loss = np.Inf
+        self.loss = np.inf
         self.split_df = []
         self.threshold = None
 
@@ -67,7 +72,7 @@ class NominalAttributeHandler(AttributeHandlerBase):
             for i in range(1, len(unique)):
                 comb += list(itertools.combinations(unique, i))
 
-        loss = np.Inf
+        loss = np.inf
 
         for c in comb:
             threshold = c
@@ -119,7 +124,7 @@ class HighCardinalityNominalAttributeHandler(AttributeHandlerBase):
         super().__init__(y_name, attribute, metrics, algorithm_kwargs)
 
     def split(self, df):
-        self.loss = np.Inf
+        self.loss = np.inf
         self.split_df = []
         self.threshold = None
 
@@ -166,7 +171,7 @@ class HighCardinalityNominalAttributeHandler(AttributeHandlerBase):
             ]
             n = [len(df_.index) for df_ in split_df]
             if min(n) == 0:
-                return np.Inf
+                return np.inf
 
             loss_args = {
                 key: self.algorithm_kwargs[key] for key in ["lambda_l1", "lambda_l2"]
@@ -204,7 +209,7 @@ class DichotomousAttributeHandler(AttributeHandlerBase):
         super().__init__(y_name, attribute, metrics, algorithm_kwargs)
 
     def split(self, df):
-        self.loss = np.Inf
+        self.loss = np.inf
         self.split_df = []
         self.threshold = None
 
@@ -260,7 +265,7 @@ class IntervalAttributeHandler(AttributeHandlerBase):
         super().__init__(y_name, attribute, metrics, algorithm_kwargs)
 
     def split(self, df):
-        self.loss = np.Inf
+        self.loss = np.inf
         self.split_df = []
         self.threshold = None
 
@@ -347,7 +352,7 @@ class NullAttributeHandler(AttributeHandlerBase):
         super().__init__(y_name, attribute, metrics, algorithm_kwargs)
 
     def split(self, df):
-        self.loss = np.Inf
+        self.loss = np.inf
         self.split_df = []
         self.threshold = None
 
@@ -372,7 +377,7 @@ class ClusteringIntervalAttributeHandler(AttributeHandlerBase):
         super().__init__(y_name, attribute, metrics, algorithm_kwargs)
 
     def split(self, df):
-        self.loss = np.Inf
+        self.loss = np.inf
         self.split_df = []
         self.threshold = None
 
@@ -387,7 +392,7 @@ class ClusteringIntervalAttributeHandler(AttributeHandlerBase):
         if not valleys:
             return success
 
-        loss = np.Inf
+        loss = np.inf
         for v in valleys:
             threshold_candidate = v
             split_df_candidate = [
@@ -437,7 +442,7 @@ class ClusteringNominalAttributeHandler(AttributeHandlerBase):
         super().__init__(y_name, attribute, metrics, algorithm_kwargs)
 
     def split(self, df):
-        self.loss = np.Inf
+        self.loss = np.inf
         self.split_df = []
         self.threshold = None
 
@@ -457,7 +462,7 @@ class ClusteringNominalAttributeHandler(AttributeHandlerBase):
             for i in range(1, len(unique)):
                 comb += list(itertools.combinations(unique, i))
 
-        loss = np.Inf
+        loss = np.inf
 
         for c in comb:
             threshold = c

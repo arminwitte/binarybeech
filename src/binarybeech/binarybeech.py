@@ -4,6 +4,7 @@
 import copy
 import logging
 from abc import ABC, abstractmethod
+from typing import Any, Dict, List, Optional
 
 import numpy as np
 import pandas as pd
@@ -20,15 +21,15 @@ from binarybeech.tree import Node, Tree
 class Model(ABC):
     def __init__(
         self,
-        training_data,
-        df,
-        y_name,
-        X_names,
-        attribute_handlers,
-        method,
-        handle_missings,
-        algorithm_kwargs,
-    ):
+        training_data: Optional[TrainingData],
+        df: Optional[pd.DataFrame],
+        y_name: Optional[str],
+        X_names: Optional[List[str]],
+        attribute_handlers: Any,
+        method: str,
+        handle_missings: Any,
+        algorithm_kwargs: Dict[str, Any],
+    ) -> None:
         if isinstance(training_data, TrainingData):
             self.training_data = training_data
         elif isinstance(df, pd.DataFrame):
@@ -67,21 +68,21 @@ class Model(ABC):
     #     return df
 
     @abstractmethod
-    def train(self):
+    def train(self, *args, **kwargs) -> None:
         pass
 
     @abstractmethod
-    def predict(self, df):
+    def predict(self, df: pd.DataFrame) -> np.ndarray:
         pass
 
-    def validate(self, df=None):
+    def validate(self, df: Optional[pd.DataFrame] = None) -> dict:
         if df is None:
             df = self.training_data.df
         y_hat = self.predict(df)
         y = df[self.y_name]
         return self.dmgr.metrics.validate(y, y_hat)
 
-    def goodness_of_fit(self, df=None):
+    def goodness_of_fit(self, df: Optional[pd.DataFrame] = None) -> float:
         if df is None:
             df = self.training_data.df
         y_hat = self.predict(df)
@@ -303,12 +304,12 @@ class CART(Model):
         return leaf
 
     def _loss_best(self, df):
-        loss = np.Inf
+        loss = np.inf
         split_df = None
         split_threshold = None
         split_name = None
         for name in self.X_names:
-            loss_ = np.Inf
+            loss_ = np.inf
             dh = self.dmgr[name]
             success = dh.split(df)
             if not success:
@@ -592,7 +593,7 @@ class GradientBoostedTree(Model):
         # Intelligence. AI 2020. Lecture Notes in Computer Science(), vol 12576.
         # Springer, Cham. https://doi.org/10.1007/978-3-030-64984-5_33
         M = len(self.trees)
-        res_norm = np.Inf
+        res_norm = np.inf
         m = M
         for i in range(M):
             res_norm_old = res_norm
@@ -929,7 +930,7 @@ class RandomForest(Model):
         df = pd.DataFrame(index=self.df.index, dtype="object")
         df[self.y_name] = self.df[self.y_name].values
         df["votes"] = np.empty((len(df), 0)).tolist()
-        df["majority_vote"] = np.NaN
+        df["majority_vote"] = np.empty(len(df), dtype=object)
         return df
 
     def validate(self, df=None):
