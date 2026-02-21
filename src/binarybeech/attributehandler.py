@@ -652,8 +652,9 @@ attribute_handler_factory = AttributeHandlerFactory()
 attribute_handler_factory.register_handler(NominalAttributeHandler)
 attribute_handler_factory.register_handler(HighCardinalityNominalAttributeHandler)
 attribute_handler_factory.register_handler(DichotomousAttributeHandler)
-attribute_handler_factory.register_handler(IntervalAttributeHandler)
+# prefer binned handler for integer / binned columns
 attribute_handler_factory.register_handler(BinnedAttributeHandler)
+attribute_handler_factory.register_handler(IntervalAttributeHandler)
 attribute_handler_factory.register_handler(NullAttributeHandler)
 attribute_handler_factory.register_method_group("clustering")
 attribute_handler_factory.register_handler(

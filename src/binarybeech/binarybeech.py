@@ -221,6 +221,13 @@ class CART(Model):
 
     def create_tree(self, leaf_loss_threshold=1e-12):
         self.leaf_loss_threshold = leaf_loss_threshold
+        # log which AttributeHandler is used for each attribute
+        try:
+            handler_map = {k: v.__class__.__name__ for k, v in self.dmgr.attribute_handlers.items()}
+        except Exception:
+            handler_map = {}
+        self.logger.info("Attribute handlers: %s", handler_map)
+
         root = self._node_or_leaf(self.training_data.df)
         self.tree = Tree(root)
         n_leafs = self.tree.leaf_count()
@@ -285,6 +292,18 @@ class CART(Model):
             )
             for b in item.branches:
                 b.parent = item
+            try:
+                handler_name = self.dmgr[split_name].__class__.__name__
+                self.logger.info(
+                    "Selected split: %s (handler=%s), threshold=%s, parent_loss=%.6f, split_loss=%.6f",
+                    split_name,
+                    handler_name,
+                    split_threshold,
+                    loss_parent,
+                    loss_best,
+                )
+            except Exception:
+                pass
         else:
             item = self._leaf(y, y_hat)
 
@@ -311,6 +330,11 @@ class CART(Model):
         for name in self.X_names:
             loss_ = np.inf
             dh = self.dmgr[name]
+            # log which handler is tried for this attribute
+            try:
+                self.logger.debug("Checking attribute '%s' with handler %s", name, dh.__class__.__name__)
+            except Exception:
+                pass
             success = dh.split(df)
             if not success:
                 continue
