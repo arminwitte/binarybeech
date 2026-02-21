@@ -79,7 +79,7 @@ class Metrics(ABC):
     def binned_loss(self, df, y_name, attribute, **kwargs):
         """
         Berechnet den besten Split für gebinnte Daten (Histogramm-basiert).
-        Rückgabe: (best_loss, best_threshold) oder (np.Inf, None)
+        Rückgabe: (best_loss, best_threshold) oder (np.inf, None)
         """
         pass
 
@@ -170,9 +170,9 @@ class RegressionMetrics(Metrics):
         total_count = np.sum(total_counts_per_class)
 
         if total_count == 0:
-            return np.Inf, None
+            return np.inf, None
 
-        best_loss = np.Inf
+        best_loss = np.inf
         best_threshold_idx = -1
 
         for i in range(n_bins - 1):
@@ -194,7 +194,7 @@ class RegressionMetrics(Metrics):
                 best_threshold_idx = i
 
         if best_threshold_idx == -1:
-            return np.Inf, None
+            return np.inf, None
 
         original_threshold = float(best_threshold_idx + bin_min + 0.5)
         return best_loss, original_threshold
@@ -225,9 +225,9 @@ class RegressionMetrics(Metrics):
         total_count = np.sum(total_counts_per_class)
 
         if total_count == 0:
-            return np.Inf, None
+            return np.inf, None
 
-        best_loss = np.Inf
+        best_loss = np.inf
         best_threshold_idx = -1
 
         for i in range(n_bins - 1):
@@ -249,7 +249,7 @@ class RegressionMetrics(Metrics):
                 best_threshold_idx = i
 
         if best_threshold_idx == -1:
-            return np.Inf, None
+            return np.inf, None
 
         original_threshold = float(best_threshold_idx + bin_min + 0.5)
         return best_loss, original_threshold
@@ -284,9 +284,9 @@ class RegressionMetrics(Metrics):
 
         total_count = cum_counts[-1]
         if total_count == 0:
-            return np.Inf, None
+            return np.inf, None
 
-        best_loss = np.Inf
+        best_loss = np.inf
         best_threshold_idx = -1
 
         # Splits evaluieren
@@ -313,7 +313,7 @@ class RegressionMetrics(Metrics):
                 best_threshold_idx = i
 
         if best_threshold_idx == -1:
-            return np.Inf, None
+            return np.inf, None
 
         # Schwellenwert zwischen Bin i und i+1
         original_threshold = float(best_threshold_idx + bin_min + 0.5)
@@ -436,9 +436,9 @@ class LogisticMetrics(Metrics):
         total_count = np.sum(total_counts_per_class)
 
         if total_count == 0:
-            return np.Inf, None
+            return np.inf, None
 
-        best_loss = np.Inf
+        best_loss = np.inf
         best_threshold_idx = -1
 
         for i in range(n_bins - 1):
@@ -460,7 +460,7 @@ class LogisticMetrics(Metrics):
                 best_threshold_idx = i
 
         if best_threshold_idx == -1:
-            return np.Inf, None
+            return np.inf, None
 
         original_threshold = float(best_threshold_idx + bin_min + 0.5)
         return best_loss, original_threshold
@@ -580,7 +580,7 @@ class ClassificationMetrics(Metrics):
         total_count = np.sum(total_counts_per_class)
 
         if total_count == 0:
-            return np.Inf, None
+            return np.inf, None
 
         best_loss = np.Inf
         best_threshold_idx = -1
