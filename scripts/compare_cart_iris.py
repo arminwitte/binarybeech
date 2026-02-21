@@ -71,6 +71,13 @@ def run_cart(
 
 def main(repeats: int = 5, n_bins: int = 5, sample_size: int | None = None, max_depth: int | None = None):
     df = pd.read_parquet("data/covtype_categorical.parquet")
+
+    # Ensure the dataset contains two categorical features as intended
+    # Treat Wilderness_Area and Soil_Type as categorical (nominal)
+    for cat_col in ("Wilderness_Area", "Soil_Type"):
+        if cat_col in df.columns:
+            df[cat_col] = df[cat_col].astype("category")
+
     if sample_size is not None and sample_size < len(df):
         df = df.sample(n=sample_size, random_state=42).reset_index(drop=True)
     results = {"scalar": [], "binned": []}
