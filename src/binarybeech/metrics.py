@@ -27,17 +27,20 @@ class Metrics(ABC):
 
     @staticmethod
     def _precision(m):
-        return np.diag(m) / np.sum(m, axis=1)
+        # precision = TP / (TP + FP) -> diag / column sums
+        denom = np.sum(m, axis=0)
+        return np.divide(np.diag(m), denom, out=np.zeros_like(np.diag(m), dtype=float), where=denom != 0)
 
     @staticmethod
     def _recall(m):
-        return np.diag(m) / np.sum(m, axis=0)
+        # recall = TP / (TP + FN) -> diag / row sums
+        denom = np.sum(m, axis=1)
+        return np.divide(np.diag(m), denom, out=np.zeros_like(np.diag(m), dtype=float), where=denom != 0)
 
     @staticmethod
     def _F1(P, R):
-        # F = np.zeros_like(P)
-        # for i in range(len(
-        return 2 * P * R / (P + R)
+        denom = P + R
+        return np.where(denom == 0, 0.0, 2 * P * R / denom)
 
     @staticmethod
     def _accuracy(m):
@@ -142,117 +145,7 @@ class RegressionMetrics(Metrics):
                 bins[1].append(u)
 
         return bins
-
-    def binned_loss(self, df, y_name, attribute, **kwargs):
-        y = df[y_name].values
-        bins = df[attribute].values
-
-        bin_min = int(np.min(bins))
-        bins_shifted = (bins - bin_min).astype(int)
-        n_bins = int(np.max(bins_shifted)) + 1
-
-        classes = np.unique(y)
-        class_to_idx = {c: i for i, c in enumerate(classes)}
-        y_idx = np.array([class_to_idx[val] for val in y])
-        n_classes = len(classes)
-
-        # Histogramm [n_bins, n_classes]
-        hist_counts = np.zeros((n_bins, n_classes), dtype=float)
-        np.add.at(hist_counts, (bins_shifted, y_idx), 1.0)
-
-        weights = kwargs.get("weights", None)
-        if weights is not None:
-            hist_counts = np.zeros((n_bins, n_classes), dtype=float)
-            np.add.at(hist_counts, (bins_shifted, y_idx), weights)
-
-        cum_hist = np.cumsum(hist_counts, axis=0)
-        total_counts_per_class = cum_hist[-1, :]
-        total_count = np.sum(total_counts_per_class)
-
-        if total_count == 0:
-            return np.inf, None
-
-        best_loss = np.inf
-        best_threshold_idx = -1
-
-        for i in range(n_bins - 1):
-            counts_L = cum_hist[i, :]
-            count_L = np.sum(counts_L)
-            counts_R = total_counts_per_class - counts_L
-            count_R = total_count - count_L
-
-            if count_L == 0 or count_R == 0:
-                continue
-
-            gini_L = count_L - np.sum(counts_L ** 2) / count_L
-            gini_R = count_R - np.sum(counts_R ** 2) / count_R
-
-            current_loss = (gini_L + gini_R) / total_count
-
-            if current_loss < best_loss:
-                best_loss = current_loss
-                best_threshold_idx = i
-
-        if best_threshold_idx == -1:
-            return np.inf, None
-
-        original_threshold = float(best_threshold_idx + bin_min + 0.5)
-        return best_loss, original_threshold
-
-    def binned_loss(self, df, y_name, attribute, **kwargs):
-        y = df[y_name].values
-        bins = df[attribute].values
-
-        bin_min = int(np.min(bins))
-        bins_shifted = (bins - bin_min).astype(int)
-        n_bins = int(np.max(bins_shifted)) + 1
-
-        classes = np.unique(y)
-        class_to_idx = {c: i for i, c in enumerate(classes)}
-        y_idx = np.array([class_to_idx[val] for val in y])
-        n_classes = len(classes)
-
-        hist_counts = np.zeros((n_bins, n_classes), dtype=float)
-        np.add.at(hist_counts, (bins_shifted, y_idx), 1.0)
-
-        weights = kwargs.get("weights", None)
-        if weights is not None:
-            hist_counts = np.zeros((n_bins, n_classes), dtype=float)
-            np.add.at(hist_counts, (bins_shifted, y_idx), weights)
-
-        cum_hist = np.cumsum(hist_counts, axis=0)
-        total_counts_per_class = cum_hist[-1, :]
-        total_count = np.sum(total_counts_per_class)
-
-        if total_count == 0:
-            return np.inf, None
-
-        best_loss = np.inf
-        best_threshold_idx = -1
-
-        for i in range(n_bins - 1):
-            counts_L = cum_hist[i, :]
-            count_L = np.sum(counts_L)
-            counts_R = total_counts_per_class - counts_L
-            count_R = total_count - count_L
-
-            if count_L == 0 or count_R == 0:
-                continue
-
-            gini_L = count_L - np.sum(counts_L ** 2) / count_L
-            gini_R = count_R - np.sum(counts_R ** 2) / count_R
-
-            current_loss = (gini_L + gini_R) / total_count
-
-            if current_loss < best_loss:
-                best_loss = current_loss
-                best_threshold_idx = i
-
-        if best_threshold_idx == -1:
-            return np.inf, None
-
-        original_threshold = float(best_threshold_idx + bin_min + 0.5)
-        return best_loss, original_threshold
+    
 
     
 
@@ -582,7 +475,7 @@ class ClassificationMetrics(Metrics):
         if total_count == 0:
             return np.inf, None
 
-        best_loss = np.Inf
+        best_loss = np.inf
         best_threshold_idx = -1
 
         for i in range(n_bins - 1):
@@ -604,7 +497,7 @@ class ClassificationMetrics(Metrics):
                 best_threshold_idx = i
 
         if best_threshold_idx == -1:
-            return np.Inf, None
+            return np.inf, None
 
         original_threshold = float(best_threshold_idx + bin_min + 0.5)
         return best_loss, original_threshold
@@ -669,7 +562,7 @@ class UnsupervisedMetrics(Metrics):
     def binned_loss(self, df, y_name, attribute, **kwargs):
         # Unsupervised metrics have no meaningful supervised split loss.
         # Return infinity so these attributes are not chosen for supervised splits.
-        return np.Inf, None
+        return np.inf, None
 
 
 # =============================

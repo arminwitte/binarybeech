@@ -329,7 +329,7 @@ class BinnedAttributeHandler(AttributeHandlerBase):
             return success
 
         # If we get a valid threshold from binned_loss, set split and return
-        if best_threshold is not None and best_loss < np.Inf:
+        if best_threshold is not None and best_loss < np.inf:
             success = True
             self.loss = best_loss
             self.threshold = best_threshold
