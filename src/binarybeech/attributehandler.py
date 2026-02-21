@@ -260,6 +260,80 @@ class DichotomousAttributeHandler(AttributeHandlerBase):
         return math.check_dichotomous(x)
 
 
+class BinnedAttributeHandler(AttributeHandlerBase):
+    def __init__(self, y_name, attribute, metrics, algorithm_kwargs):
+        super().__init__(y_name, attribute, metrics, algorithm_kwargs)
+
+    def split(self, df):
+        self.loss = np.inf
+        self.split_df = []
+        self.threshold = None
+
+        success = False
+
+        # collect unique non-NaN values
+        bin_edges = pd.Series(df[self.attribute]).dropna().unique()
+        if len(bin_edges) < 2:
+            return success
+
+        bin_edges = np.sort(bin_edges)
+
+        loss = np.inf
+        N = len(df.index)
+
+        for i in range(1, len(bin_edges)):
+            threshold = (bin_edges[i - 1] + bin_edges[i]) / 2.0
+            split_df = [df[df[self.attribute] < threshold], df[df[self.attribute] >= threshold]]
+            n = [len(df_.index) for df_ in split_df]
+
+            if min(n) == 0:
+                continue
+
+            loss_args = {key: self.algorithm_kwargs[key] for key in ["lambda_l1", "lambda_l2"] if key in self.algorithm_kwargs}
+            loss_args = [loss_args.copy(), loss_args.copy()]
+            if "__weights__" in df:
+                for j, df_ in enumerate(split_df):
+                    loss_args[j]["weights"] = df_["__weights__"].values
+
+            val = [
+                self.metrics.node_value(df_[self.y_name], **loss_args[j])
+                for j, df_ in enumerate(split_df)
+            ]
+
+            current_loss = (
+                n[0] / N * self.metrics.loss(split_df[0][self.y_name], val[0], **loss_args[0])
+                + n[1] / N * self.metrics.loss(split_df[1][self.y_name], val[1], **loss_args[1])
+            )
+
+            if current_loss < loss:
+                success = True
+                loss = current_loss
+                self.loss = loss
+                self.threshold = threshold
+                self.split_df = split_df
+
+        return success
+
+    @staticmethod
+    def decide(x, threshold):
+        return True if x < threshold else False
+
+    @staticmethod
+    def check(x):
+        if not np.issubdtype(x.dtype, np.number):
+            return False
+
+        # count uniques, handle Series vs array
+        try:
+            unique_count = x.nunique() if isinstance(x, pd.Series) else len(np.unique(x[~np.isnan(x)]))
+        except Exception:
+            unique_count = len(np.unique(x))
+
+        is_integer_type = pd.api.types.is_integer_dtype(x)
+
+        return is_integer_type or unique_count <= 256
+
+
 class IntervalAttributeHandler(AttributeHandlerBase):
     def __init__(self, y_name, attribute, metrics, algorithm_kwargs):
         super().__init__(y_name, attribute, metrics, algorithm_kwargs)
@@ -550,6 +624,7 @@ attribute_handler_factory.register_handler(NominalAttributeHandler)
 attribute_handler_factory.register_handler(HighCardinalityNominalAttributeHandler)
 attribute_handler_factory.register_handler(DichotomousAttributeHandler)
 attribute_handler_factory.register_handler(IntervalAttributeHandler)
+attribute_handler_factory.register_handler(BinnedAttributeHandler)
 attribute_handler_factory.register_handler(NullAttributeHandler)
 attribute_handler_factory.register_method_group("clustering")
 attribute_handler_factory.register_handler(
