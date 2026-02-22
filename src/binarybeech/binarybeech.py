@@ -519,7 +519,30 @@ class GradientBoostedTree(Model):
 
     def predict(self, df, m=None):
         y_hat = self._predict_raw(df, m)
-        return self.dmgr.metrics.output_transform(y_hat)
+        y_hat = self.dmgr.metrics.output_transform(y_hat)
+
+        method = self.dmgr.method if hasattr(self, "dmgr") else None
+
+        # Binary logistic: output_transform returns probabilities -> round to {0,1}
+        if method == "logistic":
+            try:
+                return np.round(y_hat).astype(int)
+            except Exception:
+                return y_hat
+
+        # Classification (possibly multiclass): map numeric scores to nearest class
+        if method is not None and str(method).startswith("classification") or method == "classification":
+            try:
+                classes = np.unique(self.training_data.df[self.y_name].values)
+                # only numeric classes can be mapped by distance
+                if np.issubdtype(classes.dtype, np.number):
+                    y_hat_arr = np.asarray(y_hat, dtype=float)
+                    mapped = np.array([classes[np.argmin(np.abs(classes - v))] for v in y_hat_arr])
+                    return mapped
+            except Exception:
+                pass
+
+        return y_hat
 
     def _pseudo_residuals(self, df, m=None):
         res = df[self.y_name] - self.predict(df, m=m)
