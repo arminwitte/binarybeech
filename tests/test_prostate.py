@@ -7,7 +7,7 @@ from binarybeech.binarybeech import CART, GradientBoostedTree, RandomForest
 def test_prostate_cart_create():
     df_prostate = pd.read_csv("data/prostate.data", sep="\t")
     train = df_prostate["train"].isin(["T"])
-    df_prostate.drop(columns=["Unnamed: 0", "train"])
+    df_prostate = df_prostate.drop(columns=["Unnamed: 0", "train"])
 
     c = CART(
         df=df_prostate[train], y_name="lpsa", method="regression:regularized", seed=42
@@ -39,7 +39,7 @@ def test_prostate_cart_create():
 def test_prostate_cart_l1():
     df_prostate = pd.read_csv("data/prostate.data", sep="\t")
     train = df_prostate["train"].isin(["T"])
-    df_prostate.drop(columns=["Unnamed: 0", "train"])
+    df_prostate = df_prostate.drop(columns=["Unnamed: 0", "train"])
     c = CART(
         df=df_prostate,
         y_name="lpsa",
@@ -75,7 +75,7 @@ def test_prostate_cart_l1():
 def test_prostate_cart_l2():
     df_prostate = pd.read_csv("data/prostate.data", sep="\t")
     train = df_prostate["train"].isin(["T"])
-    df_prostate.drop(columns=["Unnamed: 0", "train"])
+    df_prostate = df_prostate.drop(columns=["Unnamed: 0", "train"])
     c = CART(
         df=df_prostate,
         y_name="lpsa",
@@ -111,7 +111,7 @@ def test_prostate_cart_l2():
 def test_prostate_gradientboostedtree():
     df_prostate = pd.read_csv("data/prostate.data", sep="\t")
     train = df_prostate["train"].isin(["T"])
-    df_prostate.drop(columns=["Unnamed: 0", "train"])
+    df_prostate = df_prostate.drop(columns=["Unnamed: 0", "train"])
     gbt = GradientBoostedTree(
         df=df_prostate[train],
         y_name="lpsa",
