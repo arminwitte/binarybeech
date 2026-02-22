@@ -485,10 +485,31 @@ class GradientBoostedTree(Model):
         self.gamma_setting = gamma
         self.seed = seed
 
+        # multiclass handling
+        try:
+            self.classes = np.unique(self.df[self.y_name].values)
+            self.K = len(self.classes)
+        except Exception:
+            self.classes = None
+            self.K = 1
+        self.multiclass = self.K > 2
+
         self.logger = logging.getLogger(__name__)
         reporter.reset(["iter", "res_norm", "gamma", "sse"])
 
     def _initial_tree(self):
+        # For multiclass we initialize class scores with log priors instead
+        if self.multiclass:
+            y = self.df[self.y_name].values
+            unique, counts = np.unique(y, return_counts=True)
+            probs = counts / counts.sum()
+            # map to self.classes order
+            order = [np.where(unique == c)[0][0] for c in self.classes]
+            probs = probs[order]
+            # initial score per class: log probability
+            self.init_scores = np.log(np.clip(probs, 1e-12, None))
+            return None
+
         c = CART(
             df=self.df,
             y_name=self.y_name,
@@ -503,21 +524,54 @@ class GradientBoostedTree(Model):
         return c
 
     def _predict1(self, x, m=None):
-        p = self.init_tree.traverse(x).value
-        p = self.dmgr.metrics.inverse_transform(p)
+        # scalar/regression path
+        if not self.multiclass:
+            p = self.init_tree.traverse(x).value
+            p = self.dmgr.metrics.inverse_transform(p)
+            M = len(self.trees)
+            if not m:
+                m = M
+            for i in range(m):
+                t = self.trees[i]
+                p += self.learning_rate * self.gamma[i] * t.traverse(x).value
+            return p
+
+        # multiclass: compute K scores for sample x
+        # start with init_scores
+        scores = np.array(self.init_scores, dtype=float)
         M = len(self.trees)
         if not m:
             m = M
         for i in range(m):
-            t = self.trees[i]
-            p += self.learning_rate * self.gamma[i] * t.traverse(x).value
-        return p
+            trees_i = self.trees[i]
+            for k in range(self.K):
+                t = trees_i[k]
+                scores[k] += self.learning_rate * t.traverse(x).value
+        return scores
 
     def _predict_raw(self, df, m=None):
         y_hat = [self._predict1(x, m) for x in df.iloc]
         return np.array(y_hat)
 
     def predict(self, df, m=None):
+        # multiclass path: compute class probabilities and return labels
+        if self.multiclass:
+            # get raw scores per class for each sample
+            scores = self._predict_raw(df, m)
+            # scores shape: (n_samples, K)
+            # apply softmax row-wise
+            def softmax(a):
+                a = np.asarray(a)
+                a = a - np.max(a, axis=1, keepdims=True)
+                exp = np.exp(a)
+                return exp / np.sum(exp, axis=1, keepdims=True)
+
+            probs = softmax(scores)
+            inds = np.argmax(probs, axis=1)
+            labels = np.array([self.classes[i] for i in inds])
+            return labels
+
+        # scalar/regression/logistic path
         y_hat = self._predict_raw(df, m)
         y_hat = self.dmgr.metrics.output_transform(y_hat)
 
@@ -530,11 +584,10 @@ class GradientBoostedTree(Model):
             except Exception:
                 return y_hat
 
-        # Classification (possibly multiclass): map numeric scores to nearest class
-        if method is not None and str(method).startswith("classification") or method == "classification":
+        # Classification (possibly binary): map numeric scores to nearest class
+        if method is not None and (str(method).startswith("classification") or method == "classification"):
             try:
                 classes = np.unique(self.training_data.df[self.y_name].values)
-                # only numeric classes can be mapped by distance
                 if np.issubdtype(classes.dtype, np.number):
                     y_hat_arr = np.asarray(y_hat, dtype=float)
                     mapped = np.array([classes[np.argmin(np.abs(classes - v))] for v in y_hat_arr])
@@ -549,6 +602,78 @@ class GradientBoostedTree(Model):
         return res
 
     def train(self, M):
+        # multiclass K-way boosting
+        if self.multiclass:
+            # initialize
+            self._initial_tree()
+            df = self.df
+            N = len(df.index)
+            # F: raw scores, shape (N, K)
+            F = np.tile(self.init_scores.reshape(1, -1), (N, 1))
+            self.trees = []
+
+            # one-hot targets
+            y = df[self.y_name].values
+            classes = self.classes
+            class_to_idx = {c: i for i, c in enumerate(classes)}
+            Y = np.zeros((N, self.K))
+            for i_, val in enumerate(y):
+                Y[i_, class_to_idx[val]] = 1.0
+
+            for it in range(M):
+                reporter["iter"] = it
+                # probabilities
+                A = np.exp(F - np.max(F, axis=1, keepdims=True))
+                P = A / np.sum(A, axis=1, keepdims=True)
+                # residuals = Y - P
+                R = Y - P
+
+                trees_i = []
+                # build K regression trees, one per class
+                for k in range(self.K):
+                    df_k = df.copy()
+                    df_k["pseudo_residuals"] = R[:, k]
+
+                    # select attributes subset if needed
+                    if self.n_attributes is None:
+                        X_names = self.X_names
+                    else:
+                        rng = np.random.default_rng(seed=self.seed)
+                        if self.seed is not None:
+                            self.seed += 1
+                        X_names = rng.choice(self.X_names, self.n_attributes, replace=False)
+
+                    kwargs = dict(
+                        max_depth=3,
+                        min_leaf_samples=5,
+                        min_split_samples=4,
+                        method="regression",
+                    )
+                    kwargs = {**kwargs, **self.cart_settings}
+
+                    c = CART(
+                        df=df_k.sample(frac=self.sample_frac, replace=True, random_state=self.seed),
+                        y_name="pseudo_residuals",
+                        X_names=X_names,
+                        **kwargs,
+                    )
+                    c.create_tree()
+                    if self.seed is not None:
+                        self.seed += 1
+
+                    trees_i.append(c.tree)
+
+                    # update F with predictions of this tree
+                    pred_k = c.predict(df)
+                    F[:, k] += self.learning_rate * pred_k
+
+                self.trees.append(trees_i)
+                # report (use norm of residuals)
+                reporter["res_norm"] = np.linalg.norm(R)
+                reporter.print(level=2)
+            return
+
+        # regression / binary path (existing behaviour)
         self._initial_tree()
         df = self.df
         self.trees = []
