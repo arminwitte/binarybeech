@@ -8,6 +8,7 @@ from typing import Any, Dict, List, Optional
 
 import numpy as np
 import pandas as pd
+import time
 
 from binarybeech.datamanager import DataManager
 from binarybeech.minimizer import minimize
@@ -221,10 +222,23 @@ class CART(Model):
 
     def create_tree(self, leaf_loss_threshold=1e-12):
         self.leaf_loss_threshold = leaf_loss_threshold
+        # log which AttributeHandler is used for each attribute
+        try:
+            handler_map = {k: v.__class__.__name__ for k, v in self.dmgr.attribute_handlers.items()}
+        except Exception:
+            handler_map = {}
+        self.logger.info("Attribute handlers: %s", handler_map)
+
+        # initialize per-run timing info for handler splits
+        self._split_times = {}
         root = self._node_or_leaf(self.training_data.df)
         self.tree = Tree(root)
         n_leafs = self.tree.leaf_count()
         reporter.message(f"A tree with {n_leafs} leafs was created", 1)
+        try:
+            self.logger.info("Attribute handler split times (ms): %s", {k: round(v*1000, 3) for k, v in self._split_times.items()})
+        except Exception:
+            pass
         return self.tree
 
     def _node_or_leaf(self, df):
@@ -285,6 +299,18 @@ class CART(Model):
             )
             for b in item.branches:
                 b.parent = item
+            try:
+                handler_name = self.dmgr[split_name].__class__.__name__
+                self.logger.info(
+                    "Selected split: %s (handler=%s), threshold=%s, parent_loss=%.6f, split_loss=%.6f",
+                    split_name,
+                    handler_name,
+                    split_threshold,
+                    loss_parent,
+                    loss_best,
+                )
+            except Exception:
+                pass
         else:
             item = self._leaf(y, y_hat)
 
@@ -311,7 +337,20 @@ class CART(Model):
         for name in self.X_names:
             loss_ = np.inf
             dh = self.dmgr[name]
+            # log which handler is tried for this attribute and time the split
+            try:
+                self.logger.debug("Checking attribute '%s' with handler %s", name, dh.__class__.__name__)
+            except Exception:
+                pass
+            import time as _time
+            t0 = _time.perf_counter()
             success = dh.split(df)
+            t = _time.perf_counter() - t0
+            try:
+                key = dh.__class__.__name__
+                self._split_times[key] = self._split_times.get(key, 0.0) + t
+            except Exception:
+                pass
             if not success:
                 continue
             loss_ = dh.loss
@@ -447,10 +486,31 @@ class GradientBoostedTree(Model):
         self.gamma_setting = gamma
         self.seed = seed
 
+        # multiclass handling
+        try:
+            self.classes = np.unique(self.df[self.y_name].values)
+            self.K = len(self.classes)
+        except Exception:
+            self.classes = None
+            self.K = 1
+        self.multiclass = self.K > 2
+
         self.logger = logging.getLogger(__name__)
-        reporter.reset(["iter", "res_norm", "gamma", "sse"])
+        reporter.reset(["iter", "res_norm", "gamma", "sse", "time"])
 
     def _initial_tree(self):
+        # For multiclass we initialize class scores with log priors instead
+        if self.multiclass:
+            y = self.df[self.y_name].values
+            unique, counts = np.unique(y, return_counts=True)
+            probs = counts / counts.sum()
+            # map to self.classes order
+            order = [np.where(unique == c)[0][0] for c in self.classes]
+            probs = probs[order]
+            # initial score per class: log probability
+            self.init_scores = np.log(np.clip(probs, 1e-12, None))
+            return None
+
         c = CART(
             df=self.df,
             y_name=self.y_name,
@@ -465,29 +525,217 @@ class GradientBoostedTree(Model):
         return c
 
     def _predict1(self, x, m=None):
-        p = self.init_tree.traverse(x).value
-        p = self.dmgr.metrics.inverse_transform(p)
+        # scalar/regression path
+        if not self.multiclass:
+            p = self.init_tree.traverse(x).value
+            p = self.dmgr.metrics.inverse_transform(p)
+            M = len(self.trees)
+            if not m:
+                m = M
+            for i in range(m):
+                t = self.trees[i]
+                p += self.learning_rate * self.gamma[i] * t.traverse(x).value
+            return p
+
+        # multiclass: compute K scores for sample x
+        # start with init_scores
+        scores = np.array(self.init_scores, dtype=float)
         M = len(self.trees)
         if not m:
             m = M
         for i in range(m):
-            t = self.trees[i]
-            p += self.learning_rate * self.gamma[i] * t.traverse(x).value
-        return p
+            trees_i = self.trees[i]
+            for k in range(self.K):
+                t = trees_i[k]
+                # use per-iteration-per-class gamma if available
+                gamma_k = 1.0
+                if hasattr(self, "gamma") and len(self.gamma) > i:
+                    try:
+                        gamma_k = float(self.gamma[i][k])
+                    except Exception:
+                        gamma_k = 1.0
+                scores[k] += self.learning_rate * gamma_k * t.traverse(x).value
+        return scores
 
     def _predict_raw(self, df, m=None):
         y_hat = [self._predict1(x, m) for x in df.iloc]
         return np.array(y_hat)
 
+    def predict_proba(self, df, m=None):
+        """Returns continuous predictions: N x K probabilities for multiclass,
+        or N-element array of probabilities/values for binary/regression."""
+        scores = self._predict_raw(df, m)
+
+        if self.multiclass:
+            def softmax(a):
+                a = np.asarray(a)
+                a = a - np.max(a, axis=1, keepdims=True)
+                exp = np.exp(a)
+                return exp / np.sum(exp, axis=1, keepdims=True)
+
+            return softmax(scores)
+
+        # Binary/regression path
+        return self.dmgr.metrics.output_transform(scores)
+
     def predict(self, df, m=None):
-        y_hat = self._predict_raw(df, m)
-        return self.dmgr.metrics.output_transform(y_hat)
+        """Returns final hard labels for classification, or continuous values for regression."""
+        if self.multiclass:
+            probs = self.predict_proba(df, m)
+            inds = np.argmax(probs, axis=1)
+            labels = np.array([self.classes[i] for i in inds])
+            return labels
+
+        # Binary/regression path
+        y_hat = self.predict_proba(df, m)
+        method = self.dmgr.method if hasattr(self, "dmgr") else None
+
+        # Binary logistic: output_transform returns probabilities -> round to {0,1}
+        if method == "logistic":
+            try:
+                return np.round(y_hat).astype(int)
+            except Exception:
+                return y_hat
+
+        # Classification (possibly binary): map numeric scores to nearest class
+        if method is not None and (str(method).startswith("classification") or method == "classification"):
+            try:
+                classes = np.unique(self.training_data.df[self.y_name].values)
+                if np.issubdtype(classes.dtype, np.number):
+                    y_hat_arr = np.asarray(y_hat, dtype=float)
+                    mapped = np.array([classes[np.argmin(np.abs(classes - v))] for v in y_hat_arr])
+                    return mapped
+            except Exception:
+                pass
+
+        return y_hat
 
     def _pseudo_residuals(self, df, m=None):
-        res = df[self.y_name] - self.predict(df, m=m)
-        return res
+        """Calculates the gradients (residuals). Uses one-hot targets for multiclass."""
+        p = self.predict_proba(df, m=m)
+
+        if self.multiclass:
+            y = df[self.y_name].values
+            class_to_idx = {c: i for i, c in enumerate(self.classes)}
+            Y = np.zeros((len(y), self.K))
+            for i_, val in enumerate(y):
+                Y[i_, class_to_idx[val]] = 1.0
+            # Returns an N x K matrix of residuals
+            return Y - p
+
+        # Returns an N-element array of residuals
+        return df[self.y_name] - p
 
     def train(self, M):
+        # multiclass K-way boosting
+        if self.multiclass:
+            # initialize
+            self._initial_tree()
+            df = self.df
+            N = len(df.index)
+            # F: raw scores, shape (N, K)
+            F = np.tile(self.init_scores.reshape(1, -1), (N, 1))
+            self.trees = []
+            self.gamma = []
+
+            # one-hot targets
+            y = df[self.y_name].values
+            classes = self.classes
+            class_to_idx = {c: i for i, c in enumerate(classes)}
+            Y = np.zeros((N, self.K))
+            for i_, val in enumerate(y):
+                Y[i_, class_to_idx[val]] = 1.0
+
+            for it in range(M):
+                reporter["iter"] = it
+                # probabilities
+                A = np.exp(F - np.max(F, axis=1, keepdims=True))
+                P = A / np.sum(A, axis=1, keepdims=True)
+                # residuals = Y - P
+                R = Y - P
+
+                # timing: start of iteration
+                t_iter_start = time.perf_counter()
+
+                trees_i = []
+                gammas_i = []
+                # Create a temporary matrix to hold the updates for this iteration
+                F_update = np.zeros_like(F)
+                # build K regression trees, one per class
+                for k in range(self.K):
+                    df_k = df.copy()
+                    df_k["pseudo_residuals"] = R[:, k]
+
+                    # select attributes subset if needed
+                    if self.n_attributes is None:
+                        X_names = self.X_names
+                    else:
+                        rng = np.random.default_rng(seed=self.seed)
+                        if self.seed is not None:
+                            self.seed += 1
+                        X_names = rng.choice(self.X_names, self.n_attributes, replace=False)
+
+                    kwargs = dict(
+                        max_depth=3,
+                        min_leaf_samples=5,
+                        min_split_samples=4,
+                        method="regression",
+                    )
+                    kwargs = {**kwargs, **self.cart_settings}
+
+                    c = CART(
+                        df=df_k.sample(frac=self.sample_frac, replace=True, random_state=self.seed),
+                        y_name="pseudo_residuals",
+                        X_names=X_names,
+                        **kwargs,
+                    )
+                    c.create_tree()
+                    if self.seed is not None:
+                        self.seed += 1
+
+                    trees_i.append(c.tree)
+
+                    # update F with predictions of this tree
+                    pred_k = c.predict(df)
+
+                    # determine gamma for this class/tree
+                    if self.gamma_setting is None:
+                        try:
+                            # Use probabilities P (not raw scores F) for Newton step
+                            gamma_k = self._gamma_multiclass(pred_k, P, Y, k)
+                        except Exception:
+                            gamma_k = 1.0
+                    else:
+                        # clamp user-specified gamma to sensible bounds
+                        try:
+                            gamma_k = float(np.clip(self.gamma_setting, 0.1, 10.0))
+                        except Exception:
+                            gamma_k = float(self.gamma_setting)
+
+                    gammas_i.append(gamma_k)
+
+                    # Store the update instead of applying it immediately
+                    F_update[:, k] = self.learning_rate * gamma_k * np.asarray(pred_k).ravel()
+                # Apply all K updates simultaneously at the end of the iteration
+                F += F_update
+
+                self.trees.append(trees_i)
+                self.gamma.append(gammas_i)
+                # report (use norm of residuals)
+                reporter["res_norm"] = np.linalg.norm(R)
+                # log cross-entropy per sample
+                loss = -np.sum(Y * np.log(np.clip(P, 1e-12, 1.0)))
+                reporter["sse"] = loss / N
+                # gamma summary: mean of per-class gammas
+                try:
+                    reporter["gamma"] = float(np.mean(gammas_i))
+                except Exception:
+                    reporter["gamma"] = str(gammas_i)[:12]
+                reporter["time"] = time.perf_counter() - t_iter_start
+                reporter.print(level=2)
+            return
+
+        # regression / binary path (existing behaviour)
         self._initial_tree()
         df = self.df
         self.trees = []
@@ -505,7 +753,10 @@ class GradientBoostedTree(Model):
             if self.gamma_setting is None:
                 gamma = self._gamma(c.tree)
             else:
-                gamma = self.gamma_setting
+                try:
+                    gamma = float(np.clip(self.gamma_setting, 0.1, 10.0))
+                except Exception:
+                    gamma = self.gamma_setting
             self.trees.append(c.tree)
             self.gamma.append(gamma)
             reporter.print(level=2)
@@ -541,15 +792,33 @@ class GradientBoostedTree(Model):
         return c
 
     def _gamma(self, tree):
-        # minimizer = BrentsScalarMinimizer()
-        # x, y = minimizer.minimize(self._opt_fun(tree), 0.0, 10.0)
         method = self.algorithm_kwargs.get("minimizer_method", "brent")
         x, y = minimize(
-            self._opt_fun(tree), 0.0, 10.0, method=method, options=self.algorithm_kwargs
+            self._opt_fun(tree), 0.1, 10.0, method=method, options=self.algorithm_kwargs
         )
         reporter["gamma"] = x
         reporter["sse"] = y / self.N
         return x
+
+    def _gamma_multiclass(self, pred_k, P, Y, k):
+        """Compute optimal gamma for class k via Newton-Raphson step.
+
+        Args:
+            pred_k: predictions from the regression tree for class k (N,)
+            P: probability matrix (N, K) — softmax of current scores
+            Y: one-hot target matrix (N, K)
+            k: class index
+        """
+        data = {
+            "pred": np.asarray(pred_k).ravel(),
+            "r": Y[:, k] - np.asarray(P)[:, k],
+            "p": np.asarray(P)[:, k],
+        }
+        if "__weights__" in self.df:
+            data["weights"] = self.df["__weights__"].values
+
+        gamma, _ = minimize(data, 0.1, 10.0, method="newton")
+        return gamma
 
     def _opt_fun(self, tree):
         y_hat = self._predict_raw(self.df)
@@ -619,7 +888,10 @@ class GradientBoostedTree(Model):
             if self.gamma_setting is None:
                 gamma = self._gamma(c.tree)
             else:
-                gamma = self.gamma_setting
+                try:
+                    gamma = float(np.clip(self.gamma_setting, 0.1, 10.0))
+                except Exception:
+                    gamma = self.gamma_setting
             self.trees.append(c.tree)
             self.gamma.append(gamma)
             reporter.print()
@@ -749,6 +1021,10 @@ class AdaBoostTree(Model):
             reporter["alpha"] = alpha
 
             w = df["__weights__"] * np.exp(alpha * mis)
+            # normalize weights to avoid numerical explosion
+            s = np.sum(w)
+            if s > 0:
+                w = w / s
             reporter["w_ratio"] = np.max(w) / np.min(w)
             df["__weights__"] = w
 
@@ -767,14 +1043,14 @@ class AdaBoostTree(Model):
 
         kwargs = dict(
             max_depth=1,
-            min_leaf_samples=5,
-            min_split_samples=4,
+            min_leaf_samples=1,
+            min_split_samples=1,
             method=self.method,
         )
         kwargs = {**kwargs, **self.cart_settings}
 
         c = CART(
-            df=df.sample(frac=self.sample_frac, replace=True, random_state=self.seed),
+            df=df,
             y_name=self.y_name,
             X_names=X_names,
             **kwargs,

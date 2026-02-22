@@ -27,7 +27,7 @@ class Reporter:
         self.n += 1
         if self.n == 0:
             for L in self.labels:
-                print(L, end=" ")
+                print(f"{L:>12}", end=" ")
             print("")
 
         if self.n > 19:
@@ -37,15 +37,16 @@ class Reporter:
         for L in self.labels:
             v = self.buffer.get(L)
             if v is None:
-                s += " - \t"
+                s += "       -       "
             elif isinstance(v, float):
-                s += f"{v:4.2f}\t"
+                s += f"{v:12.4f}"
             elif isinstance(v, int):
-                s += f"{v:6}\t"
+                s += f"{v:12d}"
             elif isinstance(v, str):
-                s += f"{v[:9]}\t"
+                s += f"{v:12s}"
             else:
-                s += f"{v:10}\t"
+                s += f"{str(v)[:12]:12s}"
+            s += " "
         print(s)
         self.buffer = {}
 

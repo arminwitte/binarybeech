@@ -260,6 +260,110 @@ class DichotomousAttributeHandler(AttributeHandlerBase):
         return math.check_dichotomous(x)
 
 
+class BinnedAttributeHandler(AttributeHandlerBase):
+    def __init__(self, y_name, attribute, metrics, algorithm_kwargs):
+        super().__init__(y_name, attribute, metrics, algorithm_kwargs)
+
+    def split(self, df):
+        self.loss = np.inf
+        self.split_df = []
+        self.threshold = None
+
+        success = False
+
+        # Try optimized histogram-based split from metrics when available.
+        # Filter NaNs first (can appear during preprocessing)
+        clean_df = df.dropna(subset=[self.attribute])
+        if len(clean_df) < 2:
+            return success
+
+        loss_args = {}
+        if "__weights__" in df:
+            loss_args["weights"] = clean_df["__weights__"].values
+
+        try:
+            best_loss, best_threshold = self.metrics.binned_loss(
+                clean_df, self.y_name, self.attribute, **loss_args
+            )
+        except AttributeError:
+            # Fallback to classic scan if metric doesn't implement binned_loss
+            bin_edges = pd.Series(clean_df[self.attribute]).dropna().unique()
+            if len(bin_edges) < 2:
+                return success
+
+            bin_edges = np.sort(bin_edges)
+            loss = np.inf
+            N = len(df.index)
+
+            for i in range(1, len(bin_edges)):
+                threshold = (bin_edges[i - 1] + bin_edges[i]) / 2.0
+                split_df = [df[df[self.attribute] < threshold], df[df[self.attribute] >= threshold]]
+                n = [len(df_.index) for df_ in split_df]
+
+                if min(n) == 0:
+                    continue
+
+                loss_args_local = {key: self.algorithm_kwargs[key] for key in ["lambda_l1", "lambda_l2"] if key in self.algorithm_kwargs}
+                loss_args_local = [loss_args_local.copy(), loss_args_local.copy()]
+                if "__weights__" in df:
+                    for j, df_ in enumerate(split_df):
+                        loss_args_local[j]["weights"] = df_["__weights__"].values
+
+                val = [
+                    self.metrics.node_value(df_[self.y_name], **loss_args_local[j])
+                    for j, df_ in enumerate(split_df)
+                ]
+
+                current_loss = (
+                    n[0] / N * self.metrics.loss(split_df[0][self.y_name], val[0], **loss_args_local[0])
+                    + n[1] / N * self.metrics.loss(split_df[1][self.y_name], val[1], **loss_args_local[1])
+                )
+
+                if current_loss < loss:
+                    success = True
+                    loss = current_loss
+                    self.loss = loss
+                    self.threshold = threshold
+                    self.split_df = split_df
+
+            return success
+
+        # If we get a valid threshold from binned_loss, set split and return
+        if best_threshold is not None and best_loss < np.inf:
+            success = True
+            self.loss = best_loss
+            self.threshold = best_threshold
+            self.split_df = [
+                df[df[self.attribute] < self.threshold],
+                df[df[self.attribute] >= self.threshold],
+            ]
+
+        return success
+
+    @staticmethod
+    def decide(x, threshold):
+        return True if x < threshold else False
+
+    @staticmethod
+    def check(x):
+        try:
+            if not pd.api.types.is_numeric_dtype(x):
+                return False
+        except Exception:
+            return False
+
+        # count uniques, handle Series vs array
+        try:
+            unique_count = x.nunique() if isinstance(x, pd.Series) else len(np.unique(x[~np.isnan(x)]))
+        except Exception:
+            unique_count = len(np.unique(x))
+
+        is_integer_type = pd.api.types.is_integer_dtype(x)
+
+        # treat as binned only if integer type or low number of unique values
+        return is_integer_type or unique_count <= 20
+
+
 class IntervalAttributeHandler(AttributeHandlerBase):
     def __init__(self, y_name, attribute, metrics, algorithm_kwargs):
         super().__init__(y_name, attribute, metrics, algorithm_kwargs)
@@ -549,6 +653,8 @@ attribute_handler_factory = AttributeHandlerFactory()
 attribute_handler_factory.register_handler(NominalAttributeHandler)
 attribute_handler_factory.register_handler(HighCardinalityNominalAttributeHandler)
 attribute_handler_factory.register_handler(DichotomousAttributeHandler)
+# prefer binned handler for integer / binned columns
+attribute_handler_factory.register_handler(BinnedAttributeHandler)
 attribute_handler_factory.register_handler(IntervalAttributeHandler)
 attribute_handler_factory.register_handler(NullAttributeHandler)
 attribute_handler_factory.register_method_group("clustering")

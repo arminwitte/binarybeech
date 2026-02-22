@@ -15,7 +15,7 @@ TINY = np.finfo(float).tiny
 
 class Minimizer(ABC):
     def __init__(self, atol=0, rtol=0, max_iter=100):
-        self.max_iter = 100
+        self.max_iter = max_iter
         self.rtol = max(EPSSQRT, rtol)
         self.atol = atol
 
@@ -295,6 +295,42 @@ class ScipyBoundedScalarMinimizer(Minimizer):
         return res.x, res.fun
 
 
+class NewtonRaphsonStepMinimizer(Minimizer):
+    """Single Newton-Raphson step for multiclass GBT gamma optimization.
+
+    Computes gamma = sum(pred * r) / sum(pred^2 * p * (1-p)), clamped to [a, b].
+
+    The ``minimize`` method expects ``f`` to be a dict with keys:
+        - ``pred``: array of tree predictions (N,)
+        - ``r``: array of residuals (N,)
+        - ``p``: array of probabilities for this class (N,)
+        - ``weights`` (optional): array of sample weights (N,)
+    """
+
+    def __init__(self, atol=0, rtol=0, max_iter=1):
+        super().__init__(atol=atol, rtol=rtol, max_iter=max_iter)
+
+    def minimize(self, f, a, b):
+        pred = np.asarray(f["pred"]).ravel()
+        r = np.asarray(f["r"]).ravel()
+        p = np.asarray(f["p"]).ravel()
+        w = f.get("weights")
+
+        if w is None:
+            numerator = np.sum(pred * r)
+            denominator = np.sum((pred ** 2) * p * (1.0 - p))
+        else:
+            w = np.asarray(w).ravel()
+            numerator = np.sum(w * pred * r)
+            denominator = np.sum(w * (pred ** 2) * p * (1.0 - p))
+
+        denominator = denominator + 1e-10
+        gamma = numerator / denominator
+        gamma = float(np.clip(gamma, a, b))
+        # Newton step has no separate function value; return 0 as placeholder
+        return gamma, 0.0
+
+
 class MinimizerFactory:
     def __init__(self):
         self.minimizer = {}
@@ -303,6 +339,11 @@ class MinimizerFactory:
         self.minimizer[name] = minimizer_class
 
     def get_minimizer_class(self, name):
+        if name not in self.minimizer:
+            available = ", ".join(sorted(self.minimizer.keys()))
+            raise ValueError(
+                f"Unknown minimizer method '{name}'. Available: {available}"
+            )
         return self.minimizer[name]
 
 
@@ -310,9 +351,12 @@ minimizer_factory = MinimizerFactory()
 minimizer_factory.register_minimizer("brent", BrentsScalarMinimizer)
 minimizer_factory.register_minimizer("simulated_annealing", ScalarSimulatedAnnealing)
 minimizer_factory.register_minimizer("scipy_bounded", ScipyBoundedScalarMinimizer)
+minimizer_factory.register_minimizer("newton", NewtonRaphsonStepMinimizer)
 
 
-def minimize(f, a, b, method="brent", options={}):
+def minimize(f, a, b, method="brent", options=None):
+    if options is None:
+        options = {}
     M = minimizer_factory.get_minimizer_class(method)
     max_iter = options.get("minimizer_max_iter", 100)
     rtol = options.get("minimizer_rtol", 0)
