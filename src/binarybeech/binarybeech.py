@@ -561,28 +561,33 @@ class GradientBoostedTree(Model):
         y_hat = [self._predict1(x, m) for x in df.iloc]
         return np.array(y_hat)
 
-    def predict(self, df, m=None):
-        # multiclass path: compute class probabilities and return labels
+    def predict_proba(self, df, m=None):
+        """Returns continuous predictions: N x K probabilities for multiclass,
+        or N-element array of probabilities/values for binary/regression."""
+        scores = self._predict_raw(df, m)
+
         if self.multiclass:
-            # get raw scores per class for each sample
-            scores = self._predict_raw(df, m)
-            # scores shape: (n_samples, K)
-            # apply softmax row-wise
             def softmax(a):
                 a = np.asarray(a)
                 a = a - np.max(a, axis=1, keepdims=True)
                 exp = np.exp(a)
                 return exp / np.sum(exp, axis=1, keepdims=True)
 
-            probs = softmax(scores)
+            return softmax(scores)
+
+        # Binary/regression path
+        return self.dmgr.metrics.output_transform(scores)
+
+    def predict(self, df, m=None):
+        """Returns final hard labels for classification, or continuous values for regression."""
+        if self.multiclass:
+            probs = self.predict_proba(df, m)
             inds = np.argmax(probs, axis=1)
             labels = np.array([self.classes[i] for i in inds])
             return labels
 
-        # scalar/regression/logistic path
-        y_hat = self._predict_raw(df, m)
-        y_hat = self.dmgr.metrics.output_transform(y_hat)
-
+        # Binary/regression path
+        y_hat = self.predict_proba(df, m)
         method = self.dmgr.method if hasattr(self, "dmgr") else None
 
         # Binary logistic: output_transform returns probabilities -> round to {0,1}
@@ -606,8 +611,20 @@ class GradientBoostedTree(Model):
         return y_hat
 
     def _pseudo_residuals(self, df, m=None):
-        res = df[self.y_name] - self.predict(df, m=m)
-        return res
+        """Calculates the gradients (residuals). Uses one-hot targets for multiclass."""
+        p = self.predict_proba(df, m=m)
+
+        if self.multiclass:
+            y = df[self.y_name].values
+            class_to_idx = {c: i for i, c in enumerate(self.classes)}
+            Y = np.zeros((len(y), self.K))
+            for i_, val in enumerate(y):
+                Y[i_, class_to_idx[val]] = 1.0
+            # Returns an N x K matrix of residuals
+            return Y - p
+
+        # Returns an N-element array of residuals
+        return df[self.y_name] - p
 
     def train(self, M):
         # multiclass K-way boosting
@@ -642,6 +659,8 @@ class GradientBoostedTree(Model):
 
                 trees_i = []
                 gammas_i = []
+                # Create a temporary matrix to hold the updates for this iteration
+                F_update = np.zeros_like(F)
                 # build K regression trees, one per class
                 for k in range(self.K):
                     df_k = df.copy()
@@ -690,7 +709,10 @@ class GradientBoostedTree(Model):
 
                     gammas_i.append(gamma_k)
 
-                    F[:, k] += self.learning_rate * gamma_k * pred_k
+                    # Store the update instead of applying it immediately
+                    F_update[:, k] = self.learning_rate * gamma_k * np.asarray(pred_k).ravel()
+                # Apply all K updates simultaneously at the end of the iteration
+                F += F_update
 
                 self.trees.append(trees_i)
                 self.gamma.append(gammas_i)
