@@ -546,7 +546,14 @@ class GradientBoostedTree(Model):
             trees_i = self.trees[i]
             for k in range(self.K):
                 t = trees_i[k]
-                scores[k] += self.learning_rate * t.traverse(x).value
+                # use per-iteration-per-class gamma if available
+                gamma_k = 1.0
+                if hasattr(self, "gamma") and len(self.gamma) > i:
+                    try:
+                        gamma_k = float(self.gamma[i][k])
+                    except Exception:
+                        gamma_k = 1.0
+                scores[k] += self.learning_rate * gamma_k * t.traverse(x).value
         return scores
 
     def _predict_raw(self, df, m=None):
@@ -611,6 +618,7 @@ class GradientBoostedTree(Model):
             # F: raw scores, shape (N, K)
             F = np.tile(self.init_scores.reshape(1, -1), (N, 1))
             self.trees = []
+            self.gamma = []
 
             # one-hot targets
             y = df[self.y_name].values
@@ -629,6 +637,7 @@ class GradientBoostedTree(Model):
                 R = Y - P
 
                 trees_i = []
+                gammas_i = []
                 # build K regression trees, one per class
                 for k in range(self.K):
                     df_k = df.copy()
@@ -665,9 +674,22 @@ class GradientBoostedTree(Model):
 
                     # update F with predictions of this tree
                     pred_k = c.predict(df)
-                    F[:, k] += self.learning_rate * pred_k
+
+                    # determine gamma for this class/tree
+                    if self.gamma_setting is None:
+                        try:
+                            gamma_k = self._gamma_multiclass(pred_k, F, Y, k)
+                        except Exception:
+                            gamma_k = 1.0
+                    else:
+                        gamma_k = self.gamma_setting
+
+                    gammas_i.append(gamma_k)
+
+                    F[:, k] += self.learning_rate * gamma_k * pred_k
 
                 self.trees.append(trees_i)
+                self.gamma.append(gammas_i)
                 # report (use norm of residuals)
                 reporter["res_norm"] = np.linalg.norm(R)
                 reporter.print(level=2)
@@ -735,6 +757,24 @@ class GradientBoostedTree(Model):
         )
         reporter["gamma"] = x
         reporter["sse"] = y / self.N
+        return x
+
+    def _gamma_multiclass(self, pred_k, F_current, Y, k):
+        # minimize multiclass log-loss w.r.t. scalar gamma for class k
+        N = F_current.shape[0]
+
+        def fun(gamma):
+            F_tmp = F_current.copy()
+            F_tmp[:, k] = F_current[:, k] + self.learning_rate * gamma * pred_k
+            # softmax
+            A = np.exp(F_tmp - np.max(F_tmp, axis=1, keepdims=True))
+            P = A / np.sum(A, axis=1, keepdims=True)
+            # cross-entropy loss
+            loss = -np.sum(Y * np.log(np.clip(P, 1e-12, 1.0)))
+            return loss
+
+        method = self.algorithm_kwargs.get("minimizer_method", "brent")
+        x, y = minimize(fun, 0.0, 10.0, method=method, options=self.algorithm_kwargs)
         return x
 
     def _opt_fun(self, tree):
@@ -931,10 +971,13 @@ class AdaBoostTree(Model):
             reporter["err"] = err
 
             alpha = self._alpha(err, K)
-            alpha = max(0, alpha)
             reporter["alpha"] = alpha
 
             w = df["__weights__"] * np.exp(alpha * mis)
+            # normalize weights to avoid numerical explosion
+            s = np.sum(w)
+            if s > 0:
+                w = w / s
             reporter["w_ratio"] = np.max(w) / np.min(w)
             df["__weights__"] = w
 
@@ -953,14 +996,22 @@ class AdaBoostTree(Model):
 
         kwargs = dict(
             max_depth=1,
-            min_leaf_samples=5,
-            min_split_samples=4,
+            min_leaf_samples=1,
+            min_split_samples=1,
             method=self.method,
         )
         kwargs = {**kwargs, **self.cart_settings}
 
+        # For AdaBoost training use weighted resampling according to __weights__
+        if "__weights__" in df:
+            df_sample = df.sample(n=len(df), replace=True, weights=df["__weights__"], random_state=self.seed)
+        elif self.sample_frac is None or self.sample_frac >= 1.0:
+            df_sample = df
+        else:
+            df_sample = df.sample(frac=self.sample_frac, replace=True, random_state=self.seed)
+
         c = CART(
-            df=df.sample(frac=self.sample_frac, replace=True, random_state=self.seed),
+            df=df_sample,
             y_name=self.y_name,
             X_names=X_names,
             **kwargs,

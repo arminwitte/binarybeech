@@ -360,7 +360,8 @@ class BinnedAttributeHandler(AttributeHandlerBase):
 
         is_integer_type = pd.api.types.is_integer_dtype(x)
 
-        return is_integer_type or unique_count <= 256
+        # treat as binned only if integer type or low number of unique values
+        return is_integer_type or unique_count <= 20
 
 
 class IntervalAttributeHandler(AttributeHandlerBase):
