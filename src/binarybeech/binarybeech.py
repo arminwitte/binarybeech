@@ -701,7 +701,8 @@ class GradientBoostedTree(Model):
                     # determine gamma for this class/tree
                     if self.gamma_setting is None:
                         try:
-                            gamma_k = self._gamma_multiclass(pred_k, F, Y, k)
+                            # Use probabilities P (not raw scores F) for Newton step
+                            gamma_k = self._gamma_multiclass(pred_k, P, Y, k)
                         except Exception:
                             gamma_k = 1.0
                     else:
@@ -795,22 +796,46 @@ class GradientBoostedTree(Model):
         return x
 
     def _gamma_multiclass(self, pred_k, F_current, Y, k):
-        # minimize multiclass log-loss w.r.t. scalar gamma for class k
-        N = F_current.shape[0]
-
-        def fun(gamma):
-            F_tmp = F_current.copy()
-            F_tmp[:, k] = F_current[:, k] + self.learning_rate * gamma * pred_k
-            # softmax
-            A = np.exp(F_tmp - np.max(F_tmp, axis=1, keepdims=True))
+        # Old API: (pred_k, F_current, Y, k)
+        # New behavior: use a single Newton-Raphson closed-form step to compute
+        # optimal global gamma for class k. Accepts either raw scores or
+        # probabilities as the second argument, but in practice we pass P.
+        try:
+            P = np.asarray(F_current)
+            P_k = P[:, k]
+        except Exception:
+            # fall back: try to compute probabilities from raw scores
+            F_temp = np.asarray(F_current)
+            A = np.exp(F_temp - np.max(F_temp, axis=1, keepdims=True))
             P = A / np.sum(A, axis=1, keepdims=True)
-            # cross-entropy loss
-            loss = -np.sum(Y * np.log(np.clip(P, 1e-12, 1.0)))
-            return loss
+            P_k = P[:, k]
 
-        method = self.algorithm_kwargs.get("minimizer_method", "brent")
-        x, y = minimize(fun, 0.0, 10.0, method=method, options=self.algorithm_kwargs)
-        return x
+        # One-hot targets for class k
+        Y_k = Y[:, k]
+
+        pred_arr = np.asarray(pred_k).ravel()
+
+        # optional sample weights
+        w = None
+        try:
+            if "__weights__" in self.df:
+                w = np.asarray(self.df["__weights__"].values).ravel()
+        except Exception:
+            w = None
+
+        # residuals (note: r_k = Y_k - P_k)
+        r_k = Y_k - P_k
+
+        if w is None:
+            numerator = np.sum(pred_arr * r_k)
+            denominator = np.sum((pred_arr ** 2) * P_k * (1.0 - P_k))
+        else:
+            numerator = np.sum(w * pred_arr * r_k)
+            denominator = np.sum(w * (pred_arr ** 2) * P_k * (1.0 - P_k))
+
+        denominator = denominator + 1e-10
+        gamma = numerator / denominator
+        return float(gamma)
 
     def _opt_fun(self, tree):
         y_hat = self._predict_raw(self.df)
