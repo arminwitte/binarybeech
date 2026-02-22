@@ -8,6 +8,7 @@ from typing import Any, Dict, List, Optional
 
 import numpy as np
 import pandas as pd
+import time
 
 from binarybeech.datamanager import DataManager
 from binarybeech.minimizer import minimize
@@ -495,7 +496,7 @@ class GradientBoostedTree(Model):
         self.multiclass = self.K > 2
 
         self.logger = logging.getLogger(__name__)
-        reporter.reset(["iter", "res_norm", "gamma", "sse"])
+        reporter.reset(["iter", "res_norm", "gamma", "sse", "time"])
 
     def _initial_tree(self):
         # For multiclass we initialize class scores with log priors instead
@@ -636,6 +637,9 @@ class GradientBoostedTree(Model):
                 # residuals = Y - P
                 R = Y - P
 
+                # timing: start of iteration
+                t_iter_start = time.perf_counter()
+
                 trees_i = []
                 gammas_i = []
                 # build K regression trees, one per class
@@ -692,6 +696,15 @@ class GradientBoostedTree(Model):
                 self.gamma.append(gammas_i)
                 # report (use norm of residuals)
                 reporter["res_norm"] = np.linalg.norm(R)
+                # log cross-entropy per sample
+                loss = -np.sum(Y * np.log(np.clip(P, 1e-12, 1.0)))
+                reporter["sse"] = loss / N
+                # gamma summary: mean of per-class gammas
+                try:
+                    reporter["gamma"] = float(np.mean(gammas_i))
+                except Exception:
+                    reporter["gamma"] = str(gammas_i)[:12]
+                reporter["time"] = time.perf_counter() - t_iter_start
                 reporter.print(level=2)
             return
 

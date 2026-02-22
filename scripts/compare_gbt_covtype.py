@@ -30,7 +30,7 @@ def stratified_train_test_split(df: pd.DataFrame, y_col: str, test_size: float =
     return train, test
 
 
-def bin_df_to_int(df: pd.DataFrame, n_bins: int = 5) -> pd.DataFrame:
+def bin_df_to_int(df: pd.DataFrame, n_bins: int = 64) -> pd.DataFrame:
     df_b = df.copy()
     for col in df_b.columns:
         if pd.api.types.is_numeric_dtype(df_b[col]) and col != "Cover_Type":
@@ -48,6 +48,8 @@ def run_gbt(train_df: pd.DataFrame, test_df: pd.DataFrame, n_trees: int = 20, le
     if cart_max_depth is not None:
         cart_settings["max_depth"] = cart_max_depth
     kwargs["cart_settings"] = cart_settings
+    # use Simulated Annealing minimizer (slower but explores combinatorial splits)
+    kwargs["algorithm_kwargs"] = {"minimizer_method": "simulated_annealing"}
 
     # request classification init to encourage classification-oriented trees
     gbt = GradientBoostedTree(df=train_df, y_name="Cover_Type", learning_rate=learning_rate, seed=42, init_method="classification", **kwargs)
@@ -59,16 +61,20 @@ def run_gbt(train_df: pd.DataFrame, test_df: pd.DataFrame, n_trees: int = 20, le
     y_pred = gbt.predict(test_df)
     t_pred = time.perf_counter() - t0
 
-    # If predictions are numeric scores, map to nearest class label from training set
-    try:
-        y_pred_arr = np.asarray(y_pred, dtype=float)
-        classes = np.unique(train_df["Cover_Type"])
-        # map each numeric prediction to nearest class value
-        y_pred_mapped = np.array([classes[np.argmin(np.abs(classes - v))] for v in y_pred_arr])
-        y_pred = y_pred_mapped
-    except Exception:
-        # if mapping fails, leave predictions as-is
-        pass
+    # Normalize mapping: handle raw score arrays, numeric arrays, or label arrays
+    classes = np.unique(train_df["Cover_Type"])  # reference classes
+    y_pred_arr = np.asarray(y_pred)
+    # multiclass raw-scores (n_samples, K)
+    if y_pred_arr.ndim == 2:
+        inds = np.argmax(y_pred_arr, axis=1)
+        y_pred = np.array([classes[i] for i in inds])
+    else:
+        # 1-D numeric predictions -> map to nearest class
+        if np.issubdtype(y_pred_arr.dtype, np.number):
+            y_pred = np.array([classes[np.argmin(np.abs(classes - float(v)))] for v in y_pred_arr])
+        else:
+            # assume labels already
+            y_pred = y_pred_arr
 
     acc = accuracy(test_df["Cover_Type"], y_pred)
     return acc, t_fit, t_pred
@@ -92,7 +98,7 @@ def run_cart(train_df: pd.DataFrame, test_df: pd.DataFrame, max_depth: int | Non
     return acc, t_fit, t_pred
 
 
-def main(repeats: int = 3, n_bins: int = 5, sample_size: int | None = None, n_trees: int = 20, learning_rate: float = 0.1, cart_max_depth: int | None = 6):
+def main(repeats: int = 3, n_bins: int = 64, sample_size: int | None = None, n_trees: int = 10, learning_rate: float = 0.1, cart_max_depth: int | None = 6):
     df = pd.read_parquet("data/covtype_categorical.parquet")
 
     for cat_col in ("Wilderness_Area", "Soil_Type"):
