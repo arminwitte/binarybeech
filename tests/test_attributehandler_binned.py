@@ -15,14 +15,14 @@ def test_binned_check():
 
 
 def test_binned_split():
-    np.random.seed(0)
+    rng = np.random.default_rng(0)
     N = 200
     x_cont = np.linspace(0, 199, N)
     # bin into 8 discrete bins
     x_binned = pd.cut(x_cont, bins=8, labels=False)
 
     # create a target correlated with the original continuous values
-    y = x_cont + np.random.normal(scale=1.0, size=N)
+    y = x_cont + rng.normal(scale=1.0, size=N)
 
     df = pd.DataFrame({"y": y, "x": x_binned})
 

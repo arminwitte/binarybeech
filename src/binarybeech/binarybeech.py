@@ -706,7 +706,11 @@ class GradientBoostedTree(Model):
                         except Exception:
                             gamma_k = 1.0
                     else:
-                        gamma_k = self.gamma_setting
+                        # clamp user-specified gamma to sensible bounds
+                        try:
+                            gamma_k = float(np.clip(self.gamma_setting, 0.1, 10.0))
+                        except Exception:
+                            gamma_k = float(self.gamma_setting)
 
                     gammas_i.append(gamma_k)
 
@@ -749,7 +753,10 @@ class GradientBoostedTree(Model):
             if self.gamma_setting is None:
                 gamma = self._gamma(c.tree)
             else:
-                gamma = self.gamma_setting
+                try:
+                    gamma = float(np.clip(self.gamma_setting, 0.1, 10.0))
+                except Exception:
+                    gamma = self.gamma_setting
             self.trees.append(c.tree)
             self.gamma.append(gamma)
             reporter.print(level=2)
@@ -785,57 +792,33 @@ class GradientBoostedTree(Model):
         return c
 
     def _gamma(self, tree):
-        # minimizer = BrentsScalarMinimizer()
-        # x, y = minimizer.minimize(self._opt_fun(tree), 0.0, 10.0)
         method = self.algorithm_kwargs.get("minimizer_method", "brent")
         x, y = minimize(
-            self._opt_fun(tree), 0.0, 10.0, method=method, options=self.algorithm_kwargs
+            self._opt_fun(tree), 0.1, 10.0, method=method, options=self.algorithm_kwargs
         )
         reporter["gamma"] = x
         reporter["sse"] = y / self.N
         return x
 
-    def _gamma_multiclass(self, pred_k, F_current, Y, k):
-        # Old API: (pred_k, F_current, Y, k)
-        # New behavior: use a single Newton-Raphson closed-form step to compute
-        # optimal global gamma for class k. Accepts either raw scores or
-        # probabilities as the second argument, but in practice we pass P.
-        try:
-            P = np.asarray(F_current)
-            P_k = P[:, k]
-        except Exception:
-            # fall back: try to compute probabilities from raw scores
-            F_temp = np.asarray(F_current)
-            A = np.exp(F_temp - np.max(F_temp, axis=1, keepdims=True))
-            P = A / np.sum(A, axis=1, keepdims=True)
-            P_k = P[:, k]
+    def _gamma_multiclass(self, pred_k, P, Y, k):
+        """Compute optimal gamma for class k via Newton-Raphson step.
 
-        # One-hot targets for class k
-        Y_k = Y[:, k]
+        Args:
+            pred_k: predictions from the regression tree for class k (N,)
+            P: probability matrix (N, K) — softmax of current scores
+            Y: one-hot target matrix (N, K)
+            k: class index
+        """
+        data = {
+            "pred": np.asarray(pred_k).ravel(),
+            "r": Y[:, k] - np.asarray(P)[:, k],
+            "p": np.asarray(P)[:, k],
+        }
+        if "__weights__" in self.df:
+            data["weights"] = self.df["__weights__"].values
 
-        pred_arr = np.asarray(pred_k).ravel()
-
-        # optional sample weights
-        w = None
-        try:
-            if "__weights__" in self.df:
-                w = np.asarray(self.df["__weights__"].values).ravel()
-        except Exception:
-            w = None
-
-        # residuals (note: r_k = Y_k - P_k)
-        r_k = Y_k - P_k
-
-        if w is None:
-            numerator = np.sum(pred_arr * r_k)
-            denominator = np.sum((pred_arr ** 2) * P_k * (1.0 - P_k))
-        else:
-            numerator = np.sum(w * pred_arr * r_k)
-            denominator = np.sum(w * (pred_arr ** 2) * P_k * (1.0 - P_k))
-
-        denominator = denominator + 1e-10
-        gamma = numerator / denominator
-        return float(gamma)
+        gamma, _ = minimize(data, 0.1, 10.0, method="newton")
+        return gamma
 
     def _opt_fun(self, tree):
         y_hat = self._predict_raw(self.df)
@@ -905,7 +888,10 @@ class GradientBoostedTree(Model):
             if self.gamma_setting is None:
                 gamma = self._gamma(c.tree)
             else:
-                gamma = self.gamma_setting
+                try:
+                    gamma = float(np.clip(self.gamma_setting, 0.1, 10.0))
+                except Exception:
+                    gamma = self.gamma_setting
             self.trees.append(c.tree)
             self.gamma.append(gamma)
             reporter.print()
@@ -1031,6 +1017,7 @@ class AdaBoostTree(Model):
             reporter["err"] = err
 
             alpha = self._alpha(err, K)
+            alpha = max(0, alpha)
             reporter["alpha"] = alpha
 
             w = df["__weights__"] * np.exp(alpha * mis)
@@ -1062,16 +1049,8 @@ class AdaBoostTree(Model):
         )
         kwargs = {**kwargs, **self.cart_settings}
 
-        # For AdaBoost training use weighted resampling according to __weights__
-        if "__weights__" in df:
-            df_sample = df.sample(n=len(df), replace=True, weights=df["__weights__"], random_state=self.seed)
-        elif self.sample_frac is None or self.sample_frac >= 1.0:
-            df_sample = df
-        else:
-            df_sample = df.sample(frac=self.sample_frac, replace=True, random_state=self.seed)
-
         c = CART(
-            df=df_sample,
+            df=df,
             y_name=self.y_name,
             X_names=X_names,
             **kwargs,
